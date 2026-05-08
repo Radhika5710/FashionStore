@@ -1,0 +1,169 @@
+.orders-wrap {
+    width: min(1200px, 94%);
+    margin: var(--space-6) auto var(--space-7);
+}
+
+.orders-head {
+    margin-bottom: var(--space-5);
+}
+
+.orders-head h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+}
+
+.orders-head p {
+    color: var(--color-secondary);
+    font-size: 15px;
+    margin-top: var(--space-1);
+}
+
+.order-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-3);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+}
+
+.order-card:hover, .order-card:focus-within {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.order-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.order-top h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+.status-badge {
+    display: inline-flex;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.order-meta {
+    color: var(--color-secondary);
+    font-size: 14px;
+    margin-bottom: var(--space-2);
+}
+
+.order-meta strong {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.items-grid {
+    margin-top: var(--space-3);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-2);
+}
+
+.item-box {
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    display: grid;
+    gap: var(--space-1);
+    transition: all var(--transition-base);
+}
+
+.item-box:hover, .item-box:focus-within {
+    background: var(--color-border);
+}
+
+.item-box p {
+    font-size: 13px;
+    color: var(--color-secondary);
+    margin: 0;
+}
+
+.item-box strong {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.orders-empty {
+    text-align: center;
+    padding: 80px 24px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: var(--radius-lg);
+    margin: var(--space-4) 0;
+}
+
+.orders-empty svg {
+    width: 96px;
+    height: 96px;
+    color: var(--color-secondary);
+    margin-bottom: var(--space-3);
+    opacity: 0.6;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.orders-empty h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+}
+
+.orders-empty p {
+    color: var(--color-secondary);
+    margin-bottom: var(--space-4);
+    font-size: 1.05rem;
+}
+
+/* Order status badge variants */
+.badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-shipped {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.badge-delivered {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+@media (max-width: 760px) {
+    .order-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

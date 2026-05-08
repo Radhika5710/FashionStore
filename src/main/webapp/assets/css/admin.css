@@ -1,0 +1,778 @@
+/* ====================================================
+   ADMIN PAGES SHARED STYLES
+   ==================================================== */
+
+/* ══ GLASSMORPHISM UI ══ */
+/* NOTE: Uses shared design tokens from style.css --glass-bg, --glass-border, --glass-shadow */
+.admin-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: var(--space-4);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+}
+
+.admin-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: var(--space-4);
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ══ SIDEBAR ══ */
+.admin-sidebar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    height: fit-content;
+    position: sticky;
+    top: var(--space-4);
+}
+
+.sidebar-brand {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--space-4);
+    letter-spacing: -0.02em;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-base);
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    background: var(--color-primary);
+    color: white;
+    transform: translateX(4px);
+}
+
+.sidebar-link svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ══ DASHBOARD CARDS ══ */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--glass-shadow);
+    transition: transform var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-3);
+    color: white;
+}
+
+.stat-icon.sales {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.users {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon.orders {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.stock {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-change {
+    font-size: 12px;
+    margin-top: var(--space-2);
+}
+
+.stat-change.positive {
+    color: var(--color-success);
+}
+
+.stat-change.negative {
+    color: var(--color-danger);
+}
+
+/* ══ CHART CONTAINER ══ */
+.chart-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--glass-shadow);
+    margin-bottom: var(--space-5);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.chart-canvas {
+    width: 100%;
+    height: 300px;
+}
+
+/* ══ RECENT ORDERS TABLE ══ */
+.recent-orders {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--glass-shadow);
+}
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 1024px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-sidebar {
+        position: static;
+        margin-bottom: var(--space-4);
+    }
+    
+    .sidebar-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: var(--space-2);
+    }
+    
+    .sidebar-link {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-dashboard {
+        padding: var(--space-2);
+    }
+}
+
+/* ── Layout Wrappers ── */
+
+/* Used by admin-products.jsp */
+.admin-container {
+    max-width: 1200px;
+    margin: var(--space-6) auto var(--space-7);
+    padding: 0 var(--space-4);
+}
+
+/* Used by admin-orders.jsp */
+.admin-wrap {
+    max-width: 1200px;
+    margin: var(--space-6) auto var(--space-7);
+    padding: 0 var(--space-4);
+}
+
+/* ── Page Header ── */
+.admin-page {
+    padding: var(--space-6) 0 var(--space-7);
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.admin-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 400;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+}
+
+.admin-subtitle {
+    color: var(--color-secondary);
+    font-size: 15px;
+    margin-top: var(--space-1);
+}
+
+/* ── Add / Nav Buttons ── */
+.add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-primary);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: var(--font-family);
+    text-decoration: none;
+    transition: background-color var(--transition-base), transform var(--transition-fast);
+    border: none;
+    cursor: pointer;
+}
+
+.add-btn:hover, .add-btn:focus-visible {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* ── Tables ── */
+.admin-table-container {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto; /* Allow horizontal scroll on mobile */
+}
+
+/* Both .admin-table and legacy .product-table */
+.admin-table,
+.product-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 540px; /* Prevent squishing below readable width */
+}
+
+.admin-table th,
+.product-table th {
+    background: var(--color-surface-alt);
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table td,
+.product-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 14px;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.admin-table tr:last-child td,
+.product-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tr:hover, .admin-table tr:focus-within,
+.product-table tr:hover, .product-table tr:focus-within {
+    background: var(--color-surface-alt);
+}
+
+/* ── Product image in table ── */
+.prod-img {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    display: block;
+}
+
+/* ── Size badges in table ── */
+.size-badge {
+    display: inline-block;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 3px 10px;
+    margin: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--color-surface-alt);
+}
+
+/* ── Action links in table cells ── */
+.action-btns {
+    display: flex;
+    gap: var(--space-1);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.edit-link,
+.delete-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    border: 1px solid;
+}
+
+.edit-link {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: transparent;
+}
+
+.edit-link:hover, .edit-link:focus-visible {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.delete-link {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    background: transparent;
+}
+
+.delete-link:hover, .delete-link:focus-visible {
+    background: var(--color-danger);
+    color: #ffffff;
+}
+
+/* Generic admin buttons */
+.admin-actions {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.admin-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-primary);
+}
+
+.admin-btn:hover, .admin-btn:focus-visible {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.admin-btn-danger {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+.admin-btn-danger:hover, .admin-btn-danger:focus-visible {
+    background: var(--color-danger);
+    color: #ffffff;
+}
+
+/* ── Status Badges (shared between orders.jsp and admin-orders.jsp) ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* User-facing order page variants */
+.badge-pending,
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-shipped,
+.status-shipped {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.badge-delivered,
+.status-delivered {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ── Admin Status Update Form ── */
+.status-form {
+    margin-top: var(--space-2);
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.status-form select {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-family: var(--font-family);
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--color-surface);
+    transition: border-color var(--transition-fast);
+}
+
+.status-form select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.status-form button {
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 9px 16px;
+    background: var(--color-primary);
+    color: #fff;
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--transition-base), transform var(--transition-fast);
+}
+
+.status-form button:hover, .status-form button:focus-visible {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* ── Items list in admin order card ── */
+.items {
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-2);
+}
+
+.item-row {
+    padding: var(--space-1) 0;
+    border-bottom: 1px dashed var(--color-border);
+    font-size: 13px;
+    color: var(--color-secondary);
+}
+
+.item-row:last-child {
+    border-bottom: none;
+}
+
+/* ── Admin Form Card ── */
+.admin-form-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Product form container (admin-product-form.jsp) */
+.form-container {
+    max-width: 720px;
+    margin: var(--space-6) auto var(--space-7);
+    padding: 0 var(--space-4);
+}
+
+.form-container > h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-5);
+}
+
+.form-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Admin Form Groups ── */
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
+}
+
+.admin-form-group.full-width {
+    grid-column: span 2;
+}
+
+.admin-form-group label,
+.form-group-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+    margin-bottom: 4px;
+}
+
+.admin-form-group input,
+.admin-form-group select,
+.admin-form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background: var(--color-surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.admin-form-group input:focus,
+.admin-form-group select:focus,
+.admin-form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ── Submit Button ── */
+.submit-btn {
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    padding: 14px 24px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-md);
+    transition: background var(--transition-base), transform var(--transition-fast);
+}
+
+.submit-btn:hover, .submit-btn:focus-visible {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+/* ── Size/Stock Grid ── */
+.size-stock-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+}
+
+.size-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.size-input-wrap label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+}
+
+.size-input-wrap input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    text-align: center;
+    transition: border-color var(--transition-fast);
+}
+
+.size-input-wrap input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ── Empty State ── */
+.admin-empty {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-7) var(--space-5);
+    text-align: center;
+}
+
+.admin-empty p {
+    color: var(--color-secondary);
+    margin-bottom: var(--space-4);
+}
+
+/* ── Topbar (admin-orders) ── */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.topbar h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+}
+
+.topbar a {
+    color: var(--color-primary);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+.topbar a:hover, .topbar a:focus-visible {
+    color: var(--primary-hover);
+}
+
+/* ── Alert overrides for admin pages ── */
+/* These remove the need for inline style on admin alert divs */
+.alert.alert-success {
+    background: rgba(16, 185, 129, 0.08) !important;
+    border: 1px solid var(--color-success) !important;
+    color: #166534 !important;
+}
+
+.alert.alert-danger {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border: 1px solid var(--color-danger) !important;
+    color: #991b1b !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-form-group.full-width {
+        grid-column: span 1;
+    }
+
+    .size-stock-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .admin-table th,
+    .admin-table td,
+    .product-table th,
+    .product-table td {
+        padding: var(--space-2);
+        font-size: 12px;
+    }
+}

@@ -1,0 +1,58 @@
+/* Wishlist page specific styles */
+
+.wishlist-page {
+    padding: var(--space-8) 0 var(--space-6);
+}
+
+.wishlist-header {
+    text-align: center;
+    margin-bottom: var(--space-6);
+}
+
+.wishlist-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-1);
+}
+
+.wishlist-count {
+    color: var(--color-secondary);
+    font-size: var(--text-sm);
+}
+
+.wishlist-empty {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-secondary);
+}
+
+.wishlist-empty svg {
+    margin: 0 auto var(--space-4);
+    display: block;
+    color: var(--color-border);
+}
+
+.wishlist-empty h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.wishlist-empty p {
+    margin-bottom: var(--space-4);
+}
+
+/* Active wishlist heart button */
+.product-card-wishlist.active {
+    color: var(--color-primary);
+    background: var(--color-surface);
+}
+
+.product-card-wishlist.active:hover {
+    background: var(--color-danger);
+    color: var(--color-surface);
+}

@@ -1,0 +1,151 @@
+/* ====================================================
+   AUTH PAGES (login.jsp + register.jsp)
+   ==================================================== */
+
+.auth-page {
+    min-height: calc(100vh - 180px);
+    display: grid;
+    place-items: center;
+    padding: var(--space-6) var(--space-2);
+}
+
+.auth-card {
+    width: min(440px, 96%);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-6);
+}
+
+/* Page heading inside the card */
+.auth-card > h1 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-1);
+    text-align: center;
+}
+
+/* Subtitle paragraph inside the card */
+.auth-card > p {
+    color: var(--color-secondary);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: var(--space-4);
+    line-height: 1.5;
+}
+
+/* ── Form Layout ── */
+.auth-form {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.auth-form label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+    margin-bottom: 4px;
+}
+
+.auth-form input,
+.auth-form select {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background: var(--color-surface);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-form input:focus-visible,
+.auth-form select:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.auth-form input:focus,
+.auth-form select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+/* Submit button — leverages global .btn-primary */
+.auth-form button[type="submit"] {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: var(--space-1);
+    justify-content: center;
+}
+
+/* ── Links section ── */
+.auth-links {
+    text-align: center;
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-secondary);
+    font-size: 13px;
+}
+
+.auth-links a {
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: color var(--transition-base);
+}
+
+.auth-links a:hover, .auth-links a:focus-visible {
+    color: var(--primary-hover);
+}
+
+/* ── Feedback messages ── */
+.auth-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: var(--space-2);
+    line-height: 1.5;
+    text-align: center;
+}
+
+.auth-success {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: var(--space-2);
+    text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: var(--space-4);
+    }
+
+    .auth-card > h1 {
+        font-size: 1.5rem;
+    }
+}

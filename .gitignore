@@ -1,0 +1,30 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+
+# Node
+node_modules/
+package-lock.json
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+# VS Code
+.vscode/
+
+# Database
+*.db
+
+# OS
+.DS_Store
+
+# Reports (maybe keep them, but they look like audit reports that might be temporary)
+# If the user wants them, I can comment this out.
+# For now, I'll keep them as they seem to be project documentation.
