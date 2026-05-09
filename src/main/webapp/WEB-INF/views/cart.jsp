@@ -6,7 +6,7 @@
 <html lang="en">
 <head>
 <%
-    request.setAttribute("_pageTitle", "My Cart");
+    request.setAttribute("_pageTitle", "Cart");
     request.setAttribute("_pageCSS", "cart");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
@@ -128,6 +128,13 @@
                     <span>Discount</span>
                     <span>₹0.00</span>
                 </div>
+                <div class="shipping-estimator">
+                    <label for="shippingPin">Delivery estimate</label>
+                    <div>
+                        <input type="text" id="shippingPin" placeholder="Enter PIN code" maxlength="6">
+                        <button type="button" onclick="FashionStore.showToast('Estimated delivery: 3-6 business days', 'success')">Check</button>
+                    </div>
+                </div>
                 
                 <!-- Coupon Code Section -->
                 <div class="coupon-section">
@@ -144,6 +151,11 @@
                 </div>
                 
                 <a href="<%= request.getContextPath() %>/checkout" class="checkout-btn">Proceed to Checkout</a>
+                <div class="checkout-trust">
+                    <span>Secure checkout</span>
+                    <span>Free shipping</span>
+                    <span>Easy returns</span>
+                </div>
             </div>
         </div>
 
@@ -164,6 +176,18 @@
     </div>
 
     <% } %>
+
+    <section class="cart-recommendations">
+        <div class="section-head">
+            <h2 class="display-3">Complete the look</h2>
+            <a href="<%= request.getContextPath() %>/products?tag=trending" class="btn btn-outline">Trending now</a>
+        </div>
+        <div class="recommendation-strip">
+            <a href="<%= request.getContextPath() %>/products?category=accessories">Add accessories</a>
+            <a href="<%= request.getContextPath() %>/products?category=footwear">Explore footwear</a>
+            <a href="<%= request.getContextPath() %>/products?tag=deals">Shop sale</a>
+        </div>
+    </section>
 
 </main>
 

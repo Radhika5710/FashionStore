@@ -1,0 +1,221 @@
+/**
+ * CHECKOUT PAGE - Enterprise Ecommerce
+ * Layout, stepper, form grid, order summary used by checkout.jsp.
+ * Phantom payment-method / trust-badge / order-item-preview rules removed.
+ * Also fixes broken [data-theme="dark] selectors that lacked closing quote.
+ */
+
+/* ============================================
+   CHECKOUT CONTAINER
+   ============================================ */
+
+.checkout-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    padding: var(--space-8) 0 var(--space-12);
+    width: min(1400px, 94%);
+    margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .checkout-container {
+        grid-template-columns: 1fr 420px;
+        align-items: start;
+    }
+}
+
+/* ============================================
+   STEPPER
+   ============================================ */
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+}
+
+.step.active .step-number {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.step.completed .step-number {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: white;
+}
+
+.step-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step.active .step-label {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* ============================================
+   CHECKOUT FORM
+   ============================================ */
+
+.checkout-form {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+}
+
+.checkout-section {
+    margin-bottom: var(--space-10);
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.checkout-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-title {
+    font-family: var(--font-family-display);
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-5);
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+/* ============================================
+   ORDER SUMMARY
+   ============================================ */
+
+.order-summary {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    position: sticky;
+    top: 88px;
+}
+
+/* ============================================
+   SUMMARY ROWS
+   ============================================ */
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-5) 0;
+    margin-top: var(--space-2);
+    border-top: 2px solid var(--color-border);
+}
+
+/* ============================================
+   PLACE ORDER BUTTON
+   ============================================ */
+
+.place-order-btn {
+    width: 100%;
+    padding: var(--space-4) var(--space-6);
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: var(--space-6);
+}
+
+.place-order-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.place-order-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.place-order-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .checkout-container {
+        padding: var(--space-6) 0 var(--space-10);
+        gap: var(--space-6);
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .order-summary {
+        position: static;
+    }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .checkout-form,
+[data-theme="dark"] .order-summary {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .step-number {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .summary-row,
+[data-theme="dark"] .summary-total {
+    border-color: var(--color-border-dark);
+}

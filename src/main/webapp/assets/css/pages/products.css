@@ -1,0 +1,205 @@
+/**
+ * PRODUCTS PAGE - Enterprise Ecommerce
+ * Layout, category pills, pagination, empty state.
+ * Filter sidebar / sort header rules removed (phantom design \u2014 not wired into JSP).
+ */
+
+/* ============================================
+   PRODUCTS LAYOUT
+   ============================================ */
+
+.products-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    margin-top: var(--space-6);
+    padding-bottom: var(--space-12);
+}
+
+@media (min-width: 1024px) {
+    .products-layout {
+        grid-template-columns: 280px 1fr;
+        align-items: start;
+    }
+}
+
+/* ============================================
+   CATEGORY PILLS (Sticky Filter Bar)
+   ============================================ */
+
+.category-pills {
+    position: sticky;
+    top: 72px;
+    z-index: 20;
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding: var(--space-3) var(--space-4);
+    background: var(--glass-ivory);
+    backdrop-filter: blur(var(--glass-blur-strong));
+    -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    margin: 0 calc(-1 * var(--space-4)) var(--space-6);
+    scrollbar-width: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.category-pills::-webkit-scrollbar { display: none; }
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill:hover {
+    border-color: var(--color-champagne);
+    color: var(--color-champagne);
+    transform: translateY(-1px);
+}
+
+.pill.active {
+    background: var(--gradient-gold);
+    color: var(--color-text-inverse);
+    border-color: transparent;
+    box-shadow: var(--glow-gold);
+}
+
+.filter-title {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-3);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wider);
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-10);
+    padding: var(--space-4) 0;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.pagination-link:hover:not(.disabled):not(.active) {
+    background: var(--gradient-gold);
+    color: var(--color-text-inverse);
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: var(--glow-gold);
+}
+
+.pagination-link.active {
+    background: var(--gradient-gold);
+    color: var(--color-text-inverse);
+    border-color: transparent;
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--glow-gold);
+}
+
+.pagination-link.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pagination-ellipsis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    color: var(--color-text-tertiary);
+    font-size: var(--text-sm);
+}
+
+/* ============================================/* Empty States - Unified in style.css (authoritative) */
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .category-pills { top: 64px; }
+    .products-layout { margin-top: var(--space-4); gap: var(--space-6); }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .category-pills {
+    background: var(--glass-bg-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .pill {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .pill:hover,
+[data-theme="dark"] .pill.active {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .pagination-link {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .pagination-link:hover:not(.disabled):not(.active),
+[data-theme="dark"] .pagination-link.active {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .empty-state-icon {
+    color: var(--color-border-dark);
+}

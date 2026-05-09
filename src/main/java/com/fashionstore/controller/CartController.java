@@ -15,7 +15,10 @@ import com.fashionstore.model.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
@@ -101,8 +104,12 @@ public class CartController extends HttpServlet {
             boolean isAjax = isAjaxRequest(request);
 
             if ("increase".equals(action)) {
-                int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
-                int currentQty = Integer.parseInt(request.getParameter("currentQty"));
+                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
+                Integer currentQty = parseIntOrNull(request.getParameter("currentQty"));
+                if (cartItemId == null || currentQty == null) {
+                    if (isAjax) { sendErrorResponse(response, "Invalid cart parameters", 400); return; }
+                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                }
                 int newQty = currentQty + 1;
                 cartDAO.updateQuantity(cartItemId, userId, newQty);
                 syncSessionCart(session, userId);
@@ -112,8 +119,12 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("decrease".equals(action)) {
-                int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
-                int currentQty = Integer.parseInt(request.getParameter("currentQty"));
+                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
+                Integer currentQty = parseIntOrNull(request.getParameter("currentQty"));
+                if (cartItemId == null || currentQty == null) {
+                    if (isAjax) { sendErrorResponse(response, "Invalid cart parameters", 400); return; }
+                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                }
                 int newQty = currentQty - 1;
                 cartDAO.updateQuantity(cartItemId, userId, newQty);
                 syncSessionCart(session, userId);
@@ -123,7 +134,11 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("remove".equals(action)) {
-                int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
+                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
+                if (cartItemId == null) {
+                    if (isAjax) { sendErrorResponse(response, "Invalid cart item id", 400); return; }
+                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                }
                 cartDAO.removeCartItem(cartItemId, userId);
                 syncSessionCart(session, userId);
                 
@@ -132,13 +147,18 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("add".equals(action)) {
-                int productId = Integer.parseInt(request.getParameter("productId"));
+                Integer productIdBoxed = parseIntOrNull(request.getParameter("productId"));
+                if (productIdBoxed == null) {
+                    if (isAjax) { sendErrorResponse(response, "Invalid product id", 400); return; }
+                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                }
+                int productId = productIdBoxed;
                 String size = request.getParameter("size");
                 int qty = 1;
-                try {
-                    String q = request.getParameter("quantity");
-                    if (q != null) qty = Integer.parseInt(q);
-                } catch (Exception ignored) {}
+                Integer parsedQty = parseIntOrNull(request.getParameter("quantity"));
+                if (parsedQty != null && parsedQty > 0) {
+                    qty = Math.min(parsedQty, 10); // bound max per add
+                }
 
                 CartItem item = new CartItem();
                 item.setUserId(userId);
@@ -161,14 +181,24 @@ public class CartController extends HttpServlet {
                 }
             } else if ("applyCoupon".equals(action)) {
                 String couponCode = request.getParameter("couponCode");
-                double cartTotal = Double.parseDouble(request.getParameter("cartTotal"));
-                
+                // Server-side recalculation: never trust client-supplied total.
+                List<CartItem> liveCart = cartDAO.getCartItemsByUserId(userId);
+                double cartTotal = 0;
+                for (CartItem ci : liveCart) {
+                    cartTotal += ci.getPrice() * ci.getQuantity();
+                }
+
                 if (isAjax) {
                     applyCouponResponse(response, couponCode, cartTotal, userId);
                     return;
                 }
             } else if ("saveForLater".equals(action)) {
-                int cartItemId = Integer.parseInt(request.getParameter("cartItemId"));
+                Integer cartItemBoxed = parseIntOrNull(request.getParameter("cartItemId"));
+                if (cartItemBoxed == null) {
+                    if (isAjax) { sendErrorResponse(response, "Invalid cart item id", 400); return; }
+                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                }
+                int cartItemId = cartItemBoxed;
                 List<CartItem> currentCartItems = cartDAO.getCartItemsByUserId(userId);
                 CartItem cartItem = currentCartItems.stream()
                     .filter(i -> i.getCartItemId() == cartItemId)
@@ -304,6 +334,19 @@ public class CartController extends HttpServlet {
     private boolean isAjaxRequest(HttpServletRequest request) {
         return "XMLHttpRequest".equals(request.getHeader("X-Requested-With")) || 
                (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+    }
+
+    /**
+     * Parse an integer parameter without throwing. Returns null on missing or
+     * malformed input so callers can return a clean HTTP 400 instead of a 500.
+     */
+    private Integer parseIntOrNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private void sendErrorResponse(HttpServletResponse response, String message, int statusCode) throws IOException {

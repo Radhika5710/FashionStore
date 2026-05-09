@@ -8,7 +8,7 @@
 <html lang="en">
 <head>
 <%
-    request.setAttribute("_pageTitle", "Products");
+    request.setAttribute("_pageTitle", "Catalog");
     request.setAttribute("_pageCSS", "products");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
@@ -92,6 +92,30 @@
     </div>
 </nav>
 
+<section class="catalog-header container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="<%= request.getContextPath() %>/home">Home</a>
+        <span>/</span>
+        <a href="<%= request.getContextPath() %>/products">Catalog</a>
+        <% if (!currentCategorySlug.isBlank()) { %>
+            <span>/</span>
+            <span><%= currentCategorySlug.substring(0, 1).toUpperCase() + currentCategorySlug.substring(1) %></span>
+        <% } %>
+    </nav>
+    <div class="catalog-hero">
+        <div>
+            <span class="eyebrow">FashionStore Catalog</span>
+            <h1>Shop the complete edit</h1>
+            <p>Refined essentials, premium footwear, and polished accessories filtered by real category mapping.</p>
+        </div>
+        <form class="catalog-search" action="<%= request.getContextPath() %>/products" method="get">
+            <input type="search" name="search" value="<%= searchVal %>" placeholder="Search products or brands" aria-label="Search products">
+            <% if (currentCategoryId != null) { %><input type="hidden" name="category" value="<%= currentCategorySlug %>"><% } %>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+</section>
+
 <!-- Mobile filter overlay -->
 <div class="filter-overlay" id="filter-overlay" onclick="closeFilterSidebar()"></div>
 
@@ -158,6 +182,29 @@
 
         <!-- MAIN PRODUCT GRID -->
         <main class="products-main">
+            <div class="catalog-toolbar">
+                <div>
+                    <strong><%= products.size() %></strong>
+                    <span>styles shown</span>
+                    <% if (!searchVal.isBlank()) { %><span class="catalog-query">for “<%= searchVal %>”</span><% } %>
+                </div>
+                <form action="<%= request.getContextPath() %>/products" method="get" class="sort-form">
+                    <% if (!searchVal.isBlank()) { %><input type="hidden" name="search" value="<%= searchVal %>"><% } %>
+                    <% if (currentCategoryId != null) { %><input type="hidden" name="category" value="<%= currentCategorySlug %>"><% } %>
+                    <% if (!currentTag.isBlank()) { %><input type="hidden" name="tag" value="<%= currentTag %>"><% } %>
+                    <% if (!minPriceVal.isBlank()) { %><input type="hidden" name="minPrice" value="<%= minPriceVal %>"><% } %>
+                    <% if (!maxPriceVal.isBlank()) { %><input type="hidden" name="maxPrice" value="<%= maxPriceVal %>"><% } %>
+                    <% for (String s : selectedSizes) { %><input type="hidden" name="size" value="<%= s %>"><% } %>
+                    <label for="sortBy">Sort</label>
+                    <select id="sortBy" name="sortBy" onchange="this.form.submit()">
+                        <option value="" <%= sortByVal.isBlank() ? "selected" : "" %>>Newest</option>
+                        <option value="popular" <%= "popular".equals(sortByVal) ? "selected" : "" %>>Trending</option>
+                        <option value="price_asc" <%= "price_asc".equals(sortByVal) ? "selected" : "" %>>Price low to high</option>
+                        <option value="price_desc" <%= "price_desc".equals(sortByVal) ? "selected" : "" %>>Price high to low</option>
+                        <option value="name_asc" <%= "name_asc".equals(sortByVal) ? "selected" : "" %>>Name A-Z</option>
+                    </select>
+                </form>
+            </div>
             <!-- Mobile filter toggle button -->
             <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="openFilterSidebar()" aria-controls="filter-sidebar" aria-expanded="false">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -170,7 +217,9 @@
                 <% if (!products.isEmpty()) { %>
                     <% for (int i = 0; i < products.size(); i++) {
                         Product p = products.get(i);
-                        double originalPrice = p.getDiscountPercent() > 0 ? p.getPrice() / (1 - (p.getDiscountPercent() / 100.0)) : 0;
+                        // Guard against divide-by-zero when discount_percent == 100 (schema allows up to 100).
+                        double originalPrice = (p.getDiscountPercent() > 0 && p.getDiscountPercent() < 100)
+                                ? p.getPrice() / (1 - (p.getDiscountPercent() / 100.0)) : 0;
                     %>
                         <article class="product-card">
                             <div class="product-card-image-wrapper">
@@ -201,33 +250,35 @@
                                 <% if (p.getCategoryName() != null) { %>
                                     <span class="product-card-category"><%= p.getCategoryName() %></span>
                                 <% } %>
-                                <div class="product-card-price">
-                                    <span class="product-card-price-current">₹<%= String.format("%.2f", p.getPrice()) %></span>
-                                    <% if (originalPrice > p.getPrice()) { %>
-                                        <span class="product-card-price-original">₹<%= String.format("%.2f", originalPrice) %></span>
-                                    <% } %>
-                                </div>
-                                <% if (p.getSizes() != null && !p.getSizes().isEmpty()) { %>
-                                    <div class="product-card-sizes" aria-label="Available sizes">
-                                        <%
-                                            int renderedSizeCount = 0;
-                                            for (com.fashionstore.model.ProductSize size : p.getSizes()) {
-                                                if (renderedSizeCount >= 4) break;
-                                        %>
-                                            <span class="product-card-size <%= size.getStockQuantity() <= 0 ? "out-of-stock" : "" %>"><%= size.getSizeLabel() %></span>
-                                        <%
-                                                renderedSizeCount++;
-                                            }
-                                        %>
+                                <div class="product-card-bottom">
+                                    <div class="product-card-price">
+                                        <span class="product-card-price-current">₹<%= String.format("%.2f", p.getPrice()) %></span>
+                                        <% if (originalPrice > p.getPrice()) { %>
+                                            <span class="product-card-price-original">₹<%= String.format("%.2f", originalPrice) %></span>
+                                        <% } %>
                                     </div>
-                                <% } %>
-                                <div class="product-card-actions">
-                                    <a href="<%= request.getContextPath() %>/product?id=<%= p.getProductId() %>" class="btn btn-primary product-card-add-btn">View Details</a>
-                                    <button class="btn btn-outline product-card-add-btn" onclick="event.preventDefault(); FashionStore.addToCart(<%= p.getProductId() %>)" aria-label="Add <%= p.getProductName() %> to cart">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                    </button>
+                                    <% if (p.getSizes() != null && !p.getSizes().isEmpty()) { %>
+                                        <div class="product-card-sizes" aria-label="Available sizes">
+                                            <%
+                                                int renderedSizeCount = 0;
+                                                for (com.fashionstore.model.ProductSize size : p.getSizes()) {
+                                                    if (renderedSizeCount >= 4) break;
+                                            %>
+                                                <span class="product-card-size <%= size.getStockQuantity() <= 0 ? "out-of-stock" : "" %>"><%= size.getSizeLabel() %></span>
+                                            <%
+                                                    renderedSizeCount++;
+                                                }
+                                            %>
+                                        </div>
+                                    <% } %>
+                                    <div class="product-card-actions">
+                                        <a href="<%= request.getContextPath() %>/product?id=<%= p.getProductId() %>" class="btn btn-primary product-card-add-btn">View Details</a>
+                                        <button class="btn btn-outline product-card-add-btn" onclick="event.preventDefault(); FashionStore.addToCart(<%= p.getProductId() %>)" aria-label="Add <%= p.getProductName() %> to cart">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </article>

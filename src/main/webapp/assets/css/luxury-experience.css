@@ -1,0 +1,1555 @@
+/**
+ * LUXURY EXPERIENCE LAYER
+ * Cinematic, immersive, premium luxury fashion experience.
+ * Loads LAST to override base styles for premium feel.
+ */
+
+/* ============================================================
+   1. LUXURY DESIGN TOKEN EXTENSIONS
+   ============================================================ */
+:root {
+    --lux-charcoal: #0E0E10;
+    --lux-charcoal-soft: #1B1B1F;
+    --lux-graphite: #2A2A2E;
+    --lux-ivory: #FAF7F1;
+    --lux-ivory-warm: #F4EFE6;
+    --lux-champagne: #C9A86A;
+    --lux-champagne-light: #E2C28A;
+    --lux-champagne-deep: #9B7F4A;
+    --lux-emerald: #1F4E3D;
+    --lux-emerald-soft: #2F6B57;
+    --lux-lavender: #B5A8C9;
+    --lux-beige: #E8DFCF;
+
+    --lux-grad-hero: radial-gradient(ellipse at 20% 30%, rgba(201,168,106,0.18) 0%, transparent 55%),
+                     radial-gradient(ellipse at 80% 70%, rgba(31,78,61,0.20) 0%, transparent 60%),
+                     linear-gradient(135deg, #0E0E10 0%, #1B1B1F 60%, #0E0E10 100%);
+    --lux-grad-gold: linear-gradient(135deg, #E2C28A 0%, #C9A86A 50%, #9B7F4A 100%);
+    --lux-grad-ivory: linear-gradient(180deg, #FAF7F1 0%, #F4EFE6 100%);
+    --lux-grad-dark: linear-gradient(180deg, #0E0E10 0%, #1B1B1F 100%);
+    --lux-grad-overlay: linear-gradient(180deg, rgba(14,14,16,0) 0%, rgba(14,14,16,0.85) 100%);
+
+    --lux-glow-gold: 0 0 60px rgba(201,168,106,0.35);
+    --lux-glow-soft: 0 30px 80px -20px rgba(0,0,0,0.4);
+    --lux-glow-card: 0 20px 60px -15px rgba(14,14,16,0.25);
+
+    --lux-blur-glass: saturate(180%) blur(24px);
+    --lux-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+    --lux-ease-cinema: cubic-bezier(0.22, 1, 0.36, 1);
+    --lux-ease-elegant: cubic-bezier(0.65, 0, 0.35, 1);
+    --lux-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --font-display: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+    --font-editorial: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --font-sans: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-theme="dark"] {
+    --lux-bg-deep: #050507;
+    --lux-bg-surface: #0E0E10;
+    --lux-bg-elevated: #15151A;
+    --lux-text-on-dark: #F4EFE6;
+}
+
+/* ============================================================
+   2. GLOBAL TYPOGRAPHY UPGRADES
+   ============================================================ */
+body {
+    font-family: var(--font-family-sans);
+    font-feature-settings: "ss01", "ss02", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, .display-1, .display-2, .display-3, .editorial-headline {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;family-
+    line-height: 1.05;
+}
+
+h3, h4, h5, h6 {
+    font-family: var(--font-family-sans);
+    letter-spacing: -0.01em;
+}
+
+.lux-eyebrow {
+    display: inline-block;
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--lux-champagne);
+    position: relative;
+    padding-left: 38px;
+}
+.lux-eyebrow::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lux-champagne));
+}
+
+.lux-display {
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 6.5vw, 6rem);
+    font-weight: 500;family-
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+}
+
+.lux-display em {
+    font-family: var(--font-editorial);
+    font-style: italic;
+    font-weight: 400;
+    background: var(--lux-grad-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+   3. CINEMATIC HERO
+   ============================================================ */
+.hero,
+.campaign-hero {
+    position: relative;
+    min-height: 92vh;
+    overflow: hidden;
+    background: var(--lux-grad-hero);
+    color: var(--lux-ivory);
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+}
+
+.hero::before,
+.campaign-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--lux-grain);
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero-gradient-orb,
+.lux-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform;
+}
+
+.hero .hero-gradient-orb {
+    width: 620px;
+    height: 620px;
+    top: -180px;
+    right: -120px;
+    background: radial-gradient(circle, rgba(201,168,106,0.5) 0%, transparent 70%);
+    animation: lux-float 18s ease-in-out infinite;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    bottom: -160px;
+    left: -120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(31,78,61,0.4) 0%, transparent 70%);
+    filter: blur(80px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: lux-float 22s ease-in-out infinite reverse;
+}
+
+@keyframes lux-float {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(40px, -30px, 0) scale(1.08); }
+}
+
+.hero .container,
+.campaign-hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content {
+    max-width: 880px;
+    animation: lux-rise 1100ms var(--lux-ease-cinema) both;
+}
+
+.hero-badge,
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(201,168,106,0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-light);
+    margin-bottom: 32px;
+    animation: lux-rise 800ms var(--lux-ease-cinema) 100ms both;
+}
+
+.hero-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lux-champagne);
+    box-shadow: 0 0 12px var(--lux-champagne);
+    animation: lux-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lux-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    font-weight: 500;-family
+    line-height: 0.94;
+    letter-spacing: -0.035em;
+    margin: 0 0 28px;
+    color: var(--lux-ivory);
+}
+.hero-title span {
+    display: block;
+    overflow: hidden;
+}
+.hero-title span:nth-child(1) { animation: lux-rise 1100ms var(--lux-ease-cinema) 200ms both; }
+.hero-title span:nth-child(2) {
+    font-style: italic;
+    font-family: var(--font-editorial);
+    background: var(--lux-grad-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: lux-rise 1100ms var(--lux-ease-cinema) 350ms both;
+}
+
+@keyframes lux-rise {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-subtitle {
+    font-family: var(--font-family-sans);
+    font-size: clamp(1rem, 1.4vw, 1.25rem);
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(244, 239, 230, 0.72);
+    max-width: 560px;
+    margin: 0 0 44px;
+    animation: lux-rise 1100ms var(--lux-ease-cinema) 500ms both;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    animation: lux-rise 1100ms var(--lux-ease-cinema) 700ms both;
+}
+
+/* ============================================================
+   4. LUXURY BUTTONS (magnetic feel)
+   ============================================================ */
+.btn-primary,
+.btn-secondary,
+.btn-outline {
+    position: relative;
+    font-family: var(--font-family-sans);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 12px;
+    padding: 18px 36px;
+    border-radius: 0;
+    transition: all 500ms var(--lux-ease-cinema);
+    overflow: hidden;
+    isolation: isolate;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero .btn-primary,
+.campaign-hero .btn-primary,
+.newsletter-section .btn-primary {
+    background: var(--lux-ivory);
+    color: var(--lux-charcoal);
+    border-color: var(--lux-ivory);
+}
+
+.hero .btn-primary::before,
+.campaign-hero .btn-primary::before,
+.newsletter-section .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--lux-grad-gold);
+    transform: translateY(101%);
+    transition: transform 500ms var(--lux-ease-cinema);
+    z-index: -1;
+}
+
+.hero .btn-primary:hover,
+.campaign-hero .btn-primary:hover,
+.newsletter-section .btn-primary:hover {
+    color: var(--lux-charcoal);
+    border-color: var(--lux-champagne);
+    transform: translateY(-2px);
+    box-shadow: var(--lux-glow-gold);
+}
+
+.hero .btn-primary:hover::before,
+.campaign-hero .btn-primary:hover::before,
+.newsletter-section .btn-primary:hover::before {
+    transform: translateY(0);
+}
+
+.hero .btn-secondary,
+.campaign-hero .btn-secondary {
+    background: transparent;
+    color: var(--lux-ivory);
+    border-color: rgba(244,239,230,0.3);
+}
+
+.hero .btn-secondary::after,
+.campaign-hero .btn-secondary::after {
+    content: "→";
+    transition: transform 400ms var(--lux-ease-cinema);
+}
+
+.hero .btn-secondary:hover,
+.campaign-hero .btn-secondary:hover {
+    background: rgba(244,239,230,0.06);
+    border-color: var(--lux-champagne);
+    color: var(--lux-champagne-light);
+}
+
+.hero .btn-secondary:hover::after,
+.campaign-hero .btn-secondary:hover::after {
+    transform: translateX(6px);
+}
+
+/* ============================================================
+   5. SECTION HEADINGS / EDITORIAL
+   ============================================================ */
+.section-label,
+.home-section-label {
+    display: inline-block;
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-deep);
+    padding-left: 38px;
+    position: relative;
+    margin-bottom: 18px;
+}
+.section-label::before,
+.home-section-label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lux-champagne-deep));
+}
+
+.editorial-headline,
+.section-head h2,
+.featured-section h2,
+.trust-grid + h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 4.5vw, 4.5rem);
+    font-weight: 500;family-
+    line-height: 1;
+    letter-spacing: -0.025em;
+    margin: 0 0 32px;
+}
+
+/* ============================================================
+   6. CATEGORY TILES (cinematic campaign)
+   ============================================================ */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.category-tile {
+    position: relative;
+    min-height: 280px;
+    padding: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--lux-ivory);
+    background: var(--lux-charcoal);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    isolation: isolate;
+    transition: transform 700ms var(--lux-ease-cinema);
+}
+
+.category-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(14,14,16,0) 0%, rgba(14,14,16,0.85) 100%);
+    z-index: -1;
+    transition: opacity 500ms var(--lux-ease-cinema);
+}
+
+.category-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+    transition: transform 1200ms var(--lux-ease-cinema), filter 700ms var(--lux-ease-cinema);
+    filter: brightness(0.85) saturate(0.95);
+}
+
+.category-tile:hover {
+    transform: translateY(-6px);
+}
+.category-tile:hover::after {
+    transform: scale(1.12);
+    filter: brightness(1) saturate(1.05);
+}
+
+.category-tile span {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.2vw, 2.25rem);
+    font-weight: 500;-family
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.category-tile small {
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-light);
+    opacity: 0.9;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.category-tile small::after {
+    content: "→";
+    transition: transform 400ms var(--lux-ease-cinema);
+}
+.category-tile:hover small::after {
+    transform: translateX(6px);
+}
+
+/* ============================================================
+   7. EDITORIAL BAND (story sections)
+   ============================================================ */
+.editorial-band {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 0.55fr;
+    gap: 20px;
+    align-items: stretch;
+    padding-top: 88px;
+    padding-bottom: 24px;
+}
+
+.editorial-copy {
+    min-height: 600px;
+    background: var(--lux-grad-dark);
+    color: var(--lux-ivory);
+    padding: clamp(40px, 5vw, 80px);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.editorial-copy::before {
+    content: "";
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,106,0.25), transparent 70%);
+    filter: blur(60px);
+    z-index: -1;
+}
+
+.editorial-copy h2 {
+    font-family: var(--font-display);
+    color: var(--lux-ivory);
+    font-size: clamp(2.25re-familym, 4.5vw, 4.5rem);
+    font-weight: 500;
+    line-height: 0.98;
+    margin: 16px 0 24px;
+}
+
+.editorial-copy p {
+    font-size: 1.0625rem;
+    color: rgba(244,239,230,0.72);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 36px;
+}
+
+.editorial-copy .home-section-label,
+.editorial-copy .section-label {
+    color: var(--lux-champagne-light);
+}
+.editorial-copy .home-section-label::before,
+.editorial-copy .section-label::before {
+    background: linear-gradient(90deg, transparent, var(--lux-champagne-light));
+}
+
+.editorial-image {
+    min-height: 600px;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 1000ms var(--lux-ease-cinema);
+}
+
+.editorial-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(14,14,16,0.4));
+}
+
+.editorial-image:hover {
+    transform: scale(1.02);
+}
+
+.editorial-image-primary {
+    background-image: url("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=82");
+}
+.editorial-image-secondary {
+    background-image: url("https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=82");
+}
+.editorial-image-urban {
+    background-image: url("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=82");
+}
+.editorial-image-tailoring {
+    background-image: url("https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?auto=format&fit=crop&w=1000&q=82");
+}
+
+.editorial-band-reverse {
+    grid-template-columns: 0.55fr 0.9fr 1.1fr;
+}
+
+.editorial-copy-light {
+    background: var(--lux-grad-ivory);
+    color: var(--lux-charcoal);
+}
+.editorial-copy-light::before {
+    background: radial-gradient(circle, rgba(31,78,61,0.18), transparent 70%);
+}
+.editorial-copy-light h2 {
+    color: var(--lux-charcoal);
+}
+.editorial-copy-light p {
+    color: rgba(14,14,16,0.7);
+}
+.editorial-copy-light .home-section-label,
+.editorial-copy-light .section-label {
+    color: var(--lux-emerald);
+}
+.editorial-copy-light .home-section-label::before,
+.editorial-copy-light .section-label::before {
+    background: linear-gradient(90deg, transparent, var(--lux-emerald));
+}
+.editorial-copy-light .btn-outline {
+    color: var(--lux-charcoal);
+    border: 1px solid var(--lux-charcoal);
+}
+.editorial-copy-light .btn-outline:hover {
+    background: var(--lux-charcoal);
+    color: var(--lux-ivory);
+}
+
+/* ============================================================
+   8. FEATURED PRODUCTS / SECTIONS
+   ============================================================ */
+.featured-section {
+    padding: 100px 0 80px;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 56px;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.section-head h2,
+.section-head .display-3 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 4rem);
+    font-weight: 500;-family
+    line-height: 1;
+    margin: 8px 0 0;
+}
+
+.section-head .btn-outline {
+    border: 1px solid currentColor;
+    background: transparent;
+    color: var(--color-text-primary);
+    padding: 14px 28px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+}
+.section-head .btn-outline:hover {
+    background: var(--lux-charcoal);
+    color: var(--lux-ivory);
+    border-color: var(--lux-charcoal);
+}
+
+/* ============================================================
+   9. PRODUCT CARDS - LUXURY UPGRADE
+   ============================================================ */
+.product-card {
+    position: relative;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+    transition: transform 600ms var(--lux-ease-cinema);
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: none;
+    border: 0;
+}
+
+.product-card-image-wrapper {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--lux-ivory-warm);
+    margin-bottom: 18px;
+}
+
+.product-card-image-wrapper::before {
+    display: none;
+}
+
+.product-card-image-wrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(14,14,16,0.04));
+    pointer-events: none;
+    transition: opacity 700ms var(--lux-ease-cinema);
+}
+
+.product-card-image {
+    transition: transform 1400ms var(--lux-ease-cinema), filter 700ms var(--lux-ease-cinema);
+    filter: saturate(0.95);
+}
+
+.product-card:hover .product-card-image {
+    transform: scale(1.06);
+    filter: saturate(1.05);
+}
+
+.product-card-wishlist {
+    background: rgba(250,247,241,0.92);
+    border: 1px solid rgba(201,168,106,0.18);
+    width: 42px;
+    height: 42px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.product-card-wishlist svg {
+    color: var(--lux-charcoal);
+}
+
+.product-card-wishlist:hover {
+    background: var(--lux-charcoal);
+    border-color: var(--lux-charcoal);
+}
+.product-card-wishlist:hover svg {
+    color: var(--lux-champagne-light);
+}
+
+.product-card-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 6px 12px;
+    background: var(--lux-charcoal);
+    color: var(--lux-ivory);
+    font-family: var(--font-family-sans);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    border-radius: 0;
+    z-index: 2;
+}
+.product-card-badge.badge-new {
+    background: var(--lux-emerald);
+}
+.product-card-badge.badge-sale {
+    background: var(--lux-grad-gold);
+    color: var(--lux-charcoal);
+}
+
+.product-card-content {
+    padding: 0;
+    gap: 6px;
+}
+
+.product-card-brand {
+    font-family: var(--font-family-sans);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-deep);
+    margin-bottom: 4px;
+}
+
+.product-card-name {
+    font-family: var(--font-family-sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+}
+
+.product-card-category {
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+}
+
+.product-card-price-current {
+    font-family: var(--font-family-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+}
+
+.product-card-price-original {
+    font-family: var(--font-family-sans);
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+    text-decoration: line-through;
+}
+
+.product-card-add-btn {
+    margin-top: 8px;
+    background: transparent;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    padding: 12px 18px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 400ms var(--lux-ease-cinema);
+}
+
+.product-card-add-btn:hover {
+    background: var(--lux-charcoal);
+    color: var(--lux-ivory);
+    border-color: var(--lux-charcoal);
+}
+
+/* ============================================================
+   10. CAMPAIGN GRID (luxury bento)
+   ============================================================ */
+.campaign-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 80px 0;
+}
+
+.campaign-card {
+    position: relative;
+    min-height: 420px;
+    padding: 36px 32px;
+    border-radius: 4px;
+    text-decoration: none;
+    overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 700ms var(--lux-ease-cinema);
+}
+
+.campaign-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+    transition: transform 1400ms var(--lux-ease-cinema);
+}
+
+.campaign-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(14,14,16,0.1) 0%, rgba(14,14,16,0.7) 100%);
+    z-index: -1;
+}
+
+.campaign-card:hover { transform: translateY(-8px); }
+.campaign-card:hover::before { transform: scale(1.08); }
+
+.campaign-dark::before { background-image: url("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"); }
+.campaign-light::before { background-image: url("https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=1200&q=80"); }
+.campaign-accent::before { background-image: url("https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80"); }
+
+.campaign-card span {
+    font-family: var(--font-family-sans);
+    color: var(--lux-champagne-light);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+}
+
+.campaign-card strong {
+    font-family: var(--font-display);
+    color: var(--lux-ivory);
+    font-size: clamp(1.5rem,family- 2.4vw, 2.5rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    max-width: 320px;
+    display: block;
+}
+
+/* ============================================================
+   11. VALUE STRIP & TRUST CARDS
+   ============================================================ */
+.value-strip {
+    background: var(--lux-grad-ivory);
+    border: 1px solid var(--lux-beige);
+    border-radius: 4px;
+    padding: 64px 48px;
+    box-shadow: var(--lux-glow-card);
+    position: relative;
+    overflow: hidden;
+}
+.value-strip::before {
+    content: "";
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,106,0.15), transparent 70%);
+    filter: blur(40px);
+}
+
+.value-item h4,
+.value-item .display-3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;family-
+    color: var(--lux-charcoal);
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+}
+
+.trust-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    padding: 40px 32px;
+    transition: all 600ms var(--lux-ease-cinema);
+}
+.trust-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--lux-champagne);
+    box-shadow: var(--lux-glow-card);
+}
+.trust-card h4,
+.trust-card .display-3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;-family
+    color: var(--color-text-primary);
+    margin-bottom: 12px;
+}
+
+/* ============================================================
+   12. NEWSLETTER (luxury dark)
+   ============================================================ */
+.newsletter-section {
+    background: var(--lux-grad-dark);
+    color: var(--lux-ivory);
+    padding: 120px 0;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    margin-top: 80px;
+}
+
+.newsletter-section::before {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    top: -200px;
+    left: -200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,106,0.18), transparent 70%);
+    filter: blur(80px);
+    z-index: -1;
+}
+
+.newsletter-section::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--lux-grain);
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+}
+
+.newsletter-section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 5vw, 4.5rem);
+    font-weight: 500;family-
+    line-height: 1;
+    color: var(--lux-ivory);
+    margin: 16px 0 0;
+    max-width: 580px;
+}
+
+.newsletter-section .home-section-label {
+    color: var(--lux-champagne-light);
+}
+.newsletter-section .home-section-label::before {
+    background: linear-gradient(90deg, transparent, var(--lux-champagne-light));
+}
+
+.newsletter-form {
+    background: rgba(244,239,230,0.05);
+    border: 1px solid rgba(244,239,230,0.18);
+    border-radius: 999px;
+    padding: 8px 8px 8px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: border-color 400ms;
+    max-width: 540px;
+    width: 100%;
+}
+.newsletter-form:focus-within {
+    border-color: var(--lux-champagne);
+}
+
+.newsletter-form input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--lux-ivory);
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    padding: 14px 0;
+    outline: none;
+}
+.newsletter-form input::placeholder {
+    color: rgba(244,239,230,0.5);
+    letter-spacing: 0.02em;
+}
+
+.newsletter-section .btn-primary {
+    background: var(--lux-grad-gold);
+    color: var(--lux-charcoal);
+    border-radius: 999px;
+    border: 0;
+    padding: 14px 28px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   13. SOCIAL PROOF GALLERY
+   ============================================================ */
+.social-proof {
+    padding: 80px 0;
+}
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.social-shot {
+    aspect-ratio: 3/4;
+    border-radius: 2px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 800ms var(--lux-ease-cinema);
+    cursor: pointer;
+    filter: saturate(0.92);
+}
+.social-shot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(14,14,16,0.5));
+    opacity: 0;
+    transition: opacity 500ms var(--lux-ease-cinema);
+}
+.social-shot:hover {
+    transform: translateY(-4px) scale(1.02);
+    filter: saturate(1.05);
+}
+.social-shot:hover::after { opacity: 1; }
+
+/* ============================================================
+   14. NAVBAR - Moved to components/navbar.css (authoritative)
+   ============================================================ */
+
+.mega-menu {
+    background: rgba(250,247,241,0.96);
+    backdrop-filter: var(--lux-blur-glass);
+    -webkit-backdrop-filter: var(--lux-blur-glass);
+    border-top: 1px solid rgba(201,168,106,0.14);
+    border-bottom: 1px solid rgba(14,14,16,0.06);
+    box-shadow: 0 16px 40px rgba(14,14,16,0.08);
+    padding: 40px 32px;
+}
+
+.mega-kicker {
+    font-family: var(--font-family-sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-deep);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.mega-menu a {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    color: var(--color-text-primary);
+    padding: 6px 0;
+    display: block;
+    transition: color 300ms, transform 300ms var(--lux-ease-cinema);
+}
+.mega-menu a:hover {
+    color: var(--lux-champagne-deep);
+    transform: translateX(4px);
+}
+
+.mega-feature strong {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;-family
+    color: var(--color-text-primary);
+    display: block;
+    margin: 12px 0 8px;
+}
+
+[data-theme="dark"] .mega-menu {
+    background: rgba(14,14,16,0.96);
+}
+
+/* ============================================================
+   15. FOOTER - Moved to components/footer.css (authoritative)
+   ============================================================ */
+
+/* .footer-inner width unified in components/footer.css (1400px @ 94%) */
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+    gap: 64px;
+    padding-bottom: 64px;
+    border-bottom: 1px solid rgba(244,239,230,0.08);
+}
+
+.footer-brand-logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 500;-family
+    color: var(--lux-ivory);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+}
+
+.footer-brand-description {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(244,239,230,0.6);
+    max-width: 320px;
+    margin-bottom: 28px;
+}
+
+.footer-social {
+    display: flex;
+    gap: 12px;
+}
+
+.footer-social-link {
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(244,239,230,0.16);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(244,239,230,0.7);
+    transition: all 500ms var(--lux-ease-cinema);
+}
+
+.footer-social-link:hover {
+    background: var(--lux-grad-gold);
+    color: var(--lux-charcoal);
+    border-color: transparent;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--lux-glow-gold);
+}
+
+.footer-heading {
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-light);
+    margin-bottom: 24px;
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.footer-link {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    color: rgba(244,239,230,0.6);
+    text-decoration: none;
+    transition: color 400ms, transform 400ms var(--lux-ease-cinema);
+    display: inline-block;
+    width: fit-content;
+}
+
+.footer-link:hover {
+    color: var(--lux-champagne-light);
+    transform: translateX(4px);
+}
+
+.footer-bottom {
+    padding-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.footer-copyright {
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    color: rgba(244,239,230,0.4);
+    letter-spacing: 0.04em;
+}
+
+.footer-legal {
+    display: flex;
+    gap: 24px;
+}
+
+.footer-legal-link {
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    color: rgba(244,239,230,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 400ms;
+}
+.footer-legal-link:hover {
+    color: var(--lux-champagne-light);
+}
+
+/* ============================================================
+   16. CINEMATIC DARK MODE
+   ============================================================ */
+[data-theme="dark"] body {
+    background: var(--lux-charcoal);
+    color: rgba(244,239,230,0.85);
+}
+
+[data-theme="dark"] .home-page {
+    background: var(--lux-charcoal);
+}
+
+[data-theme="dark"] .product-card-image-wrapper {
+    background: var(--lux-charcoal-soft);
+}
+
+[data-theme="dark"] .value-strip {
+    background: var(--lux-grad-dark);
+    border-color: rgba(244,239,230,0.08);
+    color: var(--lux-ivory);
+}
+[data-theme="dark"] .value-item h4,
+[data-theme="dark"] .value-item .display-3 {
+    color: var(--lux-ivory);
+}
+[data-theme="dark"] .value-item p {
+    color: rgba(244,239,230,0.6);
+}
+
+[data-theme="dark"] .trust-card {
+    background: var(--lux-charcoal-soft);
+    border-color: rgba(244,239,230,0.08);
+    color: var(--lux-ivory);
+}
+[data-theme="dark"] .trust-card h4 {
+    color: var(--lux-ivory);
+}
+
+[data-theme="dark"] .product-card-add-btn {
+    color: var(--lux-ivory);
+    border-color: rgba(244,239,230,0.2);
+}
+[data-theme="dark"] .product-card-add-btn:hover {
+    background: var(--lux-ivory);
+    color: var(--lux-charcoal);
+    border-color: var(--lux-ivory);
+}
+
+/* ============================================================
+   17. SCROLL REVEAL ANIMATIONS
+   ============================================================ */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1100ms var(--lux-ease-cinema), transform 1100ms var(--lux-ease-cinema);
+    animation: none;
+}
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+[data-reveal] {
+    will-change: transform, opacity;
+}
+
+/* ============================================================
+   18. GLOBAL POLISH - SCROLLBAR, SELECTION
+   ============================================================ */
+::selection {
+    background: var(--lux-champagne);
+    color: var(--lux-charcoal);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(14,14,16,0.18);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--lux-champagne-deep);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(244,239,230,0.18);
+    background-clip: padding-box;
+}
+
+/* ============================================================
+   19. RESPONSIVE LUXURY
+   ============================================================ */
+@media (max-width: 1200px) {
+    .category-grid { grid-template-columns: repeat(3, 1fr); }
+    .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; }
+    .footer-grid > :nth-child(4),
+    .footer-grid > :nth-child(5) { grid-column: span 1; }
+}
+
+@media (max-width: 1024px) {
+    .editorial-band {
+        grid-template-columns: 1fr 1fr;
+    }
+    .editorial-image-secondary { display: none; }
+    .campaign-grid { grid-template-columns: repeat(2, 1fr); }
+    .social-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .hero, .campaign-hero { min-height: 78vh; }
+    .hero-title { font-size: clamp(2.5rem, 12vw, 4rem); }
+    .category-grid { grid-template-columns: repeat(2, 1fr); }
+    .editorial-band { grid-template-columns: 1fr; }
+    .editorial-copy { min-height: 460px; padding: 40px 28px; }
+    .editorial-image { min-height: 360px; }
+    .campaign-grid { grid-template-columns: 1fr; }
+    .campaign-card { min-height: 320px; }
+    .footer { padding: 64px 0 24px; }
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        padding-bottom: 40px;
+    }
+    .footer-grid > :first-child {
+        grid-column: 1 / -1;
+    }
+    .newsletter-section { padding: 80px 0; }
+    .newsletter-inner { grid-template-columns: 1fr; gap: 32px; }
+    .nav-category-menu { display: none; }
+    .nav-search { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-actions .btn-primary,
+    .hero-actions .btn-secondary { justify-content: center; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .section-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* ============================================================
+   20. CINEMATIC SPLASH SCREEN
+   ============================================================ */
+html.lux-loading,
+html.lux-loading body {
+    overflow: hidden;
+}
+
+#lux-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: var(--lux-grad-hero);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
+    transition: opacity 1000ms var(--lux-ease-cinema), transform 1000ms var(--lux-ease-cinema);
+}
+
+#lux-splash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--lux-grain);
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+}
+
+#lux-splash::after {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,106,0.35), transparent 70%);
+    filter: blur(80px);
+    animation: lux-float 6s ease-in-out infinite;
+}
+
+#lux-splash.lux-splash-out {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
+}
+
+.lux-splash-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--lux-ivory);
+}
+
+.lux-splash-logo {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 4.25rem);
+    font-weight: 500;-family
+    letter-spacing: 0.08em;
+    line-height: 1;
+    margin-bottom: 28px;
+    display: inline-flex;
+    overflow: hidden;
+}
+
+.lux-splash-letter {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: lux-letter-rise 900ms var(--lux-ease-cinema) forwards;
+}
+
+.lux-splash-amp {
+    color: var(--lux-champagne);
+    margin: 0 4px;
+}
+
+.lux-splash-logo .lux-splash-letter:nth-child(1)  { animation-delay: 80ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(2)  { animation-delay: 140ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(3)  { animation-delay: 200ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(4)  { animation-delay: 260ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(5)  { animation-delay: 320ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(6)  { animation-delay: 380ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(7)  { animation-delay: 440ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(8)  { animation-delay: 500ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(9)  { animation-delay: 560ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(10) { animation-delay: 620ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(11) { animation-delay: 680ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(12) { animation-delay: 740ms; }
+.lux-splash-logo .lux-splash-letter:nth-child(13) { animation-delay: 800ms; }
+
+@keyframes lux-letter-rise {
+    from { transform: translateY(110%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.lux-splash-tagline {
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--lux-champagne-light);
+    opacity: 0;
+    animation: lux-rise 800ms var(--lux-ease-cinema) 1100ms forwards;
+}
+
+.lux-splash-bar {
+    margin: 36px auto 0;
+    width: 200px;
+    height: 1px;
+    background: rgba(244,239,230,0.12);
+    overflow: hidden;
+    opacity: 0;
+    animation: lux-rise 600ms var(--lux-ease-cinema) 1300ms forwards;
+}
+.lux-splash-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--lux-grad-gold);
+    animation: lux-bar-fill 900ms var(--lux-ease-cinema) 1400ms forwards;
+}
+@keyframes lux-bar-fill {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+/* ============================================================
+   21. CURSOR GLOW
+   ============================================================ */
+#lux-cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,106,0.10) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: screen;
+    transition: opacity 400ms var(--lux-ease-cinema);
+    will-change: transform;
+}
+
+[data-theme="dark"] #lux-cursor-glow {
+    background: radial-gradient(circle, rgba(201,168,106,0.22) 0%, transparent 60%);
+}
+
+/* ============================================================
+   22. REDUCE MOTION SUPPORT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .hero-gradient-orb, .lux-orb, .hero::after { animation: none; }
+}

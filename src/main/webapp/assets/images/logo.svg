@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <!-- FS Monogram Mark -->
+  <rect x="0" y="0" width="200" height="60" fill="currentColor"/>
+  <text x="100" y="40" font-family="Playfair Display, Georgia, serif" font-size="36" font-weight="600" fill="white" text-anchor="middle" letter-spacing="4">FS</text>
+</svg>

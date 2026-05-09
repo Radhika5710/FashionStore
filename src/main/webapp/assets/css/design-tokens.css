@@ -1,0 +1,442 @@
+/**
+ * DESIGN TOKENS - Enterprise Fashion Ecommerce
+ * Single source of truth for all design values
+ * Used across all components for consistency
+ */
+
+:root {
+    /* ============================================
+       COLOR PALETTE - Premium Fashion Theme
+       ============================================ */
+    
+    /* Neutral Colors - Light Mode (Luxury Minimal) */
+    --color-bg-primary: #FEFEFE;
+    --color-bg-secondary: #FFFFFF;
+    --color-bg-tertiary: #F8F8F8;
+    --color-bg-quaternary: #F0F0F0;
+    
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #FAFAFA;
+    --color-surface-hover: #F5F5F5;
+    --color-surface-elevated: #FFFFFF;
+    
+    --color-text-primary: #0A0A0A;
+    --color-text-secondary: #4A4A4A;
+    --color-text-tertiary: #8A8A8A;
+    --color-text-inverse: #FFFFFF;
+    
+    --color-primary: #000000;
+    --color-primary-hover: #1A1A1A;
+    --color-primary-soft: #2A2A2A;
+    
+    /* Luxury Accent - Sophisticated Gold */
+    --color-accent: #B8956E;
+    --color-accent-hover: #A0805C;
+    --color-accent-soft: #D4B89A;
+    
+    /* Premium Color System - Luxury Fashion Palette */
+    /* Luxury Black */
+    --color-luxury-black: #0A0A0A;
+    --color-luxury-black-soft: #1A1A1A;
+    
+    /* Warm Ivory */
+    --color-ivory: #FFFEFA;
+    --color-ivory-warm: #FDF8F0;
+    
+    /* Champagne Gold */
+    --color-champagne: #D4AF37;
+    --color-champagne-light: #E8C547;
+    --color-champagne-soft: #F5D76E;
+    --color-champagne-muted: #C9A227;
+    
+    /* Soft Graphite */
+    --color-graphite: #3D3D3D;
+    --color-graphite-light: #4A4A4A;
+    --color-graphite-soft: #5A5A5A;
+    
+    /* Muted Lavender */
+    --color-lavender: #E6E6FA;
+    --color-lavender-muted: #DCD0FF;
+    --color-lavender-soft: #F0E6FF;
+    --color-lavender-deep: #B8A5D4;
+    
+    /* Premium Beige */
+    --color-beige: #F5F0E6;
+    --color-beige-warm: #EDE8D8;
+    --color-beige-cream: #FAF6EB;
+    
+    /* Deep Emerald */
+    --color-emerald: #047857;
+    --color-emerald-light: #10B981;
+    --color-emerald-soft: #34D399;
+    --color-emerald-deep: #065F46;
+    
+    /* Elegant Gradients */
+    --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #B8956E 50%, #A0805C 100%);
+    --gradient-emerald: linear-gradient(135deg, #10B981 0%, #047857 50%, #065F46 100%);
+    --gradient-lavender: linear-gradient(135deg, #F0E6FF 0%, #E6E6FA 50%, #B8A5D4 100%);
+    --gradient-ivory: linear-gradient(135deg, #FFFEFA 0%, #FDF8F0 50%, #F5F0E6 100%);
+    --gradient-luxury: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #2A2A2A 100%);
+    
+    /* Premium Hover Gradients */
+    --gradient-hover-gold: linear-gradient(135deg, #E8C547 0%, #D4AF37 100%);
+    --gradient-hover-emerald: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+    --gradient-hover-lavender: linear-gradient(135deg, #DCD0FF 0%, #B8A5D4 100%);
+    
+    /* Ambient Glow Effects */
+    --glow-gold: 0 0 40px rgba(212, 175, 55, 0.3);
+    --glow-emerald: 0 0 40px rgba(16, 185, 129, 0.3);
+    --glow-lavender: 0 0 40px rgba(184, 165, 212, 0.3);
+    --glow-ivory: 0 0 40px rgba(255, 254, 250, 0.5);
+    
+    /* Layered Background Accents */
+    --bg-accent-layer-1: rgba(212, 175, 55, 0.03);
+    --bg-accent-layer-2: rgba(16, 185, 129, 0.02);
+    --bg-accent-layer-3: rgba(184, 165, 212, 0.02);
+    
+    /* Subtle Premium Highlights */
+    --highlight-gold: rgba(212, 175, 55, 0.15);
+    --highlight-emerald: rgba(16, 185, 129, 0.15);
+    --highlight-lavender: rgba(184, 165, 212, 0.15);
+    --highlight-ivory: rgba(255, 254, 250, 0.5);
+    
+    /* Subtle Tertiary Accents */
+    --color-tertiary-1: #6B7280;
+    --color-tertiary-2: #9CA3AF;
+    
+    /* Border Colors */
+    --color-border: #E8E8E8;
+    --color-border-subtle: #F0F0F0;
+    --color-border-strong: #D0D0D0;
+    
+    /* Semantic Colors - Refined */
+    --color-success: #059669;
+    --color-success-hover: #16a34a;
+    --color-success-bg: rgba(5, 150, 105, 0.08);
+    --color-success-border: rgba(4, 120, 87, 0.3);
+    --color-success-focus: rgba(34, 197, 94, 0.1);
+    --color-success-bg-solid: #dcfce7;
+    --color-success-text-solid: #166534;
+    
+    --color-danger: #DC2626;
+    --color-danger-hover: #b91c1c;
+    --color-danger-bg: rgba(220, 38, 38, 0.08);
+    --color-danger-border: rgba(220, 38, 38, 0.3);
+    --color-danger-focus: rgba(239, 68, 68, 0.1);
+    --color-danger-bg-solid: #fee2e2;
+    --color-danger-text-solid: #991b1b;
+    
+    --color-warning: #D97706;
+    --color-warning-hover: #ca8a04;
+    --color-warning-bg: rgba(217, 119, 6, 0.08);
+    --color-warning-bg-solid: #fef3c7;
+    --color-warning-text-solid: #92400e;
+    
+    --color-info: #2563EB;
+    --color-info-hover: #1d4ed8;
+    --color-info-bg: rgba(37, 99, 235, 0.08);
+    --color-info-bg-solid: #dbeafe;
+    --color-info-text-solid: #1d4ed8;
+    
+    /* Neutral Colors - Dark Mode (Luxury) */
+    --color-bg-primary-dark: #050505;
+    --color-bg-secondary-dark: #0A0A0A;
+    --color-bg-tertiary-dark: #121212;
+    --color-bg-quaternary-dark: #1A1A1A;
+    
+    --color-surface-dark: #0A0A0A;
+    --color-surface-alt-dark: #121212;
+    --color-surface-hover-dark: #1A1A1A;
+    --color-surface-elevated-dark: #0F0F0F;
+    
+    --color-text-primary-dark: #FAFAFA;
+    --color-text-secondary-dark: #B8B8B8;
+    --color-text-tertiary-dark: #787878;
+    
+    --color-border-dark: #2A2A2A;
+    --color-border-subtle-dark: #222222;
+    --color-border-strong-dark: #3A3A3A;
+    
+    /* ============================================
+       TYPOGRAPHY SCALE
+       ============================================ */
+    
+    /* Font Families - Luxury Typography */
+    --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Manrope', 'Segoe UI', Roboto, sans-serif;
+    --font-family-display: 'Playfair Display', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    
+    /* Font Sizes - Luxury Fluid Scale */
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);    /* 12-13px */
+    --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 0.9375rem);  /* 14-15px */
+    --text-base: clamp(1rem, 0.9rem + 0.5vw, 1.0625rem);      /* 16-17px */
+    --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);      /* 18-20px */
+    --text-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);       /* 20-24px */
+    --text-2xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);         /* 24-32px */
+    --text-3xl: clamp(1.875rem, 1.5rem + 1.875vw, 2.5rem);    /* 30-40px */
+    --text-4xl: clamp(2.25rem, 1.75rem + 2.5vw, 3.25rem);      /* 36-52px */
+    --text-5xl: clamp(3rem, 2rem + 5vw, 4.5rem);               /* 48-72px */
+    --text-6xl: clamp(3.75rem, 2.5rem + 6.25vw, 5.5rem);      /* 60-88px */
+    --text-7xl: clamp(4.5rem, 3rem + 7.5vw, 6.5rem);          /* 72-104px */
+    
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    
+    /* Line Heights */
+    --leading-none: 1;
+    --leading-tight: 1.2;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.75;
+    --leading-loose: 2;
+    
+    /* Letter Spacing */
+    --letter-spacing-tighter: -0.05em;
+    --letter-spacing-tight: -0.03em;
+    --letter-spacing-normal: 0;
+    --letter-spacing-wide: 0.025em;
+    --letter-spacing-wider: 0.05em;
+    --letter-spacing-widest: 0.1em;
+    
+    /* ============================================
+       SPACING SCALE - Luxury Rhythm (6px Base Unit)
+       ============================================ */
+    
+    --space-0: 0;
+    --space-px: 1px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 28px;
+    --space-8: 32px;
+    --space-9: 36px;
+    --space-10: 40px;
+    --space-11: 48px;
+    --space-12: 56px;
+    --space-14: 64px;
+    --space-16: 72px;
+    --space-18: 80px;
+    --space-20: 88px;
+    --space-22: 96px;
+    --space-24: 104px;
+    --space-28: 120px;
+    --space-32: 136px;
+    --space-36: 152px;
+    --space-40: 168px;
+    --space-44: 184px;
+    --space-48: 200px;
+    --space-52: 216px;
+    --space-56: 232px;
+    --space-60: 248px;
+    --space-64: 264px;
+    --space-72: 296px;
+    --space-80: 328px;
+    --space-96: 392px;
+    
+    /* ============================================
+       BORDER RADIUS - Luxury Subtle
+       ============================================ */
+    --radius-none: 0;
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-3xl: 20px;
+    --radius-4xl: 24px;
+    --radius-full: 9999px;
+    
+    /* ============================================
+       SHADOW SYSTEM
+       ============================================ */
+    
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.1), 0 6px 10px -2px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 24px 32px -6px rgba(0, 0, 0, 0.12), 0 12px 16px -4px rgba(0, 0, 0, 0.08);
+    --shadow-2xl: 0 32px 48px -8px rgba(0, 0, 0, 0.14);
+    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    
+    /* Glassmorphism Shadows */
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.06);
+    --shadow-glass-hover: 0 12px 48px rgba(0, 0, 0, 0.1);
+    
+    /* Dark Mode Shadows */
+    --shadow-sm-dark: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md-dark: 0 4px 8px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg-dark: 0 12px 20px -4px rgba(0, 0, 0, 0.6), 0 6px 10px -2px rgba(0, 0, 0, 0.5);
+    --shadow-xl-dark: 0 24px 32px -6px rgba(0, 0, 0, 0.7), 0 12px 16px -4px rgba(0, 0, 0, 0.6);
+    --shadow-2xl-dark: 0 32px 48px -8px rgba(0, 0, 0, 0.8);
+    
+    /* Premium Colored Shadows */
+    --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.15);
+    --shadow-emerald: 0 8px 32px rgba(16, 185, 129, 0.15);
+    --shadow-lavender: 0 8px 32px rgba(184, 165, 212, 0.15);
+    
+    /* Depth Shadows */
+    --shadow-depth-1: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+    --shadow-depth-2: 0 4px 16px rgba(0, 0, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.05);
+    --shadow-depth-3: 0 8px 32px rgba(0, 0, 0, 0.12), 0 16px 64px rgba(0, 0, 0, 0.06);
+    
+    /* ============================================
+       Z-INDEX SCALE
+       ============================================ */
+    
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+    
+    /* ============================================
+       TRANSITION TIMING
+       ============================================ */
+    
+    --transition-instant: 100ms;
+    --transition-fast: 200ms;
+    --transition-base: 300ms;
+    --transition-slow: 500ms;
+    --transition-slower: 700ms;
+    --transition-slowest: 1000ms;
+    
+    --ease-linear: linear;
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    
+    /* ============================================
+       GLASSMORPHISM
+       ============================================ */
+    
+    /* Glassmorphism */
+    --glass-bg-light: rgba(255, 255, 255, 0.8);
+    --glass-bg-dark: rgba(26, 26, 26, 0.9);
+    --glass-border-light: rgba(255, 255, 255, 0.3);
+    --glass-border-dark: rgba(255, 255, 255, 0.1);
+    --glass-blur: 20px;
+    --glass-blur-strong: 30px;
+    
+    /* Premium Glass Variants */
+    --glass-gold: rgba(212, 175, 55, 0.1);
+    --glass-gold-strong: rgba(212, 175, 55, 0.2);
+    --glass-gold-hover: rgba(212, 175, 55, 0.4);
+    --glass-gold-dark: rgba(201, 162, 39, 0.15);
+    --glass-gold-dark-border: rgba(201, 162, 39, 0.3);
+    --glass-emerald: rgba(16, 185, 129, 0.1);
+    --glass-emerald-strong: rgba(16, 185, 129, 0.2);
+    --glass-emerald-hover: rgba(16, 185, 129, 0.4);
+    --glass-emerald-dark: rgba(6, 95, 70, 0.15);
+    --glass-emerald-dark-border: rgba(6, 95, 70, 0.3);
+    --glass-lavender: rgba(184, 165, 212, 0.1);
+    --glass-lavender-strong: rgba(184, 165, 212, 0.2);
+    --glass-lavender-hover: rgba(184, 165, 212, 0.4);
+    --glass-lavender-dark: rgba(184, 165, 212, 0.15);
+    --glass-lavender-dark-border: rgba(184, 165, 212, 0.3);
+    --glass-ivory: rgba(255, 254, 250, 0.6);
+    --glass-ivory-strong: rgba(255, 254, 250, 0.8);
+    
+    /* Layered Glass */
+    --glass-layer-1: rgba(255, 255, 255, 0.7);
+    --glass-layer-2: rgba(255, 255, 255, 0.5);
+    --glass-layer-3: rgba(255, 255, 255, 0.3);
+    
+    /* ============================================
+       CONTAINER SIZES
+       ============================================ */
+    /* Container - Luxury Widths */
+    --container-xs: 480px;
+    --container-sm: 640px;
+    --container-md: 768px;
+    --container-lg: 1024px;
+    --container-xl: 1280px;
+    --container-2xl: 1440px;
+    --container-3xl: 1600px;
+    --container-4xl: 1920px;
+    
+    /* ============================================
+       RESPONSIVE BREAKPOINTS
+       ============================================ */
+    
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+    
+    /* ============================================
+       ICON SIZES
+       ============================================ */
+    
+    --icon-xs: 12px;
+    --icon-sm: 16px;
+    --icon-md: 20px;
+    --icon-lg: 24px;
+    --icon-xl: 32px;
+    --icon-2xl: 40px;
+    --icon-3xl: 48px;
+    
+    /* ============================================
+       BADGE SIZES
+       ============================================ */
+    
+    --badge-sm: 16px;
+    --badge-md: 18px;
+    --badge-lg: 20px;
+    
+    /* ============================================
+       FOCUS RING
+       ============================================ */
+    
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+    --focus-ring-color: var(--color-primary);
+    --focus-ring-color-dark: var(--color-text-primary-dark);
+}
+
+/* Dark Mode Token Overrides */
+[data-theme="dark"] {
+    --color-bg-primary: var(--color-bg-primary-dark);
+    --color-bg-secondary: var(--color-bg-secondary-dark);
+    --color-bg-tertiary: var(--color-bg-tertiary-dark);
+    
+    --color-surface: var(--color-surface-dark);
+    --color-surface-alt: var(--color-surface-alt-dark);
+    --color-surface-hover: var(--color-surface-hover-dark);
+    
+    --color-text-primary: var(--color-text-primary-dark);
+    --color-text-secondary: var(--color-text-secondary-dark);
+    --color-text-tertiary: var(--color-text-tertiary-dark);
+    
+    --color-border: var(--color-border-dark);
+    --color-border-strong: var(--color-border-strong-dark);
+    
+    --color-primary: #FFFFFF;
+    --color-primary-hover: #E0E0E0;
+    
+    --glass-bg: var(--glass-bg-dark);
+    --glass-border: var(--glass-border-dark);
+    
+    --shadow-sm: var(--shadow-sm-dark);
+    --shadow-md: var(--shadow-md-dark);
+    --shadow-lg: var(--shadow-lg-dark);
+    --shadow-xl: var(--shadow-xl-dark);
+    --shadow-2xl: var(--shadow-2xl-dark);
+    
+    --focus-ring-color: var(--focus-ring-color-dark);
+}

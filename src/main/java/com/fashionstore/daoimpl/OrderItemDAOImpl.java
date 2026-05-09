@@ -88,8 +88,17 @@ public class OrderItemDAOImpl implements OrderItemDAO {
     // ✅ INSERT
     @Override
     public int addOrderItem(OrderItem item) {
+        // order_items requires price, unit_price AND total_price (all NOT NULL).
+        // Compute with BigDecimal so we never lose currency precision.
+        String sql = "INSERT INTO order_items " +
+                     "(order_id, product_id, size_label, quantity, price, unit_price, total_price) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        String sql = "INSERT INTO order_items (order_id, product_id, size_label, quantity, price) VALUES (?, ?, ?, ?, ?)";
+        java.math.BigDecimal unitPrice = java.math.BigDecimal.valueOf(item.getPrice())
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal totalPrice = unitPrice
+                .multiply(java.math.BigDecimal.valueOf(item.getQuantity()))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -98,7 +107,9 @@ public class OrderItemDAOImpl implements OrderItemDAO {
             ps.setInt(2, item.getProductId());
             ps.setString(3, item.getSizeLabel());
             ps.setInt(4, item.getQuantity());
-            ps.setDouble(5, item.getPrice());
+            ps.setBigDecimal(5, unitPrice);
+            ps.setBigDecimal(6, unitPrice);
+            ps.setBigDecimal(7, totalPrice);
 
             return ps.executeUpdate();
 

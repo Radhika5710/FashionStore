@@ -1,0 +1,261 @@
+/**
+ * PERFORMANCE POLISH - GPU Accelerated Animations
+ * Optimized rendering, smooth scrolling, lazy-loaded visuals
+ */
+
+/* ============================================
+   GPU ACCELERATED ANIMATIONS
+   ============================================ */
+
+/* Force GPU acceleration for animated elements */
+.hero-orb,
+.hero-gradient-orb,
+.splash-orb,
+.product-card,
+.product-card-image,
+.product-card-wishlist,
+.navbar-brand,
+.brand-mark,
+.nav-search-btn,
+.footer-social-link,
+.btn-motion,
+.float-card,
+[data-reveal],
+[data-stagger] > *,
+[data-parallax] {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+}
+
+/* ============================================
+   MINIMAL LAYOUT SHIFTS
+   ============================================ */
+
+/* Reserve space for dynamic content */
+.product-card-image-wrapper {
+    aspect-ratio: 3/4;
+    contain: layout style paint;
+}
+
+/* Prevent layout shifts during loading */
+img {
+    aspect-ratio: auto;
+    background-color: var(--color-bg-tertiary);
+}
+
+/* ============================================
+   OPTIMIZED RENDERING
+   ============================================ */
+
+/* Use contain for isolated compositing */
+.hero,
+.product-card,
+.navbar,
+.footer {
+    contain: layout style;
+}
+
+/* Reduce paint areas */
+.product-card:hover::before {
+    contain: strict;
+}
+
+/* ============================================
+   SMOOTH SCROLLING
+   ============================================ */
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   CONTENT VISIBILITY FOR PERFORMANCE
+   ============================================ */
+
+.product-grid,
+.category-grid,
+.footer-grid {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+}
+
+/* ============================================
+   REDUCED MOTION SUPPORT
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    /* Disable animations for users who prefer reduced motion */
+    .splash-screen,
+    .splash-logo,
+    .splash-brand,
+    .hero-badge,
+    .hero-title,
+    .hero-subtitle,
+    .hero-actions,
+    .product-card,
+    .product-card-image,
+    .product-card-wishlist,
+    .navbar-brand,
+    .footer-social-link,
+    [data-reveal],
+    [data-stagger] > * {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+    
+    /* Keep hover states simple */
+    .product-card:hover {
+        transform: none;
+    }
+    
+    .navbar-brand:hover {
+        transform: none;
+    }
+}
+
+/* ============================================
+   NO RENDERING FLICKER
+   ============================================ */
+
+/* Prevent flash of unstyled content */
+.splash-screen {
+    animation: none;
+}
+
+.splash-screen.hidden {
+    display: none;
+}
+
+/* ============================================
+   OPTIMIZED TRANSITIONS
+   ============================================ */
+
+/* Use transform and opacity only for performance */
+.product-card:hover {
+    transform: translateY(-12px);
+    /* Avoid animating layout properties */
+}
+
+.navbar.scrolled {
+    /* Use transform instead of top/bottom for better performance */
+    transform: none;
+}
+
+/* ============================================
+   LAZY LOADING OPTIMIZATIONS
+   ============================================ */
+
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+}
+
+img[loading="lazy"].loaded {
+    opacity: 1;
+}
+
+/* ============================================
+   FONT LOADING OPTIMIZATION
+   ============================================ */
+
+@font-face {
+    font-display: swap;
+}
+
+/* ============================================
+   CRITICAL CSS INLINING HINTS
+   ============================================ */
+
+/* Above-the-fold content should be critical */
+.hero,
+.navbar {
+    contain: layout style paint;
+}
+
+/* ============================================
+   INTERSECTION OBSERVER OPTIMIZATION
+   ============================================ */
+
+[data-reveal] {
+    opacity: 0;
+}
+
+[data-reveal].revealed {
+    opacity: 1;
+}
+
+/* ============================================
+   DEBOUNCE SCROLL EVENTS
+   ============================================ */
+
+/* Use passive event listeners for scroll */
+/* (Handled in JavaScript) */
+
+/* ============================================
+   PREFERS-CONTRAST SUPPORT
+   ============================================ */
+
+@media (prefers-contrast: high) {
+    .product-card,
+    .navbar,
+    .footer {
+        border-width: 2px;
+    }
+    
+    .btn {
+        border-width: 2px;
+    }
+}
+
+/* ============================================
+   DARK MODE PERFORMANCE
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    /* Optimize dark mode transitions */
+    body,
+    .navbar,
+    .footer,
+    .product-card {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    /* Disable animations for printing */
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar,
+    .footer,
+    .splash-screen {
+        display: none !important;
+    }
+}

@@ -38,25 +38,34 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     // Create Order
+    // NOTE: schema requires subtotal NOT NULL (default 0.00), total_amount NOT NULL.
+    // We populate subtotal = total_amount because the cart-to-order flow does not yet
+    // separate tax/shipping/discount lines. payment_status defaults to 'pending' in DB.
     @Override
     public int createOrder(Order order) {
 
-        String sql = "INSERT INTO orders (user_id, total_amount, full_name, address, city, state, zip, phone, payment_method, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO orders " +
+                     "(user_id, subtotal, total_amount, full_name, address, city, state, zip, phone, payment_method, status, payment_status) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        java.math.BigDecimal totalDec = java.math.BigDecimal.valueOf(order.getTotalAmount())
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, order.getUserId());
-            ps.setDouble(2, order.getTotalAmount());
-            ps.setString(3, order.getFullName());
-            ps.setString(4, order.getAddress());
-            ps.setString(5, order.getCity());
-            ps.setString(6, order.getState());
-            ps.setString(7, order.getZip());
-            ps.setString(8, order.getPhone());
-            ps.setString(9, order.getPaymentMethod());
-            ps.setString(10, order.getStatus() != null ? order.getStatus() : "Pending");
+            ps.setBigDecimal(2, totalDec);
+            ps.setBigDecimal(3, totalDec);
+            ps.setString(4, order.getFullName());
+            ps.setString(5, order.getAddress());
+            ps.setString(6, order.getCity());
+            ps.setString(7, order.getState());
+            ps.setString(8, order.getZip());
+            ps.setString(9, order.getPhone());
+            ps.setString(10, order.getPaymentMethod() != null ? order.getPaymentMethod() : "COD");
+            ps.setString(11, order.getStatus() != null ? order.getStatus() : "Pending");
+            ps.setString(12, "pending");
 
             int rows = ps.executeUpdate();
 

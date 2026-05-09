@@ -1,104 +1,81 @@
 package com.fashionstore.controller;
 
-import com.fashionstore.dao.UserDAO;
-import com.fashionstore.daoimpl.UserDAOImpl;
 import com.fashionstore.model.User;
+import com.fashionstore.security.RateLimiter;
+import com.fashionstore.security.CSRFProtection;
+import com.fashionstore.service.UserService;
 import com.fashionstore.util.AuditLogger;
-import jakarta.servlet.*;
+
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
 @WebServlet("/login")
 public class LoginController extends HttpServlet {
 
-    private UserDAO userDAO;
+    private static final long serialVersionUID = 1L;
+    private UserService userService;
 
     @Override
     public void init() {
-        userDAO = new UserDAOImpl();
+        userService = new UserService();
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        req.getRequestDispatcher("/WEB-INF/views/login.jsp")
-           .forward(req, resp);
+        request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String email = req.getParameter("email");
-        String password = req.getParameter("password");
-
-        // Input validation
-        if (email == null || email.trim().isEmpty() || 
-            password == null || password.trim().isEmpty()) {
-            req.setAttribute("error", "Email and password are required.");
-            AuditLogger.logSecurityEvent("LOGIN_FAILURE", "Missing email or password", req);
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp")
-               .forward(req, resp);
+        // Rate limiting check
+        if (!RateLimiter.checkRateLimit(request, "/login")) {
+            request.setAttribute("error", "Too many login attempts. Please try again later.");
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
             return;
         }
 
-        // Validate email format
-        if (!isValidEmail(email)) {
-            req.setAttribute("error", "Invalid email format.");
-            AuditLogger.logSecurityEvent("LOGIN_FAILURE", "Invalid email format: " + email, req);
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp")
-               .forward(req, resp);
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
+
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            request.setAttribute("error", "Email and password are required");
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
             return;
         }
 
-        User user = userDAO.loginUser(email, password);
+        try {
+            User user = userService.loginUser(email, password);
 
-        if (user != null) {
-            // Session fixation prevention: invalidate existing session
-            HttpSession oldSession = req.getSession(false);
-            if (oldSession != null) {
-                oldSession.invalidate();
-            }
+            if (user != null) {
+                HttpSession session = request.getSession(true);
+                session.setAttribute("userId", user.getUserId());
+                session.setAttribute("user", user);
+                session.setAttribute("csrfToken", CSRFProtection.generateToken(request));
 
-            // Create new session
-            HttpSession session = req.getSession(true);
-            session.setAttribute("user", user);
-            session.setMaxInactiveInterval(30 * 60); // 30 minutes
+                AuditLogger.log("LOGIN_SUCCESS", "User logged in: " + email, String.valueOf(user.getUserId()), request);
+                
+                // Reset rate limit on successful login
+                RateLimiter.resetRateLimit(request, "/login");
 
-            // Generate new CSRF token
-            String csrfToken = generateCSRFToken();
-            session.setAttribute("csrf_token", csrfToken);
-
-            AuditLogger.log(String.valueOf(user.getUserId()), "LOGIN_SUCCESS", "User logged in successfully", req);
-
-            // Role-based redirect: admin → dashboard, customer → home
-            if (user.isAdmin()) {
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+                response.sendRedirect(request.getContextPath() + "/home");
             } else {
-                resp.sendRedirect(req.getContextPath() + "/home");
+                request.setAttribute("error", "Invalid email or password");
+                AuditLogger.log("LOGIN_FAILED", "Failed login attempt: " + email, null, request);
+                request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
             }
 
-        } else {
-            req.setAttribute("error", "Invalid email or password.");
-            AuditLogger.logSecurityEvent("LOGIN_FAILURE", "Invalid credentials for email: " + email, req);
-            req.getRequestDispatcher("/WEB-INF/views/login.jsp")
-               .forward(req, resp);
+        } catch (Exception e) {
+            request.setAttribute("error", "An error occurred during login");
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
         }
-    }
-
-    private boolean isValidEmail(String email) {
-        if (email == null || email.isEmpty()) return false;
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        return email.matches(emailRegex);
-    }
-
-    private String generateCSRFToken() {
-        java.security.SecureRandom secureRandom = new java.security.SecureRandom();
-        byte[] token = new byte[32];
-        secureRandom.nextBytes(token);
-        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(token);
     }
 }

@@ -10,7 +10,10 @@ import com.fashionstore.util.DBConnection;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -87,7 +90,15 @@ public class CheckoutController extends HttpServlet {
         }
 
         int userId = user.getUserId();
-        List<CartItem> cartItems = cartDAO.getCartItemsByUserId(userId);
+        List<CartItem> cartItems;
+        try {
+            cartItems = cartDAO.getCartItemsByUserId(userId);
+        } catch (Exception e) {
+            logger.error("Could not load cart for user #{} during checkout: {}", userId, e.getMessage(), e);
+            session.setAttribute("error", "We could not load your cart. Please try again.");
+            response.sendRedirect(request.getContextPath() + "/cart");
+            return;
+        }
 
         if (cartItems == null || cartItems.isEmpty()) {
             session.setAttribute("error", "Your cart is empty.");
@@ -110,9 +121,21 @@ public class CheckoutController extends HttpServlet {
                 boolean stockReduced = reduceStockInTransaction(con, c);
                 if (!stockReduced) {
                     con.rollback();
-                    session.setAttribute("error", "Insufficient stock for " + c.getProductName() + 
-                        " (Size: " + c.getSizeLabel() + "). Please update your cart.");
-                    response.sendRedirect(request.getContextPath() + "/cart");
+                    request.setAttribute("error", "Insufficient stock for " + c.getProductName() + " (Size: " + c.getSizeLabel() + "). Please update your cart.");
+                    request.setAttribute("cartItems", cartItems);
+                    request.setAttribute("cartTotal", total);
+                    
+                    request.setAttribute("fullName", request.getParameter("fullName"));
+                    request.setAttribute("address", request.getParameter("address"));
+                    request.setAttribute("city", request.getParameter("city"));
+                    request.setAttribute("state", request.getParameter("state"));
+                    request.setAttribute("zip", request.getParameter("zip"));
+                    request.setAttribute("phone", request.getParameter("phone"));
+                    
+                    String csrfToken = (String) session.getAttribute("csrf_token");
+                    request.setAttribute("csrfToken", csrfToken);
+                    
+                    request.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(request, response);
                     return;
                 }
             }
@@ -121,8 +144,21 @@ public class CheckoutController extends HttpServlet {
             int orderId = createOrderInTransaction(con, userId, total, request);
             if (orderId <= 0) {
                 con.rollback();
-                session.setAttribute("error", "Could not place order. Please check your shipping details.");
-                response.sendRedirect(request.getContextPath() + "/checkout");
+                request.setAttribute("error", "Could not place order. Please check your shipping details.");
+                request.setAttribute("cartItems", cartItems);
+                request.setAttribute("cartTotal", total);
+                
+                request.setAttribute("fullName", request.getParameter("fullName"));
+                request.setAttribute("address", request.getParameter("address"));
+                request.setAttribute("city", request.getParameter("city"));
+                request.setAttribute("state", request.getParameter("state"));
+                request.setAttribute("zip", request.getParameter("zip"));
+                request.setAttribute("phone", request.getParameter("phone"));
+                
+                String csrfToken = (String) session.getAttribute("csrf_token");
+                request.setAttribute("csrfToken", csrfToken);
+                
+                request.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(request, response);
                 return;
             }
 
@@ -149,8 +185,24 @@ public class CheckoutController extends HttpServlet {
                     con.rollback();
                 } catch (SQLException ignored) {}
             }
-            session.setAttribute("error", "An unexpected error occurred while placing your order: " + txEx.getMessage());
-            response.sendRedirect(request.getContextPath() + "/cart");
+            
+            // Phase 7: preserve checkout state, preserve cart items, show inline error
+            request.setAttribute("error", "Could not place order: " + txEx.getMessage());
+            request.setAttribute("cartItems", cartItems);
+            request.setAttribute("cartTotal", total);
+            
+            // Preserve form inputs
+            request.setAttribute("fullName", request.getParameter("fullName"));
+            request.setAttribute("address", request.getParameter("address"));
+            request.setAttribute("city", request.getParameter("city"));
+            request.setAttribute("state", request.getParameter("state"));
+            request.setAttribute("zip", request.getParameter("zip"));
+            request.setAttribute("phone", request.getParameter("phone"));
+            
+            String csrfToken = (String) session.getAttribute("csrf_token");
+            request.setAttribute("csrfToken", csrfToken);
+            
+            request.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(request, response);
         } finally {
             if (con != null) {
                 try {
@@ -178,9 +230,13 @@ public class CheckoutController extends HttpServlet {
     }
 
     private int createOrderInTransaction(Connection con, int userId, double total, HttpServletRequest request) throws SQLException {
-        String sql = "INSERT INTO orders (user_id, total_amount, full_name, address, city, state, zip, phone, payment_method, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
+        // Populate both subtotal and total_amount so the orders row matches the
+        // financial truth shown on the checkout page. Shipping/tax/discount keep
+        // their schema defaults of 0.00 until those features are wired in.
+        String sql = "INSERT INTO orders " +
+                     "(user_id, subtotal, total_amount, full_name, address, city, state, zip, phone, payment_method, status, payment_status) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         String fullName = request.getParameter("fullName");
         String address = request.getParameter("address");
         String city = request.getParameter("city");
@@ -194,17 +250,22 @@ public class CheckoutController extends HttpServlet {
             return 0;
         }
 
+        java.math.BigDecimal totalDec = java.math.BigDecimal.valueOf(total)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, userId);
-            ps.setDouble(2, total);
-            ps.setString(3, fullName);
-            ps.setString(4, address);
-            ps.setString(5, city);
-            ps.setString(6, state);
-            ps.setString(7, zip);
-            ps.setString(8, phone);
-            ps.setString(9, paymentMethod != null ? paymentMethod : "COD");
-            ps.setString(10, "Pending");
+            ps.setBigDecimal(2, totalDec);
+            ps.setBigDecimal(3, totalDec);
+            ps.setString(4, fullName);
+            ps.setString(5, address);
+            ps.setString(6, city);
+            ps.setString(7, state);
+            ps.setString(8, zip);
+            ps.setString(9, phone);
+            ps.setString(10, paymentMethod != null ? paymentMethod : "COD");
+            ps.setString(11, "Pending");
+            ps.setString(12, "pending");
             
             int rows = ps.executeUpdate();
             if (rows == 0) return 0;
@@ -217,13 +278,28 @@ public class CheckoutController extends HttpServlet {
     }
 
     private void addOrderItemInTransaction(Connection con, int orderId, CartItem item) throws SQLException {
-        String sql = "INSERT INTO order_items (order_id, product_id, size_label, quantity, price) VALUES (?, ?, ?, ?, ?)";
+        // The order_items schema declares three NOT NULL financial columns:
+        //   price        (legacy unit-price snapshot, kept for back-compat)
+        //   unit_price   (unit-price snapshot at time of purchase)
+        //   total_price  (unit_price * quantity, for fast reporting)
+        // All three must be populated explicitly using BigDecimal to preserve
+        // currency precision; otherwise MySQL rejects the row with
+        // "Field 'unit_price' doesn't have a default value".
+        String sql = "INSERT INTO order_items " +
+                     "(order_id, product_id, size_label, quantity, price, unit_price, total_price) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        java.math.BigDecimal unitPrice = java.math.BigDecimal.valueOf(item.getPrice())
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal totalPrice = unitPrice.multiply(java.math.BigDecimal.valueOf(item.getQuantity()))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             ps.setInt(2, item.getProductId());
             ps.setString(3, item.getSizeLabel());
             ps.setInt(4, item.getQuantity());
-            ps.setDouble(5, item.getPrice());
+            ps.setBigDecimal(5, unitPrice);
+            ps.setBigDecimal(6, unitPrice);
+            ps.setBigDecimal(7, totalPrice);
             ps.executeUpdate();
         }
     }

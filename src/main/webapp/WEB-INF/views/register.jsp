@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <%
-    request.setAttribute("_pageTitle", "Create Account");
+    request.setAttribute("_pageTitle", "Register");
     request.setAttribute("_pageCSS", "auth");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />

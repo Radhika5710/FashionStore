@@ -1,8 +1,15 @@
 package com.fashionstore.filter;
 
-import jakarta.servlet.*;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -63,14 +70,18 @@ public class SecurityFilter implements Filter {
         response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         
         // Content Security Policy
+        // Kept in sync with SecurityHeadersFilter so filter order does not matter.
         response.setHeader("Content-Security-Policy",
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
             "img-src 'self' data: https:; " +
-            "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
+            "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; " +
             "connect-src 'self'; " +
-            "frame-ancestors 'none';"
+            "frame-ancestors 'none'; " +
+            "form-action 'self'; " +
+            "base-uri 'self'"
         );
         
         // Referrer Policy

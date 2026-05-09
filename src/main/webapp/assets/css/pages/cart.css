@@ -1,0 +1,221 @@
+/**
+ * CART PAGE - Enterprise Ecommerce
+ * Layout helpers used by cart.jsp.
+ * Visual styles for cart-card / cart-img / qty-controls / etc. live in /assets/css/cart.css.
+ */
+
+/* ============================================
+   CART CONTAINER
+   ============================================ */
+
+.cart-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    padding: var(--space-8) 0 var(--space-12);
+    width: min(1400px, 94%);
+    margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .cart-container {
+        grid-template-columns: 1fr 380px;
+        align-items: start;
+    }
+}
+
+/* ============================================
+   CART ITEMS WRAPPER
+   ============================================ */
+
+.cart-items {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.cart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.cart-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+.cart-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cart-item:last-child { border-bottom: none; }
+
+.cart-item:hover { background: var(--color-bg-tertiary); }
+
+.cart-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.remove-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    background: transparent;
+    border: none;
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-danger);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-sm);
+}
+
+.remove-btn:hover { 
+    opacity: 0.8;
+    background: rgba(239, 68, 68, 0.1);
+    transform: translateY(-1px);
+}
+
+.remove-btn:active {
+    transform: translateY(0);
+}
+
+.remove-btn svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+/* ============================================
+   CART SUMMARY
+   ============================================ */
+
+.cart-summary {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    position: sticky;
+    top: 88px;
+}
+
+.summary-title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-5);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.summary-row:last-child { border-bottom: none; }
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-5) 0;
+    margin-top: var(--space-2);
+    border-top: 2px solid var(--color-border);
+}
+
+/* ============================================
+   COUPON SECTION
+   ============================================ */
+
+.coupon-section { margin-bottom: var(--space-6); }
+
+.coupon-input {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+}
+
+/* ============================================
+   CHECKOUT BUTTON
+   ============================================ */
+
+.checkout-btn {
+    width: 100%;
+    padding: var(--space-4) var(--space-6);
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.checkout-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.checkout-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .cart-container {
+        padding: var(--space-6) 0 var(--space-10);
+        gap: var(--space-6);
+    }
+    .cart-item {
+        grid-template-columns: 80px 1fr;
+        gap: var(--space-3);
+    }
+    .cart-summary { position: static; }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .cart-items,
+[data-theme="dark"] .cart-summary {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .cart-header,
+[data-theme="dark"] .cart-item,
+[data-theme="dark"] .summary-row,
+[data-theme="dark"] .summary-total {
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .cart-item:hover {
+    background: var(--color-bg-tertiary-dark);
+}
+
+[data-theme="dark"] .coupon-input {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-primary-dark);
+}

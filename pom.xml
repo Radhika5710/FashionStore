@@ -11,8 +11,10 @@
   <packaging>war</packaging>
 
   <properties>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <jetty.http.port>8080</jetty.http.port>
   </properties>
 
   <dependencies>
@@ -109,7 +111,7 @@
             <contextPath>/</contextPath>
           </webApp>
           <httpConnector>
-            <port>8080</port>
+            <port>${jetty.http.port}</port>
           </httpConnector>
         </configuration>
       </plugin>

@@ -11,7 +11,7 @@
         _pd = (com.fashionstore.model.Product) _pdObj;
     }
     String _pdTitle = (_pd != null) ? _pd.getProductName() : "Product Details";
-    request.setAttribute("_pageTitle", _pdTitle);
+    request.setAttribute("_pageTitle", "Product Details");
     request.setAttribute("_pageCSS", "product-details");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
@@ -123,6 +123,21 @@
                 </div>
             </div>
 
+            <div class="quantity-select">
+                <strong>Quantity</strong>
+                <div class="quantity-stepper" aria-label="Quantity selector">
+                    <button type="button" onclick="adjustDetailsQuantity(-1)" aria-label="Decrease quantity">−</button>
+                    <input type="number" id="detailsQuantity" value="1" min="1" max="10" aria-label="Quantity">
+                    <button type="button" onclick="adjustDetailsQuantity(1)" aria-label="Increase quantity">+</button>
+                </div>
+            </div>
+
+            <div class="product-highlights">
+                <div><strong>Free delivery</strong><span>On all prepaid orders</span></div>
+                <div><strong>Easy returns</strong><span>7-day return window</span></div>
+                <div><strong>Secure checkout</strong><span>Encrypted payment flow</span></div>
+            </div>
+
             <div class="detail-actions">
                 <button class="add-cart-btn btn btn-primary" onclick="submitProductDetailsCart()">
                     Add to Cart
@@ -146,7 +161,14 @@
                     return;
                 }
                 const size = sizeInput ? sizeInput.value : 'M';
-                FashionStore.addToCart(productId, size);
+                const quantity = document.getElementById('detailsQuantity') ? document.getElementById('detailsQuantity').value : 1;
+                FashionStore.addToCart(productId, size, quantity);
+            }
+            function adjustDetailsQuantity(delta) {
+                const input = document.getElementById('detailsQuantity');
+                if (!input) return;
+                const next = Math.max(1, Math.min(10, parseInt(input.value || '1', 10) + delta));
+                input.value = next;
             }
         </script>
 
@@ -161,6 +183,29 @@
 </main>
 
 <% if (product != null) { %>
+<section class="product-info-panels">
+    <details open>
+        <summary>Product Details</summary>
+        <p><%= product.getDescription() %></p>
+    </details>
+    <details>
+        <summary>Shipping & Delivery</summary>
+        <p>Orders are packed within 24 hours. Standard delivery usually arrives within 3 to 6 business days depending on destination.</p>
+    </details>
+    <details>
+        <summary>Returns & Care</summary>
+        <p>Return eligible products within 7 days in unused condition with original tags. Follow garment care instructions for best longevity.</p>
+    </details>
+    <details>
+        <summary>Specifications</summary>
+        <ul>
+            <li>Brand: <%= product.getBrand() != null ? product.getBrand() : "FashionStore" %></li>
+            <li>Category: <%= product.getCategoryName() != null ? product.getCategoryName() : "Catalog" %></li>
+            <li>Availability: <%= product.getStockQuantity() > 0 ? "In stock" : "Out of stock" %></li>
+        </ul>
+    </details>
+</section>
+
 <%
     java.util.List<Product> relatedProducts = new java.util.ArrayList<>();
     Object relatedProductsObj = request.getAttribute("relatedProducts");
@@ -268,6 +313,11 @@
 </section>
 
 <script>
+const detailsStickyCta = document.createElement('div');
+detailsStickyCta.className = 'mobile-sticky-cta';
+detailsStickyCta.innerHTML = '<button class="btn btn-primary" onclick="submitProductDetailsCart()">Add to Cart</button><button class="wishlist-detail-btn" onclick="FashionStore.toggleWishlist(<%= product.getProductId() %>, this)">Wishlist</button>';
+document.body.appendChild(detailsStickyCta);
+
 function submitReview(event, productId) {
     event.preventDefault();
     const rating = document.getElementById('reviewRating').value;

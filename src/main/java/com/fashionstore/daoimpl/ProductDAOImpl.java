@@ -2,6 +2,8 @@ package com.fashionstore.daoimpl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fashionstore.cache.CacheKey;
+import com.fashionstore.cache.CacheService;
 import com.fashionstore.dao.ProductDAO;
 import com.fashionstore.dao.ProductSizeDAO;
 import com.fashionstore.domain.CategoryType;
@@ -20,12 +22,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ProductDAOImpl implements ProductDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductDAOImpl.class);
     private final ProductSizeDAO sizeDAO = new ProductSizeDAOImpl();
+    private final CacheService cacheService = CacheService.getInstance();
 
     // 🔥 MAP RESULTSET → PRODUCT (without sizes - sizes loaded in batch)
     // Resilient to missing columns: gracefully handles schema evolution
@@ -168,6 +172,13 @@ public class ProductDAOImpl implements ProductDAO {
     // 🔥 GET PRODUCT BY ID
     @Override
     public Product getProductById(int productId) {
+        String cacheKey = CacheKey.product(productId);
+        
+        Product cached = cacheService.get(cacheKey, Product.class);
+        if (cached != null) {
+            logger.debug("Cache hit for product: {}", productId);
+            return cached;
+        }
 
         String sql = "SELECT p.*, c.category_name FROM products p " +
                 "JOIN categories c ON c.category_id = p.category_id " +
@@ -182,6 +193,8 @@ public class ProductDAOImpl implements ProductDAO {
             if (rs.next()) {
                 Product p = mapProduct(rs);
                 p.setSizes(sizeDAO.getSizesByProductId(productId));
+                cacheService.put(cacheKey, p, 1, TimeUnit.HOURS);
+                logger.debug("Cached product: {}", productId);
                 return p;
             }
 
@@ -655,7 +668,7 @@ public class ProductDAOImpl implements ProductDAO {
             // Batch load sizes to avoid N+1 queries
             batchLoadSizes(list);
         } catch (Exception e) {
-            logger.error("ProductDAOImpl.getFeaturedProducts Error: {}", e.getMessage());
+            logger.error("ProductDAOImpl.getFeaturedProducts Error: {}", e.getMessage(), e);
         }
         return list;
     }
@@ -684,7 +697,13 @@ public class ProductDAOImpl implements ProductDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, quantity);
             ps.setInt(2, productId);
-            return ps.executeUpdate() > 0;
+            boolean result = ps.executeUpdate() > 0;
+            if (result) {
+                cacheService.remove(CacheKey.product(productId));
+                cacheService.invalidatePattern("fashionstore:products:*");
+                logger.debug("Invalidated cache for product: {}", productId);
+            }
+            return result;
         } catch (Exception e) {
             logger.error("ProductDAOImpl.updateStock Error: {}", e.getMessage());
         }

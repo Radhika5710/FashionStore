@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <!-- Square FS Mark -->
+  <rect x="0" y="0" width="60" height="60" fill="currentColor" rx="12"/>
+  <text x="30" y="42" font-family="Playfair Display, Georgia, serif" font-size="28" font-weight="600" fill="white" text-anchor="middle" letter-spacing="2">FS</text>
+</svg>

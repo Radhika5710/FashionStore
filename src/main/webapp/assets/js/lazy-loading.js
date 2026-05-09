@@ -318,36 +318,16 @@ class FashionStorePerformance {
     }
 
     setupResourceHints() {
-        // Preload critical resources
-        const criticalResources = [
-            '/assets/css/critical.css',
-            '/assets/fonts/main.woff2',
-            '/assets/js/critical.js'
-        ];
+        // Critical CSS / JS / fonts are already inlined or loaded synchronously
+        // via head.jsp; we no longer need preload hints for phantom files like
+        // /assets/css/critical.css, /assets/fonts/main.woff2, /assets/js/critical.js
+        // (those caused 404 spam in the console).
 
-        criticalResources.forEach(resource => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.href = resource;
-            
-            if (resource.endsWith('.css')) {
-                link.as = 'style';
-            } else if (resource.endsWith('.woff2')) {
-                link.as = 'font';
-                link.type = 'font/woff2';
-                link.crossOrigin = 'anonymous';
-            } else if (resource.endsWith('.js')) {
-                link.as = 'script';
-            }
-            
-            document.head.appendChild(link);
-        });
-
-        // DNS prefetch for external domains
+        // DNS prefetch for external domains we actually use.
         const externalDomains = [
-            'https://cdn.fashionstore.com',
-            'https://api.fashionstore.com',
-            'https://fonts.googleapis.com'
+            'https://fonts.googleapis.com',
+            'https://fonts.gstatic.com',
+            'https://images.unsplash.com'
         ];
 
         externalDomains.forEach(domain => {
@@ -359,14 +339,15 @@ class FashionStorePerformance {
     }
 
     setupServiceWorker() {
+        // Service worker file (/sw.js) is not shipped in this build.
+        // Attempting to register a non-existent worker spams a console
+        // warning even with a silent .catch, so we early-return.
+        // To enable offline support: drop a sw.js into webapp root and
+        // flip the flag below to true.
+        const SERVICE_WORKER_ENABLED = false;
+        if (!SERVICE_WORKER_ENABLED) return;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    // ServiceWorker registered successfully
-                })
-                .catch(error => {
-                    // ServiceWorker registration failed
-                });
+            navigator.serviceWorker.register('/sw.js').catch(() => { /* ignore */ });
         }
     }
 
@@ -447,30 +428,30 @@ class FashionStorePerformance {
     }
 
     sendMetric(name, value, metadata = {}) {
-        // Send metrics to analytics service
+        // Send metrics to analytics service (only if gtag is loaded).
         if (window.gtag) {
             window.gtag('event', name, {
                 value: Math.round(value),
                 ...metadata
             });
         }
-        
-        // Also send to custom analytics endpoint
-        fetch('/api/analytics/metrics', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name,
-                value,
-                metadata,
-                timestamp: Date.now(),
-                url: window.location.href
-            })
-        }).catch(error => {
-            // Silently fail for analytics
-        });
+
+        // Custom analytics endpoint is not implemented server-side yet.
+        // Posting to /api/analytics/metrics produced 404 spam on every page,
+        // so the call is intentionally disabled. To enable, implement a servlet
+        // mapped to /api/analytics/metrics and flip the flag below to true.
+        const ANALYTICS_ENDPOINT_ENABLED = false;
+        if (ANALYTICS_ENDPOINT_ENABLED) {
+            fetch('/api/analytics/metrics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name, value, metadata,
+                    timestamp: Date.now(),
+                    url: window.location.href
+                })
+            }).catch(() => { /* silently fail */ });
+        }
     }
 
     // Utility methods

@@ -1,0 +1,265 @@
+/**
+ * SPLASH SCREEN - Luxury Brand Entry Experience
+ * Cinematic intro animation with premium brand reveal
+ */
+
+/* ============================================
+   SPLASH SCREEN CONTAINER
+   ============================================ */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--color-luxury-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+                visibility 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ============================================
+   AMBIENT BACKGROUND MOTION
+   ============================================ */
+
+.splash-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-luxury);
+    opacity: 0.5;
+    animation: ambientShift 8s ease-in-out infinite;
+}
+
+@keyframes ambientShift {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+}
+
+/* ============================================
+   SOFT GRADIENT ORBS
+   ============================================ */
+
+.splash-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: floatOrb 12s ease-in-out infinite;
+}
+
+.splash-orb-1 {
+    width: 400px;
+    height: 400px;
+    background: var(--color-champagne);
+    top: -100px;
+    left: -100px;
+    animation-delay: 0s;
+}
+
+.splash-orb-2 {
+    width: 300px;
+    height: 300px;
+    background: var(--color-emerald-light);
+    bottom: -50px;
+    right: -50px;
+    animation-delay: -4s;
+}
+
+.splash-orb-3 {
+    width: 250px;
+    height: 250px;
+    background: var(--color-lavender-deep);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -8s;
+}
+
+@keyframes floatOrb {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    33% {
+        transform: translate(30px, -30px) scale(1.1);
+    }
+    66% {
+        transform: translate(-20px, 20px) scale(0.9);
+    }
+}
+
+/* ============================================
+   LOGO REVEAL
+   ============================================ */
+
+.splash-logo {
+    position: relative;
+    z-index: 10;
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+    animation: logoReveal 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.5s;
+}
+
+.splash-logo svg,
+.splash-logo img {
+    width: 200px;
+    height: auto;
+    filter: var(--glow-gold);
+}
+
+@keyframes logoReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ============================================
+   BRAND TEXT
+   ============================================ */
+
+.splash-brand {
+    position: relative;
+    z-index: 10;
+    margin-top: var(--space-8);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: textReveal 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 1s;
+}
+
+.splash-brand-text {
+    font-family: var(--font-family-display);
+    font-size: var(--text-4xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-inverse);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+}
+
+.splash-brand-subtext {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-champagne);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+    margin-top: var(--space-2);
+}
+
+@keyframes textReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   LOADING INDICATOR
+   ============================================ */
+
+.splash-loader {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    animation: loaderReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 1.5s;
+}
+
+.splash-loader-bar {
+    width: 60px;
+    height: 2px;
+    background: var(--color-champagne);
+    border-radius: var(--radius-full);
+    position: relative;
+    overflow: hidden;
+}
+
+.splash-loader-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--color-ivory), transparent);
+    transform: translateX(-100%);
+    animation: loadingSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes loaderReveal {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes loadingSlide {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .splash-logo svg,
+    .splash-logo img {
+        width: 150px;
+    }
+    
+    .splash-brand-text {
+        font-size: var(--text-3xl);
+    }
+    
+    .splash-orb-1 {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .splash-orb-2 {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .splash-orb-3 {
+        width: 150px;
+        height: 150px;
+    }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .splash-screen {
+    background: var(--color-luxury-black);
+}
+
+[data-theme="dark"] .splash-orb-1 {
+    background: var(--color-champagne-muted);
+}
+
+[data-theme="dark"] .splash-orb-2 {
+    background: var(--color-emerald-deep);
+}
+
+[data-theme="dark"] .splash-orb-3 {
+    background: var(--color-lavender-deep);
+}

@@ -1,0 +1,307 @@
+/**
+ * RESPONSIVE POLISH - Mobile-First Perfection
+ * Tablet optimization, desktop cinematic layout, responsive typography
+ */
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+@media (max-width: 480px) {
+    /* Typography Scaling */
+    h1 {
+        font-size: var(--text-4xl);
+        line-height: 1.1;
+    }
+    
+    h2 {
+        font-size: var(--text-3xl);
+        line-height: 1.15;
+    }
+    
+    h3 {
+        font-size: var(--text-2xl);
+        line-height: 1.2;
+    }
+    
+    .display-1 {
+        font-size: var(--text-5xl);
+    }
+    
+    .display-2 {
+        font-size: var(--text-4xl);
+    }
+    
+    .display-3 {
+        font-size: var(--text-3xl);
+    }
+    
+    /* Spacing Adjustments */
+    .section-spacer-sm {
+        padding: var(--space-6) 0;
+    }
+    
+    .section-spacer-md {
+        padding: var(--space-8) 0;
+    }
+    
+    .section-spacer-lg {
+        padding: var(--space-10) 0;
+    }
+    
+    .section-spacer-xl {
+        padding: var(--space-12) 0;
+    }
+    
+    .section-spacer-2xl {
+        padding: var(--space-16) 0;
+    }
+    
+    /* Container Padding */
+    .container {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+    
+    /* Hero Mobile */
+    .hero {
+        min-height: 80vh;
+    }
+    
+    .hero-content {
+        padding: var(--space-8) var(--space-4);
+    }
+    
+    .hero-badge {
+        font-size: var(--text-xs);
+        padding: var(--space-2) var(--space-4);
+    }
+    
+    .hero-title {
+        font-size: var(--text-4xl);
+    }
+    
+    .hero-subtitle {
+        font-size: var(--text-base);
+        max-width: 100%;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+    }
+    
+    /* Product Grid Mobile */
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+    
+    /* Navbar Mobile */
+    .navbar-container {
+        min-height: 64px;
+        padding: var(--space-3) var(--space-4);
+    }
+    
+    .nav-search-wrapper {
+        display: none;
+    }
+    
+    .brand-logo {
+        height: 40px;
+    }
+    
+    /* Footer Mobile */
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-8);
+    }
+    
+    .footer {
+        padding: var(--space-12) 0 var(--space-8);
+    }
+}
+
+/* ============================================
+   TABLET OPTIMIZATIONS
+   ============================================ */
+
+@media (min-width: 481px) and (max-width: 768px) {
+    /* Product Grid Tablet */
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-5);
+    }
+    
+    /* Category Grid Tablet */
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-5);
+    }
+    
+    /* Hero Tablet */
+    .hero-title {
+        font-size: var(--text-5xl);
+    }
+    
+    /* Navbar Tablet */
+    .nav-search-wrapper {
+        max-width: 300px;
+    }
+    
+    /* Footer Tablet */
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-10);
+    }
+}
+
+/* ============================================
+   DESKTOP CINEMATIC LAYOUT
+   ============================================ */
+
+@media (min-width: 1024px) {
+    /* Cinematic Spacing */
+    .section-spacer-lg {
+        padding: var(--space-24) 0;
+    }
+    
+    .section-spacer-xl {
+        padding: var(--space-32) 0;
+    }
+    
+    /* Product Grid Desktop */
+    .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-8);
+    }
+    
+    /* Category Grid Desktop */
+    .category-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-8);
+    }
+    
+    /* Hero Desktop Enhancements */
+    .hero-title {
+        font-size: var(--text-7xl);
+    }
+    
+    /* Navbar Desktop */
+    .nav-search-wrapper {
+        max-width: 560px;
+    }
+}
+
+/* ============================================
+   LARGE DESKOPT
+   ============================================ */
+
+@media (min-width: 1440px) {
+    /* Enhanced Spacing */
+    .section-spacer-lg {
+        padding: var(--space-28) 0;
+    }
+    
+    .section-spacer-xl {
+        padding: var(--space-36) 0;
+    }
+    
+    /* Product Grid Large */
+    .product-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: var(--space-10);
+    }
+    
+    /* Category Grid Large */
+    .category-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-10);
+    }
+}
+
+/* ============================================
+   RESPONSIVE TYPOGRAPHY
+   ============================================ */
+
+@media (max-width: 640px) {
+    .editorial-headline {
+        font-size: var(--text-3xl);
+    }
+    
+    .editorial-subhead {
+        font-size: var(--text-base);
+    }
+    
+    .section-label {
+        font-size: 10px;
+    }
+}
+
+/* ============================================
+   NO OVERFLOW ISSUES
+   ============================================ */
+
+* {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+img, video, canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ============================================
+   RESPONSIVE ALIGNMENT
+   ============================================ */
+
+@media (max-width: 768px) {
+    .text-center-mobile {
+        text-align: center;
+    }
+    
+    .flex-column-mobile {
+        flex-direction: column;
+    }
+    
+    .gap-4-mobile > * + * {
+        margin-top: var(--space-4);
+    }
+}
+
+/* ============================================
+   TOUCH TARGETS
+   ============================================ */
+
+@media (max-width: 768px) {
+    .btn,
+    .nav-link,
+    .footer-link,
+    .product-card-wishlist {
+        min-height: 48px;
+        min-width: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   SAFE AREA FOR NOTCH DEVICES
+   ============================================ */
+
+@supports (padding: max(0px)) {
+    .navbar {
+        padding-top: max(var(--space-4), env(safe-area-inset-top));
+        padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    }
+    
+    .footer {
+        padding-bottom: max(var(--space-8), env(safe-area-inset-bottom));
+    }
+}

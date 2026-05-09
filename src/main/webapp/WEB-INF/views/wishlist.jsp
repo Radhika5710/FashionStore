@@ -6,8 +6,8 @@
 <html lang="en">
 <head>
 <%
-    request.setAttribute("_pageTitle", "My Wishlist");
-    request.setAttribute("_pageCSS", "products,wishlist");
+    request.setAttribute("_pageTitle", "Wishlist");
+    request.setAttribute("_pageCSS", "wishlist");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
 </head>
@@ -46,11 +46,13 @@
                     <div class="product-card-content">
                         <span class="product-card-brand">Saved Item</span>
                         <h3 class="product-card-name"><%= item.getProductName() %></h3>
-                        <div class="product-card-price">
-                            <span class="product-card-price-current">&#8377;<%= String.format("%.2f", item.getPrice()) %></span>
-                        </div>
-                        <div class="product-card-actions">
-                            <button class="btn btn-primary btn-sm" onclick="FashionStore.addToCart(<%= item.getProductId() %>)">Add to Cart</button>
+                        <div class="product-card-bottom">
+                            <div class="product-card-price">
+                                <span class="product-card-price-current">&#8377;<%= String.format("%.2f", item.getPrice()) %></span>
+                            </div>
+                            <div class="product-card-actions">
+                                <button class="btn btn-primary btn-sm" onclick="FashionStore.addToCart(<%= item.getProductId() %>)">Add to Cart</button>
+                            </div>
                         </div>
                     </div>
                 </div>

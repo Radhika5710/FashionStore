@@ -55,6 +55,13 @@
 
                 <p class="order-meta"><strong>Total:</strong> ₹<%= String.format("%.2f", order.getTotalAmount()) %></p>
 
+                <div class="order-timeline" aria-label="Order tracking timeline">
+                    <span class="done">Processing</span>
+                    <span class="<%= "Packed".equalsIgnoreCase(status) || "Shipped".equalsIgnoreCase(status) || "Delivered".equalsIgnoreCase(status) ? "done" : "" %>">Packed</span>
+                    <span class="<%= "Shipped".equalsIgnoreCase(status) || "Delivered".equalsIgnoreCase(status) ? "done" : "" %>">Shipped</span>
+                    <span class="<%= "Delivered".equalsIgnoreCase(status) ? "done" : "" %>">Delivered</span>
+                </div>
+
                 <h4>Items:</h4>
 
                 <%
@@ -80,6 +87,11 @@
                     <p>No items found for this order</p>
 
                 <% } %>
+
+                <div class="order-actions">
+                    <a class="btn btn-outline" href="<%= request.getContextPath() %>/products">Reorder</a>
+                    <button class="btn btn-secondary" type="button" onclick="FashionStore.showToast('Invoice download will be available after shipment', 'info')">Invoice</button>
+                </div>
 
             </article>
 

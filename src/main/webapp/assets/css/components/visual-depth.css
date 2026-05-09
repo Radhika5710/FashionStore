@@ -1,0 +1,261 @@
+/**
+ * VISUAL DEPTH - Layered Backgrounds & Gradients
+ * Premium dimensional depth effects
+ */
+
+/* ============================================
+   LAYERED BACKGROUND SYSTEM
+   ============================================ */
+
+.bg-layered {
+    position: relative;
+    background: var(--color-bg-primary);
+}
+
+.bg-layered::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg-accent-layer-1);
+    z-index: 0;
+}
+
+.bg-layered::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg-accent-layer-2);
+    z-index: 1;
+}
+
+/* ============================================
+   GRADIENT BACKGROUNDS
+   ============================================ */
+
+.bg-gradient-gold {
+    background: var(--gradient-gold);
+}
+
+.bg-gradient-emerald {
+    background: var(--gradient-emerald);
+}
+
+.bg-gradient-lavender {
+    background: var(--gradient-lavender);
+}
+
+.bg-gradient-ivory {
+    background: var(--gradient-ivory);
+}
+
+.bg-gradient-luxury {
+    background: var(--gradient-luxury);
+}
+
+/* Subtle Gradient Overlays */
+.bg-gradient-overlay {
+    position: relative;
+}
+
+.bg-gradient-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(0, 0, 0, 0.02) 100%);
+    pointer-events: none;
+}
+
+/* ============================================
+   FLOATING GRADIENT ORBS
+   ============================================ */
+
+.gradient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.gradient-orb-gold {
+    background: var(--color-champagne);
+}
+
+.gradient-orb-emerald {
+    background: var(--color-emerald-light);
+}
+
+.gradient-orb-lavender {
+    background: var(--color-lavender-deep);
+}
+
+.gradient-orb-ivory {
+    background: var(--color-ivory);
+}
+
+/* ============================================
+   TEXTURE OVERLAYS
+   ============================================ */
+
+.bg-texture {
+    position: relative;
+}
+
+.bg-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ============================================
+   DEPTH SHADOWS
+   ============================================ */
+
+.shadow-depth-1 {
+    box-shadow: var(--shadow-depth-1);
+}
+
+.shadow-depth-2 {
+    box-shadow: var(--shadow-depth-2);
+}
+
+.shadow-depth-3 {
+    box-shadow: var(--shadow-depth-3);
+}
+
+/* Colored Depth Shadows */
+.shadow-glow-gold {
+    box-shadow: var(--shadow-gold), var(--glow-gold);
+}
+
+.shadow-glow-emerald {
+    box-shadow: var(--shadow-emerald), var(--glow-emerald);
+}
+
+.shadow-glow-lavender {
+    box-shadow: var(--shadow-lavender), var(--glow-lavender);
+}
+
+/* ============================================
+   GLASS LAYERS
+   ============================================ */
+
+.glass-layer-1 {
+    background: var(--glass-layer-1);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border-light);
+}
+
+.glass-layer-2 {
+    background: var(--glass-layer-2);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border-light);
+}
+
+.glass-layer-3 {
+    background: var(--glass-layer-3);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border-light);
+}
+
+/* Premium Glass Variants */
+.glass-gold {
+    background: var(--glass-gold);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-gold-strong);
+}
+
+.glass-emerald {
+    background: var(--glass-emerald);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-emerald-strong);
+}
+
+.glass-lavender {
+    background: var(--glass-lavender);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-lavender-strong);
+}
+
+.glass-ivory {
+    background: var(--glass-ivory);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-ivory-strong);
+}
+
+/* ============================================
+   AMBIENT HIGHLIGHTS
+   ============================================ */
+
+.highlight-gold {
+    background: var(--highlight-gold);
+}
+
+.highlight-emerald {
+    background: var(--highlight-emerald);
+}
+
+.highlight-lavender {
+    background: var(--highlight-lavender);
+}
+
+.highlight-ivory {
+    background: var(--highlight-ivory);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .gradient-orb {
+        filter: blur(60px);
+    }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+[data-theme="dark"] .bg-layered {
+    background: var(--color-bg-primary-dark);
+}
+
+[data-theme="dark"] .bg-texture::before {
+    opacity: 0.05;
+}
+
+[data-theme="dark"] .glass-layer-1,
+[data-theme="dark"] .glass-layer-2,
+[data-theme="dark"] .glass-layer-3 {
+    background: rgba(10, 10, 10, 0.7);
+    border-color: var(--glass-border-dark);
+}
+
+[data-theme="dark"] .glass-gold {
+    background: var(--glass-gold-dark);
+    border-color: var(--glass-gold-dark-border);
+}
+
+[data-theme="dark"] .glass-emerald {
+    background: var(--glass-emerald-dark);
+    border-color: var(--glass-emerald-dark-border);
+}
+
+[data-theme="dark"] .glass-lavender {
+    background: var(--glass-lavender-dark);
+    border-color: var(--glass-lavender-dark-border);
+}

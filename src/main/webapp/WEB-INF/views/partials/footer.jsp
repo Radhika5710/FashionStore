@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 
 <footer class="footer">
-    <div class="footer-content">
+    <div class="footer-inner">
         <div class="footer-grid">
             <div class="footer-brand">
                 <div class="footer-brand-logo">FashionStore</div>
@@ -15,7 +15,7 @@
                     </a>
                 </div>
             </div>
-            <div>
+            <div class="footer-section">
                 <h4 class="footer-heading">Shop</h4>
                 <div class="footer-links">
                     <a href="<%= request.getContextPath() %>/products" class="footer-link">All Products</a>
@@ -25,7 +25,7 @@
                     <a href="<%= request.getContextPath() %>/products?category=accessories" class="footer-link">Accessories</a>
                 </div>
             </div>
-            <div>
+            <div class="footer-section">
                 <h4 class="footer-heading">Account</h4>
                 <div class="footer-links">
                     <a href="<%= request.getContextPath() %>/cart" class="footer-link">My Cart</a>
@@ -33,12 +33,20 @@
                     <a href="<%= request.getContextPath() %>/orders" class="footer-link">Orders</a>
                 </div>
             </div>
-            <div>
+            <div class="footer-section">
                 <h4 class="footer-heading">Support</h4>
                 <div class="footer-links">
                     <a href="<%= request.getContextPath() %>/home" class="footer-link">Home</a>
                     <a href="<%= request.getContextPath() %>/login" class="footer-link">Login</a>
                     <a href="<%= request.getContextPath() %>/register" class="footer-link">Register</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4 class="footer-heading">Legal</h4>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link">Terms of Service</a>
+                    <a href="#" class="footer-link">Shipping Info</a>
                 </div>
             </div>
         </div>

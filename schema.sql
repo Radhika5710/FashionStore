@@ -560,7 +560,7 @@ CREATE INDEX idx_order_user ON orders(user_id);
 
 CREATE INDEX idx_products_active ON products(active);
 CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_brand ON products(brand);
+-- idx_products_brand is already declared inline in CREATE TABLE products (line 67)
 CREATE INDEX idx_products_new ON products(is_new);
 CREATE INDEX idx_products_sale ON products(is_sale);
 CREATE INDEX idx_products_trending ON products(is_trending);

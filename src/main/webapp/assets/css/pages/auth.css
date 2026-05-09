@@ -1,0 +1,50 @@
+/**
+ * AUTH PAGES - Enterprise Ecommerce
+ * Layout helpers used by login, register, forgot-password, reset-password.
+ * Component-level styling for .auth-page / .auth-card lives in /assets/css/auth.css.
+ */
+
+/* ============================================
+   AUTH CONTAINER (forgot-password, reset-password)
+   ============================================ */
+
+.auth-container {
+    min-height: calc(100vh - 72px);
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .auth-container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ============================================
+   AUTH HEADER
+   ============================================ */
+
+.auth-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+/* ============================================
+   AUTH FOOTER
+   ============================================ */
+
+.auth-footer {
+    text-align: center;
+    margin-top: var(--space-6);
+}
+
+.auth-footer p {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+.auth-footer a {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: underline;
+}

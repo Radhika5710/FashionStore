@@ -61,37 +61,60 @@
             <!-- ══ SHIPPING & PAYMENT FORM ══ -->
             <div class="checkout-form-col">
                 <form action="<%= request.getContextPath() %>/checkout" method="post" class="modern-form" id="checkoutForm">
-                    <div id="form-error" class="form-error" style="display:none;color:var(--color-danger);margin-bottom:var(--space-4);padding:var(--space-3);background:#FEF2F2;border-radius:var(--radius-md);font-size:var(--text-sm);"></div>
+                    <% String formError = (String) request.getAttribute("error"); %>
+                    <div id="form-error" class="form-error" style="<%= formError != null ? "display:block;" : "display:none;" %>color:var(--color-danger);margin-bottom:var(--space-4);padding:var(--space-3);background:#FEF2F2;border-radius:var(--radius-md);font-size:var(--text-sm);">
+                        <%= formError != null ? formError : "" %>
+                    </div>
                     <input type="hidden" name="csrf_token" value="<%= request.getAttribute("csrfToken") != null ? request.getAttribute("csrfToken") : "" %>">
                     
                     <!-- Step 1: Shipping -->
                     <div class="form-section checkout-step-section" id="step1">
                         <h3 class="checkout-section-title">Shipping Information</h3>
+                        <div class="saved-addresses">
+                            <button type="button" class="saved-address-card active">Home address</button>
+                            <button type="button" class="saved-address-card">Office address</button>
+                        </div>
                         <div class="form-grid">
                             <div class="form-group full-width">
                                 <label for="fullName">Full Name</label>
-                                <input type="text" id="fullName" name="fullName" placeholder="John Doe" required>
+                                <input type="text" id="fullName" name="fullName" placeholder="John Doe" value="<%= request.getAttribute("fullName") != null ? request.getAttribute("fullName") : "" %>" required>
                             </div>
                             <div class="form-group full-width">
                                 <label for="address">Street Address</label>
-                                <input type="text" id="address" name="address" placeholder="123 Fashion St, Area" required>
+                                <input type="text" id="address" name="address" placeholder="123 Fashion St, Area" value="<%= request.getAttribute("address") != null ? request.getAttribute("address") : "" %>" required>
                             </div>
                             <div class="form-group">
                                 <label for="city">City</label>
-                                <input type="text" id="city" name="city" placeholder="Mumbai" required>
+                                <input type="text" id="city" name="city" placeholder="Mumbai" value="<%= request.getAttribute("city") != null ? request.getAttribute("city") : "" %>" required>
                             </div>
                             <div class="form-group">
                                 <label for="state">State</label>
-                                <input type="text" id="state" name="state" placeholder="Maharashtra" required>
+                                <input type="text" id="state" name="state" placeholder="Maharashtra" value="<%= request.getAttribute("state") != null ? request.getAttribute("state") : "" %>" required>
                             </div>
                             <div class="form-group">
                                 <label for="zip">ZIP Code</label>
-                                <input type="text" id="zip" name="zip" placeholder="400001" required pattern="[0-9]{6}" title="6-digit ZIP code">
+                                <input type="text" id="zip" name="zip" placeholder="400001" value="<%= request.getAttribute("zip") != null ? request.getAttribute("zip") : "" %>" required pattern="[0-9]{6}" title="6-digit ZIP code">
                             </div>
                             <div class="form-group">
                                 <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" placeholder="9876543210" required pattern="[6-9][0-9]{9}" title="10-digit mobile number">
+                                <input type="tel" id="phone" name="phone" placeholder="9876543210" value="<%= request.getAttribute("phone") != null ? request.getAttribute("phone") : "" %>" required pattern="[6-9][0-9]{9}" title="10-digit mobile number">
                             </div>
+                        </div>
+                        <div class="shipping-methods">
+                            <label class="payment-card">
+                                <input type="radio" name="shippingMethod" value="STANDARD" checked>
+                                <div class="payment-info">
+                                    <span class="payment-name">Standard delivery</span>
+                                    <span class="payment-desc">3-6 business days · Free</span>
+                                </div>
+                            </label>
+                            <label class="payment-card">
+                                <input type="radio" name="shippingMethod" value="EXPRESS">
+                                <div class="payment-info">
+                                    <span class="payment-name">Express delivery</span>
+                                    <span class="payment-desc">1-2 business days · Calculated at dispatch</span>
+                                </div>
+                            </label>
                         </div>
                         <button type="button" class="place-order-btn" onclick="FashionStore.validateAndProceedToPayment()">
                             Continue to Payment
@@ -187,6 +210,11 @@
                             <span class="total-amount">₹<%= String.format("%.2f", cartTotal) %></span>
                         </div>
                     </div>
+                    <div class="checkout-assurance">
+                        <span>SSL secure payment</span>
+                        <span>Encrypted order data</span>
+                        <span>7-day easy returns</span>
+                    </div>
                 </div>
             </div>
 
@@ -202,12 +230,18 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const errorEl = document.getElementById('form-error');
     const requiredFields = ['fullName', 'address', 'city', 'state', 'zip', 'phone'];
     
+    // NOTE: dollar-brace expressions below are JSP-escaped (\$\{) so Jasper's EL
+    // parser ignores them and the literal dollar-brace reaches the browser as a
+    // JS template literal. Without the backslash, Jasper would see the regex
+    // /([A-Z])/g inside the dollar-brace and throw ELException at compile time,
+    // causing HTTP 500 on /checkout.
     for (const fieldName of requiredFields) {
-        const input = form.querySelector(`[name="${fieldName}"]`);
+        const input = form.querySelector(`[name="\${fieldName}"]`);
         if (!input || !input.value || !input.value.trim()) {
             e.preventDefault();
             if (errorEl) {
-                errorEl.textContent = `Please fill in the ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+                const pretty = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
+                errorEl.textContent = 'Please fill in the ' + pretty;
                 errorEl.style.display = 'block';
             }
             if (input) input.focus();

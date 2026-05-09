@@ -1,5 +1,38 @@
 // Modern Commerce UX System
 window.FashionStore = {
+    // Dark Mode Management
+    darkMode: {
+        STORAGE_KEY: 'fashionstore-theme',
+        DARK_CLASS: 'dark-mode',
+        
+        init: function() {
+            // Check localStorage first
+            const stored = localStorage.getItem(this.STORAGE_KEY);
+            if (stored) {
+                if (stored === 'dark') {
+                    document.documentElement.classList.add(this.DARK_CLASS);
+                }
+                return;
+            }
+            
+            // Fall back to system preference
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add(this.DARK_CLASS);
+            }
+        },
+        
+        toggle: function() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle(this.DARK_CLASS);
+            localStorage.setItem(this.STORAGE_KEY, isDark ? 'dark' : 'light');
+            return isDark;
+        },
+        
+        isDark: function() {
+            return document.documentElement.classList.contains(this.DARK_CLASS);
+        }
+    },
+
     // Toast System
     showToast: function(message, type = 'success') {
         const container = document.getElementById('toast-container');
@@ -123,14 +156,27 @@ window.FashionStore = {
             })
         })
         .then(res => {
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             if(res.redirected) {
                 window.location.href = res.url;
                 return;
             }
-            return res.json();
+            // 401 from AuthFilter still returns a JSON body with a redirect URL.
+            // Parse it instead of throwing so unauthenticated users go to /login
+            // gracefully rather than seeing a generic toast error.
+            return res.json().then(data => {
+                if (res.status === 401 && data && data.redirect) {
+                    FashionStore.showToast(data.message || 'Please login to continue.', 'info');
+                    setTimeout(() => { window.location.href = data.redirect; }, 600);
+                    return null;
+                }
+                if (!res.ok) {
+                    throw new Error((data && data.message) || `HTTP error! status: ${res.status}`);
+                }
+                return data;
+            });
         })
         .then(data => {
+            if (!data) return; // already handled (e.g. 401 redirect or 302 redirected response)
             if(data.success || data.status === 'success') {
                 FashionStore.updateMiniCartUI(data);
                 FashionStore.showToast("Added to cart", 'success');
@@ -185,10 +231,22 @@ window.FashionStore = {
             })
         })
         .then(res => {
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            return res.json();
+            // 401 from AuthFilter ships a JSON body with redirect URL.
+            // Don't throw on 401 — honor the redirect so guests are sent to /login.
+            return res.json().then(data => {
+                if (res.status === 401 && data && data.redirect) {
+                    FashionStore.showToast(data.message || 'Please login to continue.', 'info');
+                    setTimeout(() => { window.location.href = data.redirect; }, 600);
+                    return null;
+                }
+                if (!res.ok) {
+                    throw new Error((data && data.message) || `HTTP error! status: ${res.status}`);
+                }
+                return data;
+            });
         })
         .then(data => {
+            if (!data) return; // already handled (e.g. 401 redirect)
             if(data.redirect) {
                 window.location.href = data.redirect;
                 return;
@@ -727,10 +785,63 @@ function toggleMiniCart(event) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize dark mode
+    FashionStore.darkMode.init();
+    
+    // Dark mode toggle handler
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            const isDark = FashionStore.darkMode.toggle();
+            darkModeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        });
+    }
+    
     const badge = document.getElementById('nav-cart-badge');
     if (badge && parseInt(badge.innerText, 10) > 0) {
         FashionStore.fetchCart();
     }
+
+    document.querySelectorAll('.product-card, .cart-card, .order-card, .stat-card').forEach((element) => {
+        element.addEventListener('pointermove', (event) => {
+            const rect = element.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width - 0.5) * 4;
+            const y = ((event.clientY - rect.top) / rect.height - 0.5) * -4;
+            element.style.setProperty('--tilt-x', `${y}deg`);
+            element.style.setProperty('--tilt-y', `${x}deg`);
+        });
+        element.addEventListener('pointerleave', () => {
+            element.style.removeProperty('--tilt-x');
+            element.style.removeProperty('--tilt-y');
+        });
+    });
+
+    const revealItems = document.querySelectorAll('.reveal-on-scroll');
+    if ('IntersectionObserver' in window && revealItems.length) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+        revealItems.forEach((item) => observer.observe(item));
+    } else {
+        revealItems.forEach((item) => item.classList.add('is-visible'));
+    }
+
+    document.querySelectorAll('button, .btn, .product-card-add-btn').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            const ripple = document.createElement('span');
+            ripple.className = 'button-ripple';
+            const rect = button.getBoundingClientRect();
+            ripple.style.left = `${event.clientX - rect.left}px`;
+            ripple.style.top = `${event.clientY - rect.top}px`;
+            button.appendChild(ripple);
+            window.setTimeout(() => ripple.remove(), 520);
+        });
+    });
 });
 
 // Backward compatibility

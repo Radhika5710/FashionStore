@@ -13,7 +13,9 @@ import com.fashionstore.model.ProductQuery;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -110,6 +112,19 @@ public class ProductController extends HttpServlet {
             listQuery.setActiveOnly(true);
 
             List<Product> products = productDAO.getProducts(listQuery);
+            
+            // Debug: Log query results
+            logger.info("Product query results: search={}, categoryId={}, tag={}, sizes={}, brand={}, totalProducts={}, returnedProducts={}", 
+                search, categoryId, tag, sizes != null ? List.of(sizes) : "null", brand, totalProducts, products.size());
+            
+            // Fallback: If no products returned with activeOnly=true, try without active filter
+            if (products.isEmpty() && totalProducts > 0) {
+                logger.warn("No active products found but total count is {}, retrying without active filter", totalProducts);
+                listQuery.setActiveOnly(false);
+                products = productDAO.getProducts(listQuery);
+                logger.info("Fallback query returned {} products", products.size());
+            }
+            
             List<Category> categories = categoryDAO.getActiveCategories();
 
             request.setAttribute("products", products);
@@ -131,7 +146,16 @@ public class ProductController extends HttpServlet {
 
         } catch (Exception e) {
             logger.error("Error in ProductController.doGet: {}", e.getMessage(), e);
-            response.sendRedirect(request.getContextPath() + "/products");
+            // Render an empty catalog instead of redirecting back to /products
+            // (avoids infinite redirect loop when the underlying error is persistent).
+            request.setAttribute("products", new ArrayList<Product>());
+            request.setAttribute("categories", new ArrayList<Category>());
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
+            request.setAttribute("errorMessage",
+                    "We hit a snag loading the catalog. Please try again in a moment.");
+            request.getRequestDispatcher("/WEB-INF/views/products.jsp")
+                    .forward(request, response);
         }
     }
 

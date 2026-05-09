@@ -1,0 +1,263 @@
+/**
+ * CSS RESET - Modern Minimal Reset
+ * Provides a clean foundation for the design system
+ */
+
+/* ============================================
+   BOX SIZING & NORMALIZATION
+   ============================================ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    text-rendering: optimizeSpeed;
+    line-height: 1.5;
+}
+
+/* ============================================
+   TYPOGRAPHY RESET
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6,
+p, figure, blockquote, dl, dd {
+    margin: 0;
+}
+
+/* ============================================
+   LIST RESET
+   ============================================ */
+
+ul, ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ============================================
+   LINK RESET
+   ============================================ */
+
+a {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* ============================================
+   IMAGE & MEDIA RESET
+   ============================================ */
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Prevent SVG from inheriting text styles */
+svg {
+    display: block;
+    vertical-align: middle;
+}
+
+/* ============================================
+   FORM ELEMENT RESET
+   ============================================ */
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    margin: 0;
+    padding: 0;
+    outline: none;
+}
+
+button {
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+/* ============================================
+   TABLE RESET
+   ============================================ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 0;
+}
+
+/* ============================================
+   HEADING RESET
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+/* ============================================
+   PARAGRAPH RESET
+   ============================================ */
+
+p {
+    margin: 0;
+}
+
+/* ============================================
+   BLOCKQUOTE RESET
+   ============================================ */
+
+blockquote {
+    margin: 0;
+    padding: 0;
+}
+
+/* ============================================
+   HR RESET
+   ============================================ */
+
+hr {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ============================================
+   IFRAME RESET
+   ============================================ */
+
+iframe {
+    border: none;
+}
+
+/* ============================================
+   REMOVE DEFAULT APPEARANCE
+   ============================================ */
+
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+    display: none;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* ============================================
+   FOCUS VISIBLE (Accessibility)
+   ============================================ */
+
+:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+/* Remove focus outline when using mouse */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+
+::selection {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+::-moz-selection {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* ============================================
+   SCROLLBAR STYLING (Webkit)
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    padding: var(--space-3) var(--space-4);
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-md) 0;
+    z-index: var(--z-tooltip);
+    transition: top var(--transition-base);
+}
+
+.skip-link:focus {
+    top: 0;
+}
