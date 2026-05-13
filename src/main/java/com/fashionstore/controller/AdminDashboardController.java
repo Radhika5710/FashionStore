@@ -97,7 +97,7 @@ public class AdminDashboardController extends HttpServlet {
             request.setAttribute("recentOrders", recentOrders);
             request.setAttribute("totalRevenue", totalRevenue);
             
-            request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/admin-dashboard.jsp")
                    .forward(request, response);
                    
         } catch (Exception e) {
