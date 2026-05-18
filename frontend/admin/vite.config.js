@@ -46,12 +46,12 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: false,
-      chunkSizeWarningLimit: 500,
+      chunkSizeWarningLimit: 600,
       target: 'es2020',
       cssCodeSplit: true,
       // Ensure assets are generated with correct paths
       assetsDir: 'assets',
-      // Optimize chunk splitting for better caching
+      // Optimize chunk splitting for better caching and smaller bundles
       rollupOptions: {
         output: {
           manualChunks: (id) => {
@@ -61,9 +61,6 @@ export default defineConfig(({ mode }) => {
               'charts-vendor': ['recharts'],
               'api-vendor': ['axios'],
               'icons-vendor': ['lucide-react'],
-              'test-vendor': ['vitest', '@vitest', 'jsdom'],
-              'postcss-vendor': ['postcss', 'autoprefixer', 'tailwindcss'],
-              'testing-vendor': ['@testing-library/react', '@testing-library/jest-dom', '@testing-library/user-event']
             };
 
             // Check if module belongs to a specific chunk
@@ -76,10 +73,10 @@ export default defineConfig(({ mode }) => {
             // No specific chunk - return undefined to let Rollup handle it
             return undefined;
           },
-          // Ensure proper asset naming for production
-          entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash][extname]',
+          // Ensure proper asset naming for production with content-based hashing
+          entryFileNames: 'assets/[name]-[contenthash:8].js',
+          chunkFileNames: 'assets/[name]-[contenthash:8].js',
+          assetFileNames: 'assets/[name]-[contenthash:8][extname]',
         },
       },
       // Use default minification (esbuild)

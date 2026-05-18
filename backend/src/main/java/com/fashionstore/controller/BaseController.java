@@ -1,8 +1,7 @@
 package com.fashionstore.controller;
 
-import com.fashionstore.model.User;
+import com.fashionstore.security.AuthContext;
 import com.fashionstore.util.JsonUtil;
-import com.fashionstore.util.SecurityUtil;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -120,15 +119,20 @@ public abstract class BaseController extends HttpServlet {
     }
 
     protected boolean ensureAdmin(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        User user = SecurityUtil.getAuthenticatedAdmin(request);
-        if (user == null) {
+        // Use JWT authentication for admin APIs (AuthContext)
+        // Session authentication is for customer MVC pages only
+        AuthContext authContext = AuthContext.fromRequest(request);
+        
+        if (!authContext.isAuthenticated()) {
             writeApiResponse(response, 401, ApiResponse.error("Authentication required"));
             return false;
         }
-        if (!user.isAdmin()) {
+        
+        if (!authContext.isAdmin()) {
             writeApiResponse(response, 403, ApiResponse.error("Admin access required"));
             return false;
         }
+        
         return true;
     }
 

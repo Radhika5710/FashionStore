@@ -222,6 +222,31 @@ public class RecommendationService {
     }
     
     /**
+     * Get similar products based on category, brand, and price
+     */
+    public List<Product> getSimilarProducts(int productId, int limit) {
+        try {
+            Product currentProduct = productDAO.getProductById(productId);
+            if (currentProduct == null) {
+                return new ArrayList<>();
+            }
+            
+            List<Product> allProducts = productDAO.getAllProducts();
+            
+            return allProducts.stream()
+                .filter(p -> p.getProductId() != productId)
+                .filter(p -> p.isActive())
+                .filter(p -> isRelatedProduct(p, currentProduct))
+                .limit(limit)
+                .collect(Collectors.toList());
+                
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting similar products", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
      * Check if two products are related (same brand or similar category)
      */
     private boolean isRelatedProduct(Product p1, Product p2) {

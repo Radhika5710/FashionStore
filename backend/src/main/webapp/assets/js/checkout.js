@@ -1,7 +1,22 @@
 /**
  * FashionStore - Checkout Page JavaScript
- * Handles multi-step checkout, address selection, payment methods,
- * Stripe integration, and form validation with idempotency protection
+ * 
+ * REFACTORED FOR MVC ARCHITECTURE:
+ * - NO order total calculations (backend provides)
+ * - NO payment amount calculations (backend provides)
+ * - NO discount calculations (backend provides)
+ * - NO tax calculations (backend provides)
+ * - Only handles UI interactions and AJAX triggers
+ * - Only displays backend-calculated totals
+ * - Prevents frontend order/payment tampering
+ * 
+ * Responsibilities:
+ * - Address selection UI
+ * - Payment method selection UI
+ * - Form validation (required fields, format)
+ * - Stripe payment element initialization
+ * - AJAX submission to backend
+ * - Error display and loading states
  */
 
 const Checkout = (function() {
@@ -270,8 +285,9 @@ const Checkout = (function() {
     
     /**
      * Validate and proceed to payment
+     * @param {HTMLElement} button - Optional button element for loading state
      */
-    function validateAndProceedToPayment() {
+    function validateAndProceedToPayment(button = null) {
         const form = document.getElementById('checkoutForm');
         const selectedAddress = document.querySelector('input[name="shippingAddressId"]:checked');
         const errorEl = document.getElementById('form-error');
@@ -420,7 +436,7 @@ const Checkout = (function() {
                 StateManager.showError('checkout-error', {
                     errorMessage: err.message || 'Payment failed. Please try again.',
                     onRetry: function() {
-                        Checkout.validateAndProceedToPayment(btn);
+                        Checkout.validateAndProceedToPayment();
                     }
                 });
             }

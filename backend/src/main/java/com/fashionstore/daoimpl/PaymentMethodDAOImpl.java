@@ -116,7 +116,7 @@ public class PaymentMethodDAOImpl implements PaymentMethodDAO {
 
     @Override
     public PaymentMethod getPaymentMethodById(int paymentMethodId, int userId) {
-        String sql = "SELECT * FROM payment_methods WHERE payment_method_id = ? AND user_id = ?";
+        String sql = "SELECT payment_method_id, user_id, method_type, provider, method_alias, last_four, expiry_month, expiry_year, card_brand, is_default, is_active, gateway_token, created_at, updated_at FROM payment_methods WHERE payment_method_id = ? AND user_id = ?";
         
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -138,7 +138,7 @@ public class PaymentMethodDAOImpl implements PaymentMethodDAO {
     @Override
     public List<PaymentMethod> getPaymentMethodsByUserId(int userId) {
         List<PaymentMethod> paymentMethods = new ArrayList<>();
-        String sql = "SELECT * FROM payment_methods WHERE user_id = ? AND is_active = TRUE " +
+        String sql = "SELECT payment_method_id, user_id, method_type, provider, method_alias, last_four, expiry_month, expiry_year, card_brand, is_default, is_active, gateway_token, created_at, updated_at FROM payment_methods WHERE user_id = ? AND is_active = TRUE " +
                      "ORDER BY is_default DESC, created_at DESC";
         
         try (Connection conn = DBConnection.getConnection();
@@ -159,7 +159,7 @@ public class PaymentMethodDAOImpl implements PaymentMethodDAO {
 
     @Override
     public PaymentMethod getDefaultPaymentMethod(int userId) {
-        String sql = "SELECT * FROM payment_methods WHERE user_id = ? AND is_default = TRUE " +
+        String sql = "SELECT payment_method_id, user_id, method_type, provider, method_alias, last_four, expiry_month, expiry_year, card_brand, is_default, is_active, gateway_token, created_at, updated_at FROM payment_methods WHERE user_id = ? AND is_default = TRUE " +
                      "AND is_active = TRUE ORDER BY created_at DESC LIMIT 1";
         
         try (Connection conn = DBConnection.getConnection();
@@ -246,7 +246,7 @@ public class PaymentMethodDAOImpl implements PaymentMethodDAO {
 
     @Override
     public PaymentMethod getPaymentMethodByToken(String gatewayToken, String gateway) {
-        String sql = "SELECT * FROM payment_methods WHERE gateway_token = ? AND provider = ? AND is_active = TRUE";
+        String sql = "SELECT payment_method_id, user_id, method_type, provider, method_alias, last_four, expiry_month, expiry_year, card_brand, is_default, is_active, gateway_token, created_at, updated_at FROM payment_methods WHERE gateway_token = ? AND provider = ? AND is_active = TRUE";
         
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

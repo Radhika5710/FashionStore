@@ -86,7 +86,7 @@ public class SavedItemDAOImpl implements SavedItemDAO {
 
     @Override
     public SavedItem getSavedItem(int userId, int productId, String sizeLabel) {
-        String sql = "SELECT * FROM saved_items WHERE user_id = ? AND product_id = ? AND size_label = ?";
+        String sql = "SELECT saved_item_id, user_id, product_id, size_label, saved_at FROM saved_items WHERE user_id = ? AND product_id = ? AND size_label = ?";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

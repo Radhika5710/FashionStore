@@ -5,6 +5,40 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Simple Security Utilities for Session Attribute Retrieval
+ * 
+ * PURPOSE:
+ * =======
+ * This class provides simple session attribute checks for controllers.
+ * It is designed for lightweight session attribute retrieval without advanced security validation.
+ * 
+ * USAGE:
+ * ======
+ * - Use this class for simple session attribute checks (getAuthenticatedCustomer, isAuthenticated)
+ * - Use SessionSecurityUtil for advanced session validation (IP binding, inactivity checks, concurrent sessions)
+ * - Use AuthContext for JWT-based authentication (admin APIs)
+ * 
+ * SEPARATION OF CONCERNS:
+ * ========================
+ * - SecurityUtil: Simple session attribute checks (used by controllers)
+ * - SessionSecurityUtil: Advanced session security validation (used by security filters)
+ * - AuthContext: JWT-based authentication (used by admin APIs)
+ * 
+ * EXAMPLE:
+ * ========
+ * // Simple attribute check (controller level)
+ * User customer = SecurityUtil.getAuthenticatedCustomer(request);
+ * if (customer != null) {
+ *     // Customer is authenticated
+ * }
+ * 
+ * // Advanced security validation (filter level)
+ * SessionValidationResult result = SessionSecurityUtil.validateSession(request);
+ * if (!result.isValid()) {
+ *     // Handle invalid session (IP mismatch, inactivity, etc.)
+ * }
+ */
 public class SecurityUtil {
 
     /**
@@ -128,18 +162,4 @@ public class SecurityUtil {
         return true;
     }
 
-    /**
-     * Validate CSRF token
-     * DEPRECATED: Use CSRFProtection.validateRequest() instead
-     * This method is kept for backward compatibility but delegates to CSRFProtection
-     */
-    public static boolean validateCSRF(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) return false;
-        
-        String sessionToken = (String) session.getAttribute("csrfToken");
-        String requestToken = request.getParameter("csrfToken");
-        
-        return sessionToken != null && sessionToken.equals(requestToken);
-    }
 }

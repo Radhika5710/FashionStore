@@ -1,6 +1,7 @@
 package com.fashionstore.controller;
 
 import com.fashionstore.model.User;
+import com.fashionstore.registry.ServiceRegistry;
 import com.fashionstore.security.RateLimiter;
 import com.fashionstore.service.UserService;
 import com.fashionstore.util.AuditLogger;
@@ -25,7 +26,7 @@ public class RegisterController extends HttpServlet {
 
     @Override
     public void init() {
-        userService = new UserService();
+        userService = ServiceRegistry.getInstance().getUserService();
     }
 
     @Override

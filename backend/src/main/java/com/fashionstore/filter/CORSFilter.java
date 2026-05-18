@@ -17,8 +17,80 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * CORS Filter to allow cross-origin requests from frontend development servers
- * Uses environment variables to configure allowed origins for Docker/production runtime
+ * CORSFilter - Cross-Origin Resource Sharing for React Admin
+ * 
+ * FILTER CHAIN ARCHITECTURE:
+ * ==========================
+ * Filter execution order (from web.xml):
+ * 1. RequestLoggingFilter - Adds request ID to MDC
+ * 2. CORSFilter - Handles CORS preflight (OPTIONS) (THIS FILTER)
+ * 3. SecurityHardeningFilter - Rate limiting, attack prevention
+ * 4. JWTAuthenticationFilter - JWT validation for /api/admin/*
+ * 5. Servlet/Controller - Handles request
+ * 
+ * RESPONSIBILITIES:
+ * =================
+ * ✓ Handle CORS preflight requests (OPTIONS)
+ * ✓ Set Access-Control-Allow-Origin header
+ * ✓ Set Access-Control-Allow-Credentials header
+ * ✓ Set Access-Control-Allow-Methods header
+ * ✓ Set Access-Control-Allow-Headers header
+ * ✓ Validate origin against whitelist
+ * ✓ Support same-origin requests
+ * 
+ * DOES NOT HANDLE:
+ * ================
+ * ✗ Authentication (JWTAuthenticationFilter)
+ * ✗ Authorization (JWTAuthenticationFilter)
+ * ✗ Rate limiting (SecurityHardeningFilter)
+ * ✗ Request logging (RequestLoggingFilter)
+ * ✗ Security headers (SecurityHardeningFilter)
+ * 
+ * APPLIES TO:
+ * ===========
+ * - React admin frontend requests (/api/admin/*)
+ * - CORS preflight requests (OPTIONS)
+ * - Cross-origin requests from allowed origins
+ * 
+ * DOES NOT APPLY TO:
+ * ==================
+ * - JSP pages (same-origin)
+ * - MVC controllers (same-origin)
+ * - Customer APIs (same-origin)
+ * - Static assets (same-origin)
+ * 
+ * CONFIGURATION:
+ * ===============
+ * Environment variable: CORS_ALLOWED_ORIGINS
+ * Format: comma-separated list of origins
+ * Example: http://localhost:5173,http://localhost:3000
+ * 
+ * Default (development):
+ * - http://localhost:5173 (Vite dev server)
+ * - http://127.0.0.1:5173
+ * - http://localhost:3000 (React dev server)
+ * - http://127.0.0.1:3000
+ * - http://localhost:8080
+ * 
+ * PREFLIGHT HANDLING:
+ * ===================
+ * OPTIONS requests:
+ * 1. Check if origin is allowed
+ * 2. Set CORS headers
+ * 3. Return 200 OK (no body)
+ * 4. Do NOT continue filter chain
+ * 
+ * Regular requests:
+ * 1. Check if origin is allowed
+ * 2. Set CORS headers
+ * 3. Continue filter chain
+ * 
+ * PERFORMANCE NOTES:
+ * ==================
+ * - Minimal overhead (origin check + header set)
+ * - Early return for OPTIONS (prevents unnecessary processing)
+ * - No blocking operations
+ * - Preflight caching (Access-Control-Max-Age: 3600)
  */
 public class CORSFilter implements Filter {
 

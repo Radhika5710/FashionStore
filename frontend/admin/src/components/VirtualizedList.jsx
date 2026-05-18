@@ -41,7 +41,6 @@ export default function VirtualizedList({
         overflowY: 'auto',
         position: 'relative',
       }}
-      onScroll={handleScroll}
     >
       <div style={{ height: items.length * itemHeight, position: 'relative' }}>
         <div
@@ -115,7 +114,6 @@ export function VirtualizedGrid({
         overflow: 'auto',
         position: 'relative',
       }}
-      onScroll={handleScroll}
     >
       <div
         style={{

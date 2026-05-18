@@ -1,12 +1,24 @@
 /**
- * FashionStore - Authentication & Session Security Handler
- * Production-grade login experience with:
+ * FashionStore - Customer MVC Session Authentication Handler
+ * 
+ * IMPORTANT: This script handles CUSTOMER LOGIN ONLY using SESSIONS.
+ * DO NOT add JWT logic here. JWT is for admin APIs only (/api/admin/*).
+ * 
+ * Features:
  * - Password visibility toggle
  * - Loading spinner with debounce protection
  * - Duplicate form submission prevention
  * - Graceful API error handling
  * - Inline validation states
  * - Optimized performance
+ * 
+ * Authentication Flow:
+ * 1. Form submission to /login (POST)
+ * 2. Server validates credentials
+ * 3. Server creates HttpSession
+ * 4. Server returns JSON response with redirect
+ * 5. Client redirects to /home
+ * 6. Session maintained via JSESSIONID cookie
  */
 document.addEventListener('DOMContentLoaded', () => {
     const contextPath = window.contextPath || '';
@@ -165,29 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
             };
 
-            fetch(actionUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: formData
-            })
-            .then(res => {
-                // Handle redirect (non-AJAX fallback)
-                if (res.redirected) {
-                    window.location.href = res.url;
-                    return null;
-                }
-
-                return res.json().then(data => {
-                    if (!res.ok) {
-                        throw new Error(data.message || `HTTP Error ${res.status}`);
-                    }
-                    return data;
-                });
-            })
+            FashionStoreAPI.post('/login', { email, password })
             .then(data => {
                 if (!data) return; // Already handled redirect
 
@@ -457,28 +447,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
             };
 
-            fetch(actionUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: formData
-            })
-            .then(res => {
-                if (res.redirected) {
-                    window.location.href = res.url;
-                    return null;
-                }
-
-                return res.json().then(data => {
-                    if (!res.ok) {
-                        throw new Error(data.message || `HTTP Error ${res.status}`);
-                    }
-                    return data;
-                });
-            })
+            // Convert FormData to plain object for API call
+            const formDataObj = {};
+            for (const [key, value] of formData.entries()) {
+                formDataObj[key] = value;
+            }
+            
+            FashionStoreAPI.post('/register', formDataObj)
             .then(data => {
                 if (!data) return;
 

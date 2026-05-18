@@ -66,6 +66,16 @@ public interface CouponService {
     List<Coupon> getAllActiveCoupons();
     
     /**
+     * Get all coupons (including inactive)
+     */
+    List<Coupon> getAllCoupons();
+    
+    /**
+     * Get coupon by ID
+     */
+    Coupon getCouponById(int couponId);
+    
+    /**
      * Create new coupon
      */
     boolean createCoupon(Coupon coupon);

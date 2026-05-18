@@ -6,7 +6,7 @@ echo "Building FashionStore Docker images..."
 
 # Build backend WAR file
 echo "Building backend WAR file..."
-cd FashionStore
+cd backend
 mvn clean package -DskipTests
 cd ..
 

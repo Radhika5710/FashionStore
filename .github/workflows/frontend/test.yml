@@ -135,12 +135,10 @@ jobs:
 
     - name: Install Playwright Browsers
       run: |
-        cd playwright-tests
         npx playwright install --with-deps
 
     - name: Run Playwright Tests
       run: |
-        cd playwright-tests
         npm run test
       env:
         BASE_URL: http://localhost:8080/FashionStore

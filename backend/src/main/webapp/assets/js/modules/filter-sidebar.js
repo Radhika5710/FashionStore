@@ -1,6 +1,12 @@
 /**
  * Filter Sidebar Module
- * Handles product filter sidebar functionality
+ * Handles product filter sidebar UI interactions only
+ * 
+ * REFACTORED FOR MVC ARCHITECTURE:
+ * - No filtering logic (backend handles all filtering)
+ * - Only manages sidebar UI state (open/close)
+ * - Filter form submission goes to backend
+ * - Backend returns filtered products via ProductController
  */
 const FilterSidebar = (function() {
     
@@ -20,7 +26,7 @@ const FilterSidebar = (function() {
         overlay.classList.add('active');
         if (btn) btn.setAttribute('aria-expanded', 'true');
         
-        // Use consistent scroll locking
+        // Lock scroll position
         filterScrollY = window.scrollY;
         document.body.style.position = 'fixed';
         document.body.style.top = `-${filterScrollY}px`;

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
+import OptimizedImage from '../../components/OptimizedImage.jsx';
 import { ProductsApi, CategoriesApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 
@@ -203,7 +204,7 @@ export default function ProductForm() {
           <div className="flex items-center gap-4">
             <div className="w-24 h-24 rounded-xl border border-dashed border-ink-300 dark:border-ink-600 bg-ink-50 dark:bg-ink-900 flex items-center justify-center overflow-hidden">
               {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <OptimizedImage src={imagePreview} alt="Preview" width={400} height={400} loading="eager" />
               ) : (
                 <Upload size={20} className="text-ink-400" />
               )}

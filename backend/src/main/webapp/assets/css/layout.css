@@ -1,14 +1,4 @@
 /* ============================================
-   GLOBAL LAYOUT RESET (Defensive Protection)
-   ============================================ */
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-/* ============================================
    CONTAINER SYSTEM - Enterprise-Grade Consistency
    Using semantic spacing scale
    ============================================ */
@@ -16,14 +6,7 @@
 /* Base container removed to prevent overriding base.css */
 
 
-/* Legacy shell support (for backward compatibility) */
-.shell {
-    width: 100%;
-    max-width: var(--container-xl);
-    margin: 0 auto;
-    padding-left: var(--container-padding-md);
-    padding-right: var(--container-padding-md);
-}
+/* Legacy shell class removed - use .page-container instead */
 
 /* ============================================
    PAGE CONTAINER UTILITIES

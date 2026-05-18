@@ -16,7 +16,6 @@ public class SecurityLogger {
 
     private static final SecurityLogger INSTANCE = new SecurityLogger();
     private final EnterpriseLogger enterpriseLogger;
-    private final MetricsCollector metricsCollector;
     
     // Security metrics
     private final Map<String, AtomicLong> securityEvents = new ConcurrentHashMap<>();
@@ -30,7 +29,6 @@ public class SecurityLogger {
     
     private SecurityLogger() {
         this.enterpriseLogger = EnterpriseLogger.getLogger(SecurityLogger.class);
-        this.metricsCollector = MetricsCollector.getInstance();
     }
     
     public static SecurityLogger getInstance() {

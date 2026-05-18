@@ -8,7 +8,54 @@
 
   <!-- Filter Mappings - Order matters! -->
   
-  <!-- 1. CORS (handle cross-origin requests first) -->
+  <!-- FILTER CHAIN ORDER REQUIREMENTS:
+       ================================
+       The order of filters is CRITICAL for proper security and logging:
+       
+       1. RequestLoggingFilter (MUST BE FIRST)
+          - Adds request ID to MDC for all subsequent logging
+          - Enables request tracing across all security filters
+          - Logs request duration and status
+       
+       2. CORSFilter (MUST BE SECOND)
+          - Handles CORS preflight requests (OPTIONS)
+          - Sets CORS headers for cross-origin requests
+          - Returns early for OPTIONS requests
+       
+       3. SecurityHardeningFilter (MUST BE THIRD)
+          - Rate limiting and brute-force protection
+          - Attack pattern detection
+          - Security headers (CSP, X-Frame-Options, etc.)
+          - Session cookie configuration
+       
+       4. DemoHardeningFilter (MUST BE FOURTH)
+          - Disables non-essential routes in demo mode
+          - Protects sensitive endpoints
+       
+       5. JWTAuthenticationFilter (MUST BE FIFTH)
+          - JWT validation for /api/admin/* endpoints
+          - Skips JSP routes (session auth)
+          - Skips static assets
+          - Returns JSON errors for unauthorized requests
+       
+       6. FileUploadSecurityFilter (APPLIED TO UPLOAD ENDPOINTS ONLY)
+          - Validates file uploads
+          - Prevents malicious file uploads
+       
+       DO NOT CHANGE THIS ORDER WITHOUT SECURITY REVIEW
+       =============================================== -->
+  
+  <!-- 1. Request Logging (adds request ID to MDC for all subsequent logging) -->
+  <filter>
+    <filter-name>RequestLoggingFilter</filter-name>
+    <filter-class>com.fashionstore.filter.RequestLoggingFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>RequestLoggingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- 2. CORS (handle cross-origin requests) -->
   <filter>
     <filter-name>CORSFilter</filter-name>
     <filter-class>com.fashionstore.filter.CORSFilter</filter-class>
@@ -18,23 +65,33 @@
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
-  <!-- 2. Security Hardening (rate limiting, IP blocking, CSP headers, CSRF validation) -->
+  <!-- 3. Security Hardening (rate limiting, IP blocking, CSP headers) -->
   <filter>
     <filter-name>SecurityHardeningFilter</filter-name>
-    <filter-class>com.fashionstore.security.SecurityHardeningFilter</filter-class>
+    <filter-class>com.fashionstore.filter.SecurityHardeningFilter</filter-class>
   </filter>
   <filter-mapping>
     <filter-name>SecurityHardeningFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
-  <!-- 3. Request Logging (log all requests) -->
+  <!-- 3.5. Demo Hardening (disables non-essential routes in demo mode) -->
   <filter>
-    <filter-name>RequestLoggingFilter</filter-name>
-    <filter-class>com.fashionstore.filter.RequestLoggingFilter</filter-class>
+    <filter-name>DemoHardeningFilter</filter-name>
+    <filter-class>com.fashionstore.filter.DemoHardeningFilter</filter-class>
   </filter>
   <filter-mapping>
-    <filter-name>RequestLoggingFilter</filter-name>
+    <filter-name>DemoHardeningFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- 4. JWT Authentication Filter (validates JWT for /api/admin/*) -->
+  <filter>
+    <filter-name>JWTAuthenticationFilter</filter-name>
+    <filter-class>com.fashionstore.filter.JWTAuthenticationFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>JWTAuthenticationFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
@@ -53,12 +110,22 @@
   <!-- Error Pages Configuration -->
   <error-page>
     <error-code>404</error-code>
-    <location>/WEB-INF/views/404.jsp</location>
+    <location>/WEB-INF/views/errors/404.jsp</location>
+  </error-page>
+  
+  <error-page>
+    <error-code>500</error-code>
+    <location>/WEB-INF/views/errors/500.jsp</location>
+  </error-page>
+  
+  <error-page>
+    <error-code>401</error-code>
+    <location>/WEB-INF/views/errors/401.jsp</location>
   </error-page>
   
   <error-page>
     <exception-type>java.lang.Throwable</exception-type>
-    <location>/WEB-INF/views/error.jsp</location>
+    <location>/WEB-INF/views/errors/500.jsp</location>
   </error-page>
 
   <welcome-file-list>

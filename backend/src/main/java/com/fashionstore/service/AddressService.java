@@ -1,7 +1,6 @@
 package com.fashionstore.service;
 
 import com.fashionstore.dao.AddressDAO;
-import com.fashionstore.daoimpl.AddressDAOImpl;
 import com.fashionstore.model.Address;
 import com.fashionstore.validation.AddressValidator;
 import org.slf4j.Logger;
@@ -15,11 +14,24 @@ public class AddressService {
     private final AddressDAO addressDAO;
 
     public AddressService() {
-        this.addressDAO = new AddressDAOImpl();
+        // Default constructor - DAO will be set via setter injection
+        this.addressDAO = null;
     }
 
     public AddressService(AddressDAO addressDAO) {
         this.addressDAO = addressDAO;
+    }
+
+    public void setAddressDAO(AddressDAO addressDAO) {
+        if (this.addressDAO == null) {
+            try {
+                java.lang.reflect.Field field = AddressService.class.getDeclaredField("addressDAO");
+                field.setAccessible(true);
+                field.set(this, addressDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set addressDAO", e);
+            }
+        }
     }
 
     // CRUD Operations

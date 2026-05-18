@@ -1,0 +1,140 @@
+/**
+ * DEMO HARDENING MODE CSS
+ * 
+ * Emergency Demo Stabilization Mode - Disables all animations and transitions
+ * for maximum rendering reliability during demo presentation.
+ * 
+ * DISABLED:
+ * - All CSS animations
+ * - All CSS transitions
+ * - All CSS transforms
+ * - All keyframe animations
+ * 
+ * This ensures:
+ * - No animation-related rendering issues
+ * - No transition timing conflicts
+ * - No transform layout shifts
+ * - Maximum browser compatibility
+ * - Predictable rendering behavior
+ */
+
+/* Disable all animations globally */
+* {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    transition-timing-function: linear !important;
+}
+
+/* Disable all keyframe animations */
+@keyframes none {}
+
+/* Force instant rendering for all interactive elements */
+button, a, input, select, textarea {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Disable hover effects that use transitions */
+*:hover {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Disable loading animations */
+.loading, .spinner, .skeleton {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable modal animations */
+.modal, .dialog, .popup {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Disable toast/notification animations */
+.toast, .notification, .alert {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable card hover animations */
+.card, .product-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Disable skeleton loading animations */
+.skeleton-loader, .shimmer {
+    animation: none !important;
+    background-image: none !important;
+}
+
+/* Disable form validation animations */
+input:focus, textarea:focus, select:focus {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable button animations */
+button:active, button:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Disable dropdown animations */
+.dropdown, .menu {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Disable carousel/slider animations */
+.carousel, .slider {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable pagination animations */
+.pagination button, .pagination a {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable tab animations */
+.tab-content, .tab-pane {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable accordion animations */
+.accordion, .collapse {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable progress bar animations */
+.progress-bar, .progress {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable badge/pill animations */
+.badge, .pill {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable tooltip animations */
+.tooltip, .popover {
+    animation: none !important;
+    transition: none !important;
+}

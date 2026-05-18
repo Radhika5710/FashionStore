@@ -1,6 +1,12 @@
 /**
  * FashionStore - Search Module
  * Search suggestions, trending searches, and keyboard navigation
+ * 
+ * REFACTORED FOR MVC ARCHITECTURE:
+ * - Backend provides all search suggestions (no frontend filtering)
+ * - Frontend only handles UI interactions and AJAX triggers
+ * - Trending searches loaded from backend session
+ * - No client-side result manipulation
  */
 
 const FashionStoreSearch = (function() {
@@ -11,8 +17,8 @@ const FashionStoreSearch = (function() {
     let selectedIndex = -1;
     let clickHandler = null; // Track click handler for proper cleanup
     
-    // Trending searches (can be loaded from backend)
-    const trendingSearches = [
+    // Trending searches from backend (loaded via session)
+    const trendingSearches = window.trendingSearches || [
         'Summer Collection',
         'Casual Shirts',
         'Denim Jeans',
@@ -91,54 +97,33 @@ const FashionStoreSearch = (function() {
             suggestionsContainer.style.display = 'block';
         }
         
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        fetch(`${contextPath}/search/suggestions?q=${encodeURIComponent(query)}`, {
-            signal: controller.signal,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(res => {
-            clearTimeout(timeoutId);
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
-            return res.json();
-        })
-        .then(suggestions => {
+        FashionStoreAPI.get(`/search/suggestions?q=${encodeURIComponent(query)}`)
+        .then(data => {
             // Hide loading state
             if (typeof StateManager !== 'undefined') {
                 StateManager.showInlineLoading('search-suggestions-loading', false);
             }
             
-            if (Array.isArray(suggestions)) {
-                displaySuggestions(suggestions, query);
+            if (Array.isArray(data)) {
+                displaySuggestions(data, query);
             } else {
                 displayEmptyState(query);
             }
         })
         .catch(err => {
-            clearTimeout(timeoutId);
-            if (err.name === 'AbortError') {
-                console.warn('Search suggestions request timed out');
-                displayEmptyState(query);
+            console.error('Error fetching suggestions:', err);
+            // Show error state
+            if (suggestionsContainer && typeof StateManager !== 'undefined') {
+                suggestionsContainer.innerHTML = `
+                    <div class="suggestion-empty">
+                        <div class="empty-icon">⚠️</div>
+                        <div class="empty-text">Unable to load suggestions</div>
+                        <button class="fs-btn fs-btn--primary" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);" onclick="FashionStoreSearch.fetchSuggestions('${escapeHtml(query)}')">Retry</button>
+                    </div>
+                `;
+                suggestionsContainer.style.display = 'block';
             } else {
-                console.error('Error fetching suggestions:', err);
-                // Show error state
-                if (suggestionsContainer && typeof StateManager !== 'undefined') {
-                    suggestionsContainer.innerHTML = `
-                        <div class="suggestion-empty">
-                            <div class="empty-icon">⚠️</div>
-                            <div class="empty-text">Unable to load suggestions</div>
-                            <button class="fs-btn fs-btn--primary" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);" onclick="FashionStoreSearch.fetchSuggestions('${escapeHtml(query)}')">Retry</button>
-                        </div>
-                    `;
-                    suggestionsContainer.style.display = 'block';
-                } else {
-                    suggestionsContainer.innerHTML = '';
-                }
+                suggestionsContainer.innerHTML = '';
             }
         });
     }

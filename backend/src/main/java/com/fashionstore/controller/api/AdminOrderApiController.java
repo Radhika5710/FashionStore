@@ -1,9 +1,9 @@
 package com.fashionstore.controller.api;
 
 import com.fashionstore.controller.ApiResponse;
-import com.fashionstore.dao.*;
-import com.fashionstore.daoimpl.*;
 import com.fashionstore.model.*;
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.service.OrderService;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,23 +11,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Modular API controller for order management in admin dashboard.
- * Refactored to inherit from AdminApiBaseController and BaseController.
- */
 @WebServlet("/api/admin/orders/*")
 public class AdminOrderApiController extends AdminApiBaseController {
 
     private static final long serialVersionUID = 1L;
 
-    private OrderDAO orderDAO;
-    private OrderItemDAO orderItemDAO;
+    private OrderService orderService;
 
     @Override
     public void init() {
         super.init();
-        orderDAO = new OrderDAOImpl();
-        orderItemDAO = new OrderItemDAOImpl();
+        orderService = ServiceRegistry.getInstance().getOrderService();
     }
 
     @Override
@@ -41,8 +35,7 @@ public class AdminOrderApiController extends AdminApiBaseController {
             if (pathInfo == null || pathInfo.equals("/")) {
                 // GET /api/admin/orders - List all orders
                 int limit = parseInt(request.getParameter("limit"), 50);
-                List<Order> orders = orderDAO.getRecentOrders(limit);
-                orderItemDAO.batchLoadOrderItems(orders);
+                List<Order> orders = orderService.getRecentOrders(limit);
                 writeApiResponse(response, 200, ApiResponse.success("Orders retrieved successfully", Map.of(
                     "orders", orders.stream().map(this::publicOrder).toList(),
                     "count", orders.size()
@@ -53,8 +46,7 @@ public class AdminOrderApiController extends AdminApiBaseController {
             // GET /api/admin/orders/recent - Get recent orders
             if (pathInfo.equals("/recent")) {
                 int limit = parseInt(request.getParameter("limit"), 10);
-                List<Order> orders = orderDAO.getRecentOrders(limit);
-                orderItemDAO.batchLoadOrderItems(orders);
+                List<Order> orders = orderService.getRecentOrders(limit);
                 writeApiResponse(response, 200, ApiResponse.success("Recent orders retrieved successfully", orders.stream().map(this::publicOrder).toList()));
                 return;
             }
@@ -64,12 +56,11 @@ public class AdminOrderApiController extends AdminApiBaseController {
             if (segments.length == 2) {
                 try {
                     int orderId = Integer.parseInt(segments[1]);
-                    Order order = orderDAO.getOrderById(orderId);
+                    Order order = orderService.getOrderById(orderId, 0);
                     if (order == null) {
                         writeApiResponse(response, 404, ApiResponse.error("Order not found"));
                         return;
                     }
-                    order.setItems(orderItemDAO.getItemsByOrderId(order.getOrderId()));
                     writeApiResponse(response, 200, ApiResponse.success("Order retrieved successfully", publicOrder(order)));
                 } catch (NumberFormatException e) {
                     writeApiResponse(response, 400, ApiResponse.error("Invalid order ID"));
@@ -101,7 +92,7 @@ public class AdminOrderApiController extends AdminApiBaseController {
                         int orderId = Integer.parseInt(segments[1]);
                         String action = segments[2];
                         
-                        if (orderDAO.getOrderById(orderId) == null) {
+                        if (orderService.getOrderById(orderId, 0) == null) {
                             writeApiResponse(response, 404, ApiResponse.error("Order not found"));
                             return;
                         }
@@ -115,7 +106,7 @@ public class AdminOrderApiController extends AdminApiBaseController {
                                     writeApiResponse(response, 400, ApiResponse.error("Status required"));
                                     return;
                                 }
-                                success = orderDAO.updateOrderStatus(orderId, status);
+                                success = orderService.updateOrderStatus(orderId, status, 0);
                                 if (success) {
                                     writeApiResponse(response, 200, ApiResponse.success("Order status updated to " + status, null));
                                 } else {
@@ -123,42 +114,42 @@ public class AdminOrderApiController extends AdminApiBaseController {
                                 }
                             }
                             case "confirm" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Confirmed");
+                                success = orderService.updateOrderStatus(orderId, "Confirmed", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order confirmed successfully", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Confirmed"));
                             }
                             case "pack" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Packing");
+                                success = orderService.updateOrderStatus(orderId, "Packing", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order packing started", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Packing"));
                             }
                             case "approve" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Processing");
+                                success = orderService.updateOrderStatus(orderId, "Processing", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order approved successfully", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Processing"));
                             }
                             case "cancel" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Cancelled");
+                                success = orderService.updateOrderStatus(orderId, "Cancelled", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order cancelled successfully", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Cancelled"));
                             }
                             case "refund" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Refunded");
+                                success = orderService.updateOrderStatus(orderId, "Refunded", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order refunded successfully", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Refunded"));
                             }
                             case "ship" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Shipped");
+                                success = orderService.updateOrderStatus(orderId, "Shipped", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order shipped successfully", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Shipped"));
                             }
                             case "outfordelivery" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Out for Delivery");
+                                success = orderService.updateOrderStatus(orderId, "Out for Delivery", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order is out for delivery", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Out for Delivery"));
                             }
                             case "deliver" -> {
-                                success = orderDAO.updateOrderStatus(orderId, "Delivered");
+                                success = orderService.updateOrderStatus(orderId, "Delivered", 0);
                                 if (success) writeApiResponse(response, 200, ApiResponse.success("Order marked as delivered", null));
                                 else writeApiResponse(response, 400, ApiResponse.error("Failed to transition to Delivered"));
                             }

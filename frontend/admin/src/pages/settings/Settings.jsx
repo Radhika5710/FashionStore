@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Store, CreditCard, Truck, Receipt, Save } from 'lucide-react';
 import { useToast } from '../../context/ToastContext.jsx';
 
@@ -13,6 +13,16 @@ export default function Settings() {
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('store');
   const [saving, setSaving] = useState(false);
+  const saveTimeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const [store, setStore] = useState({ name: 'FashionStore', email: 'support@fashionstore.com', currency: 'USD', timezone: 'UTC' });
   const [payment, setPayment] = useState({ gateway: 'stripe', publicKey: '', secretKey: '', enabled: true });
@@ -21,9 +31,14 @@ export default function Settings() {
 
   const handleSave = () => {
     setSaving(true);
-    setTimeout(() => {
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
       setSaving(false);
       addToast('Settings saved', 'success');
+      saveTimeoutRef.current = null;
     }, 600);
   };
 

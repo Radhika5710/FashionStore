@@ -56,55 +56,81 @@ public class RedisConnection {
     }
 
     /**
-     * Connect to Redis with connection pooling
+     * Connect to Redis with connection pooling and retry logic
      */
     public boolean connect(Duration timeout) {
-        try {
-            JedisPoolConfig poolConfig = new JedisPoolConfig();
-            poolConfig.setMaxTotal(maxConnections);
-            poolConfig.setMaxIdle(5);
-            poolConfig.setMinIdle(1);
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(false);
-            poolConfig.setTestWhileIdle(true);
-            poolConfig.setMinEvictableIdleTimeMillis(60000);
-            poolConfig.setTimeBetweenEvictionRunsMillis(30000);
-            poolConfig.setNumTestsPerEvictionRun(3);
-            poolConfig.setBlockWhenExhausted(true);
-            poolConfig.setMaxWaitMillis(connectionTimeout.toMillis());
-            
-            if (password != null && !password.trim().isEmpty()) {
-                jedisPool = new JedisPool(poolConfig, host, port, (int) socketTimeout.toMillis(), 
-                                         password, database);
-            } else {
-                jedisPool = new JedisPool(poolConfig, host, port, (int) socketTimeout.toMillis(), 
-                                         null, database);
-            }
-            
-            // Test connection
-            try (Jedis jedis = jedisPool.getResource()) {
-                String pong = jedis.ping();
-                if ("PONG".equals(pong)) {
-                    connected.set(true);
-                    lastConnectionTime.set(System.currentTimeMillis());
-                    logger.info("Connected to Redis at {}:{}", host, port);
-                    return true;
+        int maxRetries = 10;
+        int retryDelayMs = 5000;
+        int attempt = 0;
+
+        while (attempt < maxRetries) {
+            attempt++;
+            try {
+                logger.info("Connecting to Redis at {}:{} (attempt {}/{})...", host, port, attempt, maxRetries);
+                
+                JedisPoolConfig poolConfig = new JedisPoolConfig();
+                poolConfig.setMaxTotal(maxConnections);
+                poolConfig.setMaxIdle(5);
+                poolConfig.setMinIdle(1);
+                poolConfig.setTestOnBorrow(true);
+                poolConfig.setTestOnReturn(false);
+                poolConfig.setTestWhileIdle(true);
+                poolConfig.setMinEvictableIdleTimeMillis(60000);
+                poolConfig.setTimeBetweenEvictionRunsMillis(30000);
+                poolConfig.setNumTestsPerEvictionRun(3);
+                poolConfig.setBlockWhenExhausted(true);
+                poolConfig.setMaxWaitMillis(connectionTimeout.toMillis());
+                
+                if (password != null && !password.trim().isEmpty()) {
+                    jedisPool = new JedisPool(poolConfig, host, port, (int) socketTimeout.toMillis(), 
+                                             password, database);
                 } else {
-                    logger.error("Unexpected Redis ping response: {}", pong);
+                    jedisPool = new JedisPool(poolConfig, host, port, (int) socketTimeout.toMillis(), 
+                                             null, database);
+                }
+                
+                // Test connection
+                try (Jedis jedis = jedisPool.getResource()) {
+                    String pong = jedis.ping();
+                    if ("PONG".equals(pong)) {
+                        connected.set(true);
+                        lastConnectionTime.set(System.currentTimeMillis());
+                        logger.info("Connected to Redis at {}:{}", host, port);
+                        return true; // Success, exit retry loop
+                    } else {
+                        logger.error("Unexpected Redis ping response: {}", pong);
+                        throw new Exception("Unexpected ping response: " + pong);
+                    }
+                }
+                
+            } catch (Exception e) {
+                lastErrorTime.set(System.currentTimeMillis());
+                connected.set(false);
+                
+                if (jedisPool != null) {
+                    jedisPool.close();
+                    jedisPool = null;
+                }
+                
+                if (attempt < maxRetries) {
+                    logger.warn("Redis connection attempt {}/{} failed, retrying in {}ms: {}", 
+                        attempt, maxRetries, retryDelayMs, e.getMessage());
+                    try {
+                        Thread.sleep(retryDelayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        logger.error("Redis connection retry interrupted");
+                        return false;
+                    }
+                } else {
+                    logger.error("Failed to connect to Redis at {}:{} after {} attempts: {}", 
+                        host, port, maxRetries, e.getMessage());
                     return false;
                 }
             }
-            
-        } catch (Exception e) {
-            lastErrorTime.set(System.currentTimeMillis());
-            logger.error("Failed to connect to Redis at {}:{}", host, port, e);
-            connected.set(false);
-            if (jedisPool != null) {
-                jedisPool.close();
-                jedisPool = null;
-            }
-            return false;
         }
+        
+        return false;
     }
 
     /**

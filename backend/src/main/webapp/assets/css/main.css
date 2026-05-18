@@ -9,16 +9,6 @@
  */
 
 /* ============================================
-   GLOBAL LAYOUT RESET (Defensive Protection)
-   ============================================ */
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-/* ============================================
    GLOBAL PAGE STRUCTURE (Sticky Footer)
    ============================================ */
 
@@ -53,57 +43,6 @@ main {
    Do not duplicate container definitions here. */
 
 /* Spacing utilities */
-.m-0 { margin: 0; }
-.m-1 { margin: var(--space-1); }
-.m-2 { margin: var(--space-2); }
-.m-3 { margin: var(--space-3); }
-.m-4 { margin: var(--space-4); }
-.m-5 { margin: var(--space-5); }
-.m-6 { margin: var(--space-6); }
-
-.p-0 { padding: 0; }
-.p-1 { padding: var(--space-1); }
-.p-2 { padding: var(--space-2); }
-.p-3 { padding: var(--space-3); }
-.p-4 { padding: var(--space-4); }
-.p-5 { padding: var(--space-5); }
-.p-6 { padding: var(--space-6); }
-
-/* Text utilities */
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
-
-.text-xs { font-size: var(--text-xs); }
-.text-sm { font-size: var(--text-sm); }
-.text-base { font-size: var(--text-base); }
-.text-lg { font-size: var(--text-lg); }
-.text-xl { font-size: var(--text-xl); }
-.text-2xl { font-size: var(--text-2xl); }
-
-.font-regular { font-weight: var(--font-weight-regular); }
-.font-medium { font-weight: var(--font-weight-medium); }
-.font-semibold { font-weight: var(--font-weight-semibold); }
-.font-bold { font-weight: var(--font-weight-bold); }
-
-/* Display utilities */
-.hidden { display: none; }
-.block { display: block; }
-.inline { display: inline; }
-.inline-block { display: inline-block; }
-.flex { display: flex; }
-.inline-flex { display: inline-flex; }
-.grid { display: grid; }
-
-.items-center { align-items: center; }
-.items-start { align-items: flex-start; }
-.items-end { align-items: flex-end; }
-
-.justify-center { justify-content: center; }
-.justify-start { justify-content: flex-start; }
-.justify-end { justify-content: flex-end; }
-.justify-between { justify-content: space-between; }
-
 /* Border utilities */
 .border { border: 1px solid var(--color-border); }
 .border-0 { border: none; }
@@ -143,19 +82,6 @@ main {
     .hidden-desktop { display: none; }
     .block-desktop { display: block; }
 }
-
-/* ============================================
-   ANIMATION UTILITIES
-   ============================================ */
-
-.transition { transition: all var(--transition-fast); }
-.transition-colors { transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast); }
-.transform { transition: transform var(--transition-fast); }
-.transition-opacity { transition: opacity var(--transition-fast); }
-
-.hover-lift:hover { transform: translateY(-2px); }
-.hover-scale:hover { transform: scale(1.05); }
-.hover-glow:hover { box-shadow: var(--shadow-lg); }
 
 /* ============================================
    THEME UTILITIES

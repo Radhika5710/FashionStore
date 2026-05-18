@@ -1,26 +1,15 @@
 package com.fashionstore.serviceimpl;
 
-import com.fashionstore.cache.CacheKey;
-import com.fashionstore.cache.CacheService;
-import com.fashionstore.cache.CacheServiceImpl;
 import com.fashionstore.dao.CartDAO;
-import com.fashionstore.dao.CouponDAO;
 import com.fashionstore.dao.ProductDAO;
-import com.fashionstore.daoimpl.CartDAOImpl;
-import com.fashionstore.daoimpl.CouponDAOImpl;
-import com.fashionstore.daoimpl.ProductDAOImpl;
 import com.fashionstore.model.CartItem;
-import com.fashionstore.model.Coupon;
 import com.fashionstore.model.Product;
 import com.fashionstore.service.CartService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Service implementation for cart operations with business logic
@@ -33,15 +22,44 @@ public class CartServiceImpl implements CartService {
     private static final int MAX_CART_ITEMS = 50;
 
     private final CartDAO cartDAO;
-    private final CouponDAO couponDAO;
     private final ProductDAO productDAO;
-    private final CacheService cacheService;
 
     public CartServiceImpl() {
-        this.cartDAO = new CartDAOImpl();
-        this.couponDAO = new CouponDAOImpl();
-        this.productDAO = new ProductDAOImpl();
-        this.cacheService = CacheServiceImpl.getInstance();
+        // Default constructor - DAOs will be set via setter injection
+        this.cartDAO = null;
+        this.productDAO = null;
+    }
+
+    public CartServiceImpl(CartDAO cartDAO, ProductDAO productDAO) {
+        this.cartDAO = cartDAO;
+        this.productDAO = productDAO;
+    }
+
+    public void setCartDAO(CartDAO cartDAO) {
+        // For backward compatibility - use constructor injection when possible
+        if (this.cartDAO == null) {
+            // Hack to set final field via reflection for backward compatibility
+            try {
+                java.lang.reflect.Field field = CartServiceImpl.class.getDeclaredField("cartDAO");
+                field.setAccessible(true);
+                field.set(this, cartDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set cartDAO", e);
+            }
+        }
+    }
+
+    public void setProductDAO(ProductDAO productDAO) {
+        // For backward compatibility - use constructor injection when possible
+        if (this.productDAO == null) {
+            try {
+                java.lang.reflect.Field field = CartServiceImpl.class.getDeclaredField("productDAO");
+                field.setAccessible(true);
+                field.set(this, productDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set productDAO", e);
+            }
+        }
     }
 
     @Override
@@ -49,21 +67,6 @@ public class CartServiceImpl implements CartService {
         if (userId <= 0) {
             logger.warn("Invalid user ID: {}", userId);
             return new ArrayList<>();
-        }
-        
-        String key = CacheKey.userCart(userId);
-        try {
-            CartItem[] cached = cacheService.get(key, CartItem[].class);
-            if (cached != null) {
-                logger.info("Cart cache hit for user #{}", userId);
-                List<CartItem> list = new ArrayList<>();
-                for (CartItem ci : cached) {
-                    list.add(ci);
-                }
-                return list;
-            }
-        } catch (Exception e) {
-            logger.warn("Error reading from cart cache for user #{}", userId, e);
         }
         
         try {
@@ -77,14 +80,6 @@ public class CartServiceImpl implements CartService {
                     logger.warn("Removing invalid cart item: {}", item);
                     cartDAO.removeCartItem(item.getCartItemId(), userId);
                 }
-            }
-            
-            // Put in cache as array
-            try {
-                CartItem[] array = validItems.toArray(new CartItem[0]);
-                cacheService.put(key, array, 30, TimeUnit.MINUTES);
-            } catch (Exception e) {
-                logger.warn("Error writing to cart cache for user #{}", userId, e);
             }
             
             return validItems;
@@ -123,9 +118,6 @@ public class CartServiceImpl implements CartService {
         }
 
         try {
-            // Evict cache before state change to prevent race conditions
-            cacheService.remove(CacheKey.userCart(userId));
-            
             // Check if item already exists
             CartItem existingItem = findCartItem(currentItems, productId, size);
             boolean result;
@@ -149,8 +141,6 @@ public class CartServiceImpl implements CartService {
                 result = cartDAO.addToCart(newItem) > 0;
             }
             
-            // Evict cache again after state change to ensure absolute consistency
-            cacheService.remove(CacheKey.userCart(userId));
             return result;
         } catch (Exception e) {
             logger.error("Error adding item to cart: {}", e.getMessage(), e);
@@ -172,9 +162,7 @@ public class CartServiceImpl implements CartService {
         }
 
         try {
-            cacheService.remove(CacheKey.userCart(userId));
             boolean result = cartDAO.updateQuantity(cartItemId, userId, quantity);
-            cacheService.remove(CacheKey.userCart(userId));
             return result;
         } catch (Exception e) {
             logger.error("Error updating cart item quantity: {}", e.getMessage(), e);
@@ -190,9 +178,7 @@ public class CartServiceImpl implements CartService {
         }
 
         try {
-            cacheService.remove(CacheKey.userCart(userId));
             boolean result = cartDAO.removeCartItem(cartItemId, userId);
-            cacheService.remove(CacheKey.userCart(userId));
             return result;
         } catch (Exception e) {
             logger.error("Error removing cart item: {}", e.getMessage(), e);
@@ -216,23 +202,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public double calculateCartTotalWithCoupon(int userId, String couponCode) {
-        double cartTotal = calculateCartTotal(userId);
-        
-        if (couponCode == null || couponCode.trim().isEmpty()) {
-            return cartTotal;
-        }
-
-        try {
-            Coupon coupon = couponDAO.getCouponByCode(couponCode);
-            if (coupon != null && isCouponValid(coupon, cartTotal)) {
-                double discount = calculateDiscount(cartTotal, coupon);
-                return Math.max(0, cartTotal - discount);
-            }
-        } catch (Exception e) {
-            logger.error("Error applying coupon: {}", e.getMessage(), e);
-        }
-        
-        return cartTotal;
+        // Coupon functionality not available - CouponDAO doesn't exist
+        return calculateCartTotal(userId);
     }
 
     @Override
@@ -270,9 +241,7 @@ public class CartServiceImpl implements CartService {
         }
 
         try {
-            cacheService.remove(CacheKey.userCart(userId));
             boolean result = cartDAO.clearCartByUserId(userId);
-            cacheService.remove(CacheKey.userCart(userId));
             return result;
         } catch (Exception e) {
             logger.error("Error clearing cart: {}", e.getMessage(), e);
@@ -317,41 +286,5 @@ public class CartServiceImpl implements CartService {
             }
         }
         return null;
-    }
-
-    private boolean isCouponValid(Coupon coupon, double cartTotal) {
-        if (coupon == null || !coupon.isActive()) {
-            return false;
-        }
-
-        // Check expiration
-        if (coupon.getValidUntil() != null && coupon.getValidUntil().before(new java.util.Date())) {
-            return false;
-        }
-
-        // Check minimum order amount
-        if (coupon.getMinimumOrderAmount() > 0 && cartTotal < coupon.getMinimumOrderAmount()) {
-            return false;
-        }
-
-        // Check usage limits
-        if (coupon.getUsageLimit() != null && coupon.getUsageCount() >= coupon.getUsageLimit()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private double calculateDiscount(double cartTotal, Coupon coupon) {
-        if ("percentage".equalsIgnoreCase(coupon.getDiscountType())) {
-            double discount = cartTotal * (coupon.getDiscountValue() / 100.0);
-            // Apply maximum discount limit if set
-            if (coupon.getMaximumDiscountAmount() != null && discount > coupon.getMaximumDiscountAmount()) {
-                discount = coupon.getMaximumDiscountAmount();
-            }
-            return discount;
-        } else {
-            return Math.min(coupon.getDiscountValue(), cartTotal);
-        }
     }
 }

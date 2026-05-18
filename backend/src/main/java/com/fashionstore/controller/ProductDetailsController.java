@@ -2,13 +2,11 @@ package com.fashionstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fashionstore.dao.ProductDAO;
-import com.fashionstore.daoimpl.ProductDAOImpl;
-import com.fashionstore.dao.ReviewDAO;
-import com.fashionstore.daoimpl.ReviewDAOImpl;
+import com.fashionstore.registry.ServiceRegistry;
 import com.fashionstore.model.Product;
-import com.fashionstore.model.Review;
-import com.fashionstore.service.RecommendationService;
+import com.fashionstore.model.ProductReview;
+import com.fashionstore.service.ProductService;
+import com.fashionstore.service.ProductReviewService;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
@@ -25,15 +23,14 @@ public class ProductDetailsController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(ProductDetailsController.class);
 
-    private ProductDAO productDAO;
-    private ReviewDAO reviewDAO;
-    private RecommendationService recommendationService;
+    private ProductService productService;
+    private ProductReviewService productReviewService;
 
     @Override
     public void init() {
-        productDAO = new ProductDAOImpl();
-        reviewDAO = new ReviewDAOImpl();
-        recommendationService = new RecommendationService();
+        ServiceRegistry registry = ServiceRegistry.getInstance();
+        productService = registry.getProductService();
+        productReviewService = registry.getProductReviewService();
     }
 
     @Override
@@ -55,7 +52,7 @@ public class ProductDetailsController extends HttpServlet {
                 return;
             }
 
-            Product product = productDAO.getProductById(productId);
+            Product product = productService.getProductById(productId);
             if (product == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
@@ -82,14 +79,13 @@ public class ProductDetailsController extends HttpServlet {
             request.setAttribute("product", product);
 
             // Fetch Reviews
-            List<Review> reviews = reviewDAO.getReviewsByProductId(productId);
-            double avgRating = reviewDAO.getAverageRating(productId);
-            int reviewCount = reviewDAO.getReviewCount(productId);
+            List<ProductReview> reviews = productReviewService.getReviewsByProductId(productId);
+            double avgRating = productReviewService.getAverageRating(productId);
+            int reviewCount = reviews != null ? reviews.size() : 0;
 
             request.setAttribute("reviews", reviews);
             request.setAttribute("avgRating", avgRating);
             request.setAttribute("reviewCount", reviewCount);
-            request.setAttribute("relatedProducts", recommendationService.getRelatedProducts(productId, 4));
 
             request.getRequestDispatcher("/WEB-INF/views/product-details.jsp")
                     .forward(request, response);

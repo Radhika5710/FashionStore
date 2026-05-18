@@ -33,54 +33,60 @@ public class CartDAOImpl implements CartDAO {
                 logger.error("Failed to get database connection for cart operation");
                 return 0;
             }
-            
-            // Disable auto-commit for transaction consistency
-            con.setAutoCommit(false);
-            
-            try (PreparedStatement checkPs = con.prepareStatement(checkSql)) {
-                checkPs.setInt(1, item.getUserId());
-                checkPs.setInt(2, item.getProductId());
-                checkPs.setString(3, item.getSizeLabel() != null ? item.getSizeLabel() : "M");
-                
-                try (ResultSet rs = checkPs.executeQuery()) {
-                    if (rs.next()) {
-                        int existingId = rs.getInt("cart_item_id");
-                        int currentQuantity = rs.getInt("quantity");
-                        
-                        // Prevent excessive quantities
-                        int newQuantity = Math.min(currentQuantity + item.getQuantity(), 100);
-                        
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
-                            updatePs.setInt(1, item.getQuantity());
-                            updatePs.setInt(2, existingId);
-                            int result = updatePs.executeUpdate();
-                            con.commit();
-                            return result;
-                        }
-                    } else {
-                        try (PreparedStatement insertPs = con.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-                            insertPs.setInt(1, item.getUserId());
-                            insertPs.setInt(2, item.getProductId());
-                            insertPs.setString(3, item.getSizeLabel() != null ? item.getSizeLabel() : "M");
-                            insertPs.setInt(4, item.getQuantity());
-                            
-                            int result = insertPs.executeUpdate();
-                            con.commit();
-                            
-                            if (result > 0) {
-                                try (ResultSet generatedKeys = insertPs.getGeneratedKeys()) {
-                                    if (generatedKeys.next()) {
-                                        return generatedKeys.getInt(1);
+
+            boolean originalAutoCommit = con.getAutoCommit();
+
+            try {
+                // Disable auto-commit for transaction consistency
+                con.setAutoCommit(false);
+
+                try (PreparedStatement checkPs = con.prepareStatement(checkSql)) {
+                    checkPs.setInt(1, item.getUserId());
+                    checkPs.setInt(2, item.getProductId());
+                    checkPs.setString(3, item.getSizeLabel() != null ? item.getSizeLabel() : "M");
+
+                    try (ResultSet rs = checkPs.executeQuery()) {
+                        if (rs.next()) {
+                            int existingId = rs.getInt("cart_item_id");
+                            int currentQuantity = rs.getInt("quantity");
+
+                            // Prevent excessive quantities
+                            int newQuantity = Math.min(currentQuantity + item.getQuantity(), 100);
+
+                            try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
+                                updatePs.setInt(1, item.getQuantity());
+                                updatePs.setInt(2, existingId);
+                                int result = updatePs.executeUpdate();
+                                con.commit();
+                                return result;
+                            }
+                        } else {
+                            try (PreparedStatement insertPs = con.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                                insertPs.setInt(1, item.getUserId());
+                                insertPs.setInt(2, item.getProductId());
+                                insertPs.setString(3, item.getSizeLabel() != null ? item.getSizeLabel() : "M");
+                                insertPs.setInt(4, item.getQuantity());
+
+                                int result = insertPs.executeUpdate();
+                                con.commit();
+
+                                if (result > 0) {
+                                    try (ResultSet generatedKeys = insertPs.getGeneratedKeys()) {
+                                        if (generatedKeys.next()) {
+                                            return generatedKeys.getInt(1);
+                                        }
                                     }
                                 }
+                                return result;
                             }
-                            return result;
                         }
                     }
                 }
             } catch (Exception e) {
                 con.rollback();
                 throw e;
+            } finally {
+                con.setAutoCommit(originalAutoCommit);
             }
         } catch (Exception e) {
             logger.error("Error adding to cart for user {}: {}", item.getUserId(), e.getMessage(), e);

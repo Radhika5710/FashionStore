@@ -1,8 +1,18 @@
-import apiClient from '../core/api/client.js';
+/**
+ * Admin API Facade
+ * 
+ * Re-exports the centralized admin API client from core/api/client.js
+ * Provides domain-specific API helpers for admin operations
+ * 
+ * IMPORTANT: This is for ADMIN APIs ONLY using JWT authentication.
+ * DO NOT use this for customer/MVC APIs.
+ */
+
+import adminApiClient from '../core/api/client.js';
 import { unwrapList, unwrapOne, unwrap } from '../core/api/index.js';
 
 // Re-export the centralized client for backward compatibility
-const api = apiClient;
+const api = adminApiClient;
 
 // Domain-specific helpers
 export const AuthApi = {

@@ -2,10 +2,10 @@ package com.fashionstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fashionstore.dao.ReviewDAO;
-import com.fashionstore.daoimpl.ReviewDAOImpl;
-import com.fashionstore.model.Review;
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.model.ProductReview;
 import com.fashionstore.model.User;
+import com.fashionstore.service.ProductReviewService;
 import com.fashionstore.util.JsonUtil;
 
 import jakarta.servlet.ServletException;
@@ -24,11 +24,11 @@ public class ReviewController extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(ReviewController.class);
-    private ReviewDAO reviewDAO;
+    private ProductReviewService productReviewService;
 
     @Override
     public void init() {
-        reviewDAO = new ReviewDAOImpl();
+        productReviewService = ServiceRegistry.getInstance().getProductReviewService();
     }
 
     @Override
@@ -55,8 +55,17 @@ public class ReviewController extends HttpServlet {
             int productId;
             int rating;
             try {
-                productId = Integer.parseInt(request.getParameter("productId"));
-                rating = Integer.parseInt(request.getParameter("rating"));
+                String productIdStr = request.getParameter("productId");
+                String ratingStr = request.getParameter("rating");
+                if (productIdStr == null || ratingStr == null) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    map.put("success", false);
+                    map.put("message", "productId and rating are required");
+                    response.getWriter().write(JsonUtil.toJson(map));
+                    return;
+                }
+                productId = Integer.parseInt(productIdStr);
+                rating = Integer.parseInt(ratingStr);
             } catch (NumberFormatException e) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 map.put("success", false);
@@ -80,13 +89,13 @@ public class ReviewController extends HttpServlet {
                 return;
             }
 
-            Review review = new Review();
+            ProductReview review = new ProductReview();
             review.setUserId(user.getUserId());
             review.setProductId(productId);
             review.setRating(rating);
             review.setComment(comment);
 
-            boolean added = reviewDAO.addReview(review);
+            boolean added = productReviewService.createReview(review);
 
             if (added) {
                 map.put("success", true);

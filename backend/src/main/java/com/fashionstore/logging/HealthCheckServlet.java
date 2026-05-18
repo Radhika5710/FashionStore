@@ -25,11 +25,9 @@ import java.util.Map;
 public class HealthCheckServlet extends HttpServlet {
 
     private static final Logger logger = LoggerFactory.getLogger(HealthCheckServlet.class);
-    private MetricsCollector metricsCollector;
     
     @Override
     public void init() throws ServletException {
-        metricsCollector = MetricsCollector.getInstance();
         logger.info("Health check servlet initialized");
     }
     
@@ -79,18 +77,6 @@ public class HealthCheckServlet extends HttpServlet {
         
         // Check system resources
         checkSystemResources(status);
-        
-        // Check application metrics
-        checkApplicationMetrics(status);
-        
-        // Check database connectivity (simplified)
-        checkDatabaseConnectivity(status);
-        
-        // Check cache connectivity (simplified)
-        checkCacheConnectivity(status);
-        
-        // Check external services (simplified)
-        checkExternalServices(status);
         
         // Determine overall health
         status.calculateOverallHealth();
@@ -149,112 +135,6 @@ public class HealthCheckServlet extends HttpServlet {
             
         } catch (Exception e) {
             status.addIssue("Failed to check system resources: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Check application metrics
-     */
-    private void checkApplicationMetrics(HealthStatus status) {
-        try {
-            // Check error rates
-            long totalRequests = metricsCollector.getCounter("http_requests_total");
-            long failedRequests = metricsCollector.getCounter("http_requests_total{status=\"4xx\"}") + 
-                                 metricsCollector.getCounter("http_requests_total{status=\"5xx\"}");
-            
-            if (totalRequests > 0) {
-                double errorRate = (double) failedRequests / totalRequests * 100;
-                status.addMetric("error_rate_percent", errorRate);
-                
-                if (errorRate > 5) {
-                    status.addIssue("High error rate: " + String.format("%.1f%%", errorRate));
-                }
-            }
-            
-            // Check authentication failures
-            long authFailures = metricsCollector.getCounter("authentication_failed");
-            if (authFailures > 100) { // Threshold for suspicious activity
-                status.addIssue("High authentication failures: " + authFailures);
-            }
-            
-            // Check payment failures
-            long paymentFailures = metricsCollector.getCounter("payment_failed");
-            if (paymentFailures > 50) { // Threshold for payment issues
-                status.addIssue("High payment failures: " + paymentFailures);
-            }
-            
-        } catch (Exception e) {
-            status.addIssue("Failed to check application metrics: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Check database connectivity (simplified)
-     */
-    private void checkDatabaseConnectivity(HealthStatus status) {
-        try {
-            // In a real implementation, this would check actual database connectivity
-            // For now, we'll simulate a basic check
-            long dbOperations = metricsCollector.getCounter("database_operations");
-            long dbErrors = metricsCollector.getCounter("database_errors");
-            
-            if (dbOperations > 0) {
-                double dbErrorRate = (double) dbErrors / dbOperations * 100;
-                status.addMetric("database_error_rate_percent", dbErrorRate);
-                
-                if (dbErrorRate > 1) {
-                    status.addIssue("High database error rate: " + String.format("%.1f%%", dbErrorRate));
-                }
-            }
-            
-        } catch (Exception e) {
-            status.addIssue("Failed to check database connectivity: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Check cache connectivity (simplified)
-     */
-    private void checkCacheConnectivity(HealthStatus status) {
-        try {
-            // In a real implementation, this would check actual cache connectivity
-            long cacheOperations = metricsCollector.getCounter("cache_operations");
-            long cacheHits = metricsCollector.getCounter("cache_hits");
-            
-            if (cacheOperations > 0) {
-                double cacheHitRate = (double) cacheHits / cacheOperations * 100;
-                status.addMetric("cache_hit_rate_percent", cacheHitRate);
-                
-                if (cacheHitRate < 50) {
-                    status.addIssue("Low cache hit rate: " + String.format("%.1f%%", cacheHitRate));
-                }
-            }
-            
-        } catch (Exception e) {
-            status.addIssue("Failed to check cache connectivity: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Check external services (simplified)
-     */
-    private void checkExternalServices(HealthStatus status) {
-        try {
-            // Check payment service health
-            long paymentOperations = metricsCollector.getCounter("payment_total");
-            long paymentErrors = metricsCollector.getCounter("payment_failed");
-            
-            if (paymentOperations > 0) {
-                double paymentErrorRate = (double) paymentErrors / paymentOperations * 100;
-                status.addMetric("payment_service_error_rate_percent", paymentErrorRate);
-                
-                if (paymentErrorRate > 2) {
-                    status.addIssue("Payment service issues detected");
-                }
-            }
-            
-        } catch (Exception e) {
-            status.addIssue("Failed to check external services: " + e.getMessage());
         }
     }
     

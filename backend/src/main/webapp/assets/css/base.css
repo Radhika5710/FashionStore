@@ -1,7 +1,3 @@
-* {
-    box-sizing: border-box;
-}
-
 html,
 body {
     margin: 0;
@@ -47,15 +43,6 @@ body {
 /* ============================================
    GLOBAL RESPONSIVE MEDIA SCALING
    ============================================ */
-
-img,
-picture,
-video,
-canvas {
-    max-width: 100%;
-    display: block;
-    height: auto;
-}
 
 svg {
    display: block;
@@ -350,18 +337,6 @@ button, a[role="button"], input[type="button"], input[type="submit"] {
     min-height: 40vh;
     max-width: 100%;
     overflow-x: hidden;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
 }
 
 .breadcrumb {

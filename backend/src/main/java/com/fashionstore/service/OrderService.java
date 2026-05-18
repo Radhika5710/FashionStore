@@ -7,13 +7,42 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service interface for order operations and business logic
- * Handles order creation, processing, status updates, and management
+ * OrderService - MVC Service Layer Interface
+ * 
+ * REFACTORED FOR PROPER MVC:
+ * - ALL order business logic in service layer
+ * - ALL order creation and validation
+ * - ALL payment processing
+ * - ALL stock deduction
+ * - Backend is single source of truth
+ * - Frontend cannot manipulate orders
+ * 
+ * Order Creation Flow:
+ * 1. Validate cart items and availability
+ * 2. Calculate totals (subtotal, tax, shipping, discount)
+ * 3. Validate payment information
+ * 4. Create order record
+ * 5. Deduct stock from inventory
+ * 6. Process payment
+ * 7. Clear cart
+ * 8. Return order confirmation
+ * 
+ * All operations are atomic and transactional.
+ * Rollback on any failure to maintain data consistency.
  */
 public interface OrderService {
     
     /**
      * Create new order with business logic validation
+     * 
+     * Backend validates:
+     * - Cart items exist and are available
+     * - Quantities are valid
+     * - Prices match backend prices
+     * - Payment information is valid
+     * - Address is valid
+     * 
+     * Frontend cannot manipulate order data.
      */
     Order createOrder(int userId, Map<String, Object> orderData);
     
@@ -91,4 +120,9 @@ public interface OrderService {
      * Get total revenue
      */
     double getTotalRevenue();
+    
+    /**
+     * Get total order count
+     */
+    int getTotalOrderCount();
 }

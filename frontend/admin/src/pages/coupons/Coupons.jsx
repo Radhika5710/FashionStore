@@ -1,12 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash2, Save, X, Percent } from 'lucide-react';
 import { CouponsApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { useDataTable } from '../../hooks/useDataTable.js';
 
 export default function Coupons() {
   const { addToast } = useToast();
-  const [coupons, setCoupons] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     code: '',
@@ -17,32 +16,18 @@ export default function Coupons() {
     expiresAt: '',
   });
   const [saving, setSaving] = useState(false);
-  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    fetchCoupons();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const fetchCoupons = async () => {
-    try {
-      const data = await CouponsApi.list();
-      if (mountedRef.current) {
-        setCoupons(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      if (mountedRef.current) {
-        addToast('Failed to load coupons', 'error');
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-    }
-  };
+  const {
+    items: coupons,
+    setItems: setCoupons,
+    loading,
+    handleDelete,
+  } = useDataTable(CouponsApi.list, CouponsApi.delete, {
+    deleteConfirmMessage: 'Delete this coupon?',
+    deleteSuccessMessage: 'Coupon deleted',
+    deleteErrorMessage: 'Delete failed',
+    loadErrorMessage: 'Failed to load coupons',
+  });
 
   const handleSave = async () => {
     if (!form.code.trim() || !form.discountValue) return;
@@ -63,7 +48,9 @@ export default function Coupons() {
       }
       setForm({ code: '', discountType: 'percentage', discountValue: '', minOrder: '', maxUses: '', expiresAt: '' });
       setEditingId(null);
-      fetchCoupons();
+      // Refresh data
+      const data = await CouponsApi.list();
+      setCoupons(Array.isArray(data) ? data : []);
     } catch {
       addToast('Save failed', 'error');
     } finally {
@@ -81,17 +68,6 @@ export default function Coupons() {
       maxUses: c.maxUses ?? '',
       expiresAt: c.expiresAt ? c.expiresAt.slice(0, 10) : '',
     });
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this coupon?')) return;
-    try {
-      await CouponsApi.delete(id);
-      setCoupons((prev) => prev.filter((c) => c.id !== id));
-      addToast('Coupon deleted', 'success');
-    } catch {
-      addToast('Delete failed', 'error');
-    }
   };
 
   return (

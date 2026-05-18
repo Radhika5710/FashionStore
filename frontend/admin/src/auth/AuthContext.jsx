@@ -7,12 +7,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const mountedRef = useRef(true);
+  const MAX_RETRIES = 3;
 
   // On mount, check whether an admin session already exists (page refresh case).
   useEffect(() => {
     mountedRef.current = true;
-    (async () => {
+    
+    const checkAuth = async () => {
       try {
         setError(null);
         const response = await AuthApi.me();
@@ -22,6 +25,7 @@ export function AuthProvider({ children }) {
           if (!response || !response.data) {
             console.warn('Invalid response from AuthApi.me()');
             setUser(null);
+            setLoading(false);
             return;
           }
           
@@ -30,9 +34,11 @@ export function AuthProvider({ children }) {
           // Check for success flag and user data
           if (data?.success && data.data) {
             setUser(data.data);
+            setRetryCount(0); // Reset retry count on success
           } else if (data?.data) {
             // Some backends may not include success flag
             setUser(data.data);
+            setRetryCount(0);
           } else {
             setUser(null);
           }
@@ -44,6 +50,17 @@ export function AuthProvider({ children }) {
           if (err.response?.status !== 401) {
             console.error('Error checking auth status:', err.message);
             setError(err.message);
+            
+            // Retry with exponential backoff for non-401 errors
+            if (retryCount < MAX_RETRIES) {
+              const delay = Math.pow(2, retryCount) * 1000;
+              setTimeout(() => {
+                if (mountedRef.current) {
+                  setRetryCount(c => c + 1);
+                }
+              }, delay);
+              return; // Don't set loading false yet, will retry
+            }
           }
           setUser(null);
         }
@@ -52,12 +69,14 @@ export function AuthProvider({ children }) {
           setLoading(false);
         }
       }
-    })();
+    };
+    
+    checkAuth();
     
     return () => {
       mountedRef.current = false;
     };
-  }, []);
+  }, [retryCount]);
 
   // Listen for 401 errors from API interceptor
   useEffect(() => {
@@ -65,6 +84,7 @@ export function AuthProvider({ children }) {
       if (mountedRef.current) {
         setUser(null);
         setError(null);
+        setRetryCount(0);
       }
     };
     
@@ -92,10 +112,12 @@ export function AuthProvider({ children }) {
       // Check for success and user data
       if (data?.success && data.data) {
         setUser(data.data);
+        setRetryCount(0);
         return { ok: true };
       } else if (data?.data) {
         // Some backends may not include success flag
         setUser(data.data);
+        setRetryCount(0);
         return { ok: true };
       }
       
@@ -122,6 +144,7 @@ export function AuthProvider({ children }) {
       // Always clear local state
       setUser(null);
       setError(null);
+      setRetryCount(0);
     }
   }, []);
 

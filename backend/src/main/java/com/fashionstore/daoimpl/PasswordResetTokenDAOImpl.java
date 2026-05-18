@@ -46,7 +46,7 @@ public class PasswordResetTokenDAOImpl implements PasswordResetTokenDAO {
 
     @Override
     public PasswordResetToken getTokenByToken(String token) {
-        String sql = "SELECT * FROM password_reset_tokens WHERE token = ?";
+        String sql = "SELECT token_id, user_id, token, expires_at, used, created_at FROM password_reset_tokens WHERE token = ?";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -66,7 +66,7 @@ public class PasswordResetTokenDAOImpl implements PasswordResetTokenDAO {
 
     @Override
     public PasswordResetToken getTokenByUserId(int userId) {
-        String sql = "SELECT * FROM password_reset_tokens WHERE user_id = ? AND used = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1";
+        String sql = "SELECT token_id, user_id, token, expires_at, used, created_at FROM password_reset_tokens WHERE user_id = ? AND used = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

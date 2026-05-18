@@ -2,11 +2,10 @@ package com.fashionstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fashionstore.dao.OrderDAO;
-import com.fashionstore.daoimpl.OrderDAOImpl;
-import com.fashionstore.daoimpl.OrderItemDAOImpl;
 import com.fashionstore.model.Order;
 import com.fashionstore.model.User;
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.service.OrderService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,13 +24,12 @@ public class OrderController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
-    private OrderDAO orderDAO;
-    private OrderItemDAOImpl orderItemDAO;
+    private OrderService orderService;
 
     @Override
     public void init() {
-        orderDAO = new OrderDAOImpl();
-        orderItemDAO = new OrderItemDAOImpl();
+        ServiceRegistry registry = ServiceRegistry.getInstance();
+        orderService = registry.getOrderService();
     }
 
     @Override
@@ -52,10 +50,10 @@ public class OrderController extends HttpServlet {
                 orders = Collections.emptyList();
                 request.setAttribute("error", "Invalid user session. Please login again.");
             } else {
-                orders = orderDAO.getOrdersByUserId(userId);
+                orders = orderService.getOrdersForUser(userId);
                 if (orders != null) {
                     // Batch load order items to avoid N+1 queries
-                    orderItemDAO.batchLoadOrderItems(orders);
+                    orderService.batchLoadOrderItems(orders);
                 } else {
                     orders = Collections.emptyList();
                 }

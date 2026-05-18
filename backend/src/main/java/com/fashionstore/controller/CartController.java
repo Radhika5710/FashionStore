@@ -2,14 +2,13 @@ package com.fashionstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fashionstore.dao.SavedItemDAO;
-import com.fashionstore.daoimpl.SavedItemDAOImpl;
 import com.fashionstore.model.CartItem;
 import com.fashionstore.model.SavedItem;
 import com.fashionstore.model.User;
 import com.fashionstore.security.CSRFProtection;
+import com.fashionstore.registry.ServiceRegistry;
 import com.fashionstore.service.CartService;
-import com.fashionstore.serviceimpl.CartServiceImpl;
+import com.fashionstore.service.SavedItemService;
 import com.fashionstore.util.JsonUtil;
 import com.fashionstore.util.ValidationUtil;
 
@@ -23,6 +22,29 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * CartController - MVC Architecture
+ * 
+ * REFACTORED FOR PROPER MVC:
+ * - Backend handles ALL cart operations
+ * - Backend calculates ALL cart totals
+ * - Backend validates ALL cart items
+ * - Frontend only provides AJAX triggers
+ * - Frontend only displays backend-calculated totals
+ * - No frontend cart calculations
+ * 
+ * Request Flow:
+ * GET /cart → Load cart items, calculate totals, display cart.jsp
+ * POST /cart?action=add → Add item, recalculate totals, return JSON
+ * POST /cart?action=remove → Remove item, recalculate totals, return JSON
+ * POST /cart?action=update → Update quantity, recalculate totals, return JSON
+ * 
+ * Response includes:
+ * - Updated cart items
+ * - Recalculated cart total
+ * - Updated cart item count
+ * - Error messages if any
+ */
 @WebServlet("/cart")
 public class CartController extends HttpServlet {
 
@@ -30,12 +52,13 @@ public class CartController extends HttpServlet {
     private static final Logger logger = LoggerFactory.getLogger(CartController.class);
 
     private CartService cartService;
-    private SavedItemDAO savedItemDAO;
+    private SavedItemService savedItemService;
 
     @Override
     public void init() {
-        cartService = new CartServiceImpl();
-        savedItemDAO = new SavedItemDAOImpl();
+        ServiceRegistry registry = ServiceRegistry.getInstance();
+        cartService = registry.getCartService();
+        savedItemService = registry.getSavedItemService();
     }
 
     @Override
@@ -242,7 +265,7 @@ public class CartController extends HttpServlet {
                 
                 if (cartItem != null) {
                     SavedItem savedItem = new SavedItem(userId, cartItem.getProductId(), cartItem.getSizeLabel());
-                    savedItemDAO.saveItem(savedItem);
+                    savedItemService.saveItem(savedItem);
                     cartService.removeCartItem(cartItemId, userId);
                     syncSessionCart(session, userId);
                 }

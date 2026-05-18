@@ -81,11 +81,8 @@ public class FileUploadSecurityFilter implements Filter {
                 }
             } else {
                 // Check authentication for non-admin uploads
-                SessionSecurityUtil.SessionValidationResult sessionResult = 
-                    SessionSecurityUtil.validateSession(request);
-                
-                if (!sessionResult.isValid()) {
-                    logger.warn("File upload attempted without valid session: {}", path);
+                if (!com.fashionstore.util.SecurityUtil.isAuthenticatedCustomer(request)) {
+                    logger.warn("File upload attempted without valid customer session: {}", path);
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
                     return false;
                 }

@@ -53,6 +53,10 @@ public class EmailService {
         return sendEmail(to, subject, content, true);
     }
     
+    public boolean sendNewsletterEmail(String to, String subject, String content) {
+        return sendEmail(to, subject, content, true);
+    }
+
     public boolean sendOrderConfirmationEmail(String to, String username, int orderId, double total) {
         String subject = "Order Confirmation - Order #" + orderId;
         String content = buildOrderConfirmationEmail(username, orderId, total);

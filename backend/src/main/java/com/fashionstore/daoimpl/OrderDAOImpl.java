@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class OrderDAOImpl implements OrderDAO {
 
@@ -58,16 +60,24 @@ public class OrderDAOImpl implements OrderDAO {
     // separate tax/shipping/discount lines. payment_status defaults to 'pending' in DB.
     @Override
     public int createOrder(Order order) {
-
+        try (Connection con = DBConnection.getConnection()) {
+            return createOrder(con, order);
+        } catch (Exception e) {
+            logger.error("Error in createOrder for user {}: {}", order.getUserId(), e.getMessage(), e);
+            return 0;
+        }
+    }
+    
+    @Override
+    public int createOrder(Connection conn, Order order) throws Exception {
         String sql = "INSERT INTO orders " +
                      "(user_id, subtotal, total_amount, full_name, address, city, state, zip, phone, payment_method, status, payment_status) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        java.math.BigDecimal totalDec = java.math.BigDecimal.valueOf(order.getTotalAmount())
-                .setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal totalDec = BigDecimal.valueOf(order.getTotalAmount())
+                .setScale(2, RoundingMode.HALF_UP);
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, order.getUserId());
             ps.setBigDecimal(2, totalDec);
@@ -91,9 +101,6 @@ public class OrderDAOImpl implements OrderDAO {
                     }
                 }
             }
-            // createOrder already wraps generated-keys ResultSet correctly.
-        } catch (Exception e) {
-            logger.error("Error in createOrder for user {}: {}", order.getUserId(), e.getMessage(), e);
         }
 
         return 0;

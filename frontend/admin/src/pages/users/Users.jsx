@@ -1,57 +1,40 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useState } from 'react';
 import { Search, Shield, Ban, RotateCcw, Trash2 } from 'lucide-react';
 import DataTable from '../../components/DataTable.jsx';
 import { UsersApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { useDataTableWithFilter } from '../../hooks/useDataTable.js';
 
 const ROLE_OPTIONS = ['all', 'admin', 'user', 'manager'];
 
 export default function Users() {
   const { addToast } = useToast();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
   const [actionId, setActionId] = useState(null);
-  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    (async () => {
-      try {
-        const data = await UsersApi.list();
-        if (mountedRef.current) {
-          setUsers(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        if (mountedRef.current) {
-          addToast('Failed to load users', 'error');
-        }
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
+  const {
+    items: users,
+    setItems: setUsers,
+    loading,
+    search,
+    setSearch,
+    statusFilter: roleFilter,
+    setStatusFilter: setRoleFilter,
+    filtered,
+  } = useDataTableWithFilter(UsersApi.list, null, {
+    statusOptions: ROLE_OPTIONS,
+    filterKey: 'role',
+    loadErrorMessage: 'Failed to load users',
+    filterFn: (rows, search) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        return rows.filter((u) =>
+          (u.fullName || u.name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q)
+        );
       }
-    })();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, [addToast]);
-
-  const filtered = useMemo(() => {
-    let rows = users;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      rows = rows.filter((u) =>
-        (u.fullName || u.name || '').toLowerCase().includes(q) ||
-        (u.email || '').toLowerCase().includes(q)
-      );
-    }
-    if (roleFilter !== 'all') {
-      rows = rows.filter((u) => (u.role || 'user') === roleFilter);
-    }
-    return rows;
-  }, [users, search, roleFilter]);
+      return rows;
+    },
+  });
 
   const updateUser = async (id, patch, msg) => {
     setActionId(id);

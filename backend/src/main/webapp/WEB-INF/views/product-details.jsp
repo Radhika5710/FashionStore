@@ -1,6 +1,40 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="com.fashionstore.model.Product" %>
 
+<%--
+PRODUCT DETAILS PAGE - MVC ARCHITECTURE
+
+REFACTORED FOR PROPER MVC:
+- Backend (ProductController) loads product by ID
+- Backend provides product data via request attributes
+- JSP displays backend-provided product (NO calculations)
+- JavaScript only handles UI interactions (gallery, reviews, cart)
+- NO frontend price calculations
+- NO frontend stock manipulations
+- NO frontend discount calculations
+- Backend is single source of truth
+
+Data Flow:
+1. Frontend requests product by ID
+2. ProductController loads product from ProductService
+3. ProductService retrieves from ProductDAO
+4. JSP displays backend product data
+5. JavaScript handles UI interactions only
+
+Price Handling:
+- Price from backend database
+- Discount from backend database
+- Discounted price calculated on backend
+- JSP displays backend-calculated prices
+- Frontend cannot modify prices
+
+Stock Handling:
+- Stock level from backend database
+- Stock validation on backend
+- JSP displays backend stock level
+- Frontend cannot modify stock
+--%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

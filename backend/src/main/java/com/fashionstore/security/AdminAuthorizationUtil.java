@@ -4,14 +4,71 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Admin Authorization Utilities
- * Provides role-based access control for admin operations
+ * AdminAuthorizationUtil - Hybrid MVC + React Admin Architecture
+ * 
+ * ARCHITECTURE OVERVIEW:
+ * =====================
+ * - Customer MVC Frontend: Session-based authentication
+ *   * JSP pages rendered server-side
+ *   * Session authentication via HttpSession
+ *   * CSRF protection for form submissions
+ *   * Routes: /login, /register, /products, /cart, /checkout, etc.
+ * 
+ * - React Admin Dashboard: JWT-based authentication
+ *   * Separate React frontend
+ *   * JWT token-based authentication
+ *   * No HttpSession required
+ *   * Routes: /api/admin/*
+ * 
+ * AUTHORIZATION FLOW:
+ * ===================
+ * 1. Admin user logs in via /api/admin/login
+ * 2. Backend validates credentials
+ * 3. Backend generates JWT token
+ * 4. Frontend stores JWT in localStorage/sessionStorage
+ * 5. Frontend includes JWT in Authorization header for API calls
+ * 6. JWTAuthenticationFilter validates JWT
+ * 7. AdminAuthorizationUtil checks admin role
+ * 8. Request proceeds to controller
+ * 
+ * ROLE-BASED ACCESS CONTROL:
+ * ==========================
+ * - admin: Standard admin role with product, order, user management
+ * - super_admin: Extended permissions including system, audit, security
+ * - manager: Manager role with limited permissions
+ * 
+ * ADMIN PERMISSIONS:
+ * ==================
+ * Standard Admin:
+ * - dashboard: View admin dashboard
+ * - products: Manage products
+ * - orders: Manage orders
+ * - users: Manage users
+ * - categories: Manage categories
+ * - coupons: Manage coupons
+ * - settings: Manage settings
+ * - reports: View reports
+ * 
+ * Super Admin (includes all above plus):
+ * - system: System administration
+ * - audit: Audit trail access
+ * - security: Security settings
+ * - backup: Backup operations
+ * - restore: Restore operations
+ * 
+ * SECURITY GUARANTEES:
+ * ====================
+ * ✓ JWT validation prevents unauthorized access
+ * ✓ Role-based access control enforces permissions
+ * ✓ No session conflicts between customer and admin auth
+ * ✓ Admin APIs isolated from customer routes
+ * ✓ Audit logging for admin actions
+ * ✓ Sensitive operations require super_admin role
  */
 public class AdminAuthorizationUtil {
     private static final Logger logger = LoggerFactory.getLogger(AdminAuthorizationUtil.class);
@@ -33,70 +90,36 @@ public class AdminAuthorizationUtil {
     ));
     
     /**
-     * Check if user is admin
-     * This method ONLY checks adminAuth attribute - session validation delegated to SessionSecurityUtil
+     * Check if user is admin using JWT
      */
     public static boolean isAdmin(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return false;
-        }
-        
-        Object adminAuth = session.getAttribute("adminAuth");
-        if (adminAuth == null) {
-            return false;
-        }
-        
-        return true;
+        AuthContext authContext = AuthContext.fromRequest(request);
+        return authContext.isAuthenticated() && authContext.isAdmin();
     }
     
     /**
-     * Check if user is super admin
+     * Check if user is super admin using JWT
      */
     public static boolean isSuperAdmin(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return false;
-        }
-        
-        Object adminAuth = session.getAttribute("adminAuth");
-        if (adminAuth == null) {
-            return false;
-        }
-        
-        // Check if user has super_admin role
-        // This would typically come from the user object in session
-        return true; // Simplified for this implementation
+        AuthContext authContext = AuthContext.fromRequest(request);
+        return authContext.isAuthenticated() && "super_admin".equals(authContext.getRole());
     }
     
     /**
-     * Check if user has admin role
+     * Check if user has admin role using JWT
      */
     public static boolean hasAdminRole(HttpServletRequest request, String role) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return false;
-        }
-        
-        Object adminAuth = session.getAttribute("adminAuth");
-        if (adminAuth == null) {
-            return false;
-        }
-        
-        return ADMIN_ROLES.contains(role.toLowerCase());
+        AuthContext authContext = AuthContext.fromRequest(request);
+        return authContext.isAuthenticated() && ADMIN_ROLES.contains(role.toLowerCase());
     }
     
     /**
-     * Check if user has permission
+     * Check if user has permission using JWT
      */
     public static boolean hasPermission(HttpServletRequest request, String permission) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return false;
-        }
+        AuthContext authContext = AuthContext.fromRequest(request);
         
-        Object adminAuth = session.getAttribute("adminAuth");
-        if (adminAuth == null) {
+        if (!authContext.isAuthenticated()) {
             return false;
         }
         
@@ -110,14 +133,14 @@ public class AdminAuthorizationUtil {
     }
     
     /**
-     * Check if user can access admin area
+     * Check if user can access admin area using JWT
      */
     public static boolean canAccessAdminArea(HttpServletRequest request) {
         return isAdmin(request);
     }
     
     /**
-     * Check if user can perform sensitive operation
+     * Check if user can perform sensitive operation using JWT
      */
     public static boolean canPerformSensitiveOperation(HttpServletRequest request, String operation) {
         if (!isAdmin(request)) {
@@ -134,54 +157,38 @@ public class AdminAuthorizationUtil {
     }
     
     /**
-     * Validate admin access - role-based authorization ONLY
-     * Session validation is delegated to SessionSecurityUtil (single source of truth)
-     * This method ONLY checks adminAuth and role - no session metadata validation
+     * Validate admin access using JWT - role-based authorization
      */
     public static AuthorizationResult validateAdminAccess(HttpServletRequest request) {
         AuthorizationResult result = new AuthorizationResult();
         String path = request.getRequestURI();
-        HttpSession session = request.getSession(false);
-        String sessionId = session != null ? session.getId() : "null";
-        String userId = (String) (session != null ? session.getAttribute("userId") : null);
         
-        // Check if user is authenticated (session existence check only)
-        if (session == null) {
+        AuthContext authContext = AuthContext.fromRequest(request);
+        
+        // Check if user is authenticated
+        if (!authContext.isAuthenticated()) {
             result.setAuthorized(false);
-            result.setReason("Not authenticated");
+            result.setReason("Not authenticated: " + authContext.getError());
+            logger.warn("validateAdminAccess failed: Not authenticated - Path: {}", path);
             return result;
         }
         
-        // Check if user has adminAuth attribute (role-based check only)
-        Object adminAuth = session.getAttribute("adminAuth");
-        if (adminAuth == null) {
+        // Check if user has admin role
+        if (!authContext.isAdmin()) {
             result.setAuthorized(false);
-            result.setReason("Not authorized as admin");
-            logger.warn("validateAdminAccess failed: adminAuth not in session - Path: {}, Session ID: {}", path, sessionId);
+            result.setReason("Not authorized as admin. Role: " + authContext.getRole());
+            logger.warn("validateAdminAccess failed: Not admin - Path: {}, Role: {}", path, authContext.getRole());
             return result;
         }
-        
-        // Check user role if available (role-based authorization)
-        String role = (String) session.getAttribute("role");
-        if (role != null && !ADMIN_ROLES.contains(role.toLowerCase())) {
-            result.setAuthorized(false);
-            result.setReason("Invalid admin role: " + role);
-            logger.warn("validateAdminAccess failed: Invalid admin role - Path: {}, Session ID: {}, Role: {}", 
-                path, sessionId, role);
-            return result;
-        }
-        
-        // Session validation (metadata, IP, user-agent) is delegated to SessionSecurityUtil
-        // This method ONLY handles role-based authorization
         
         result.setAuthorized(true);
-        result.setUserId(userId);
+        result.setUserId(authContext.getUserId());
         
         return result;
     }
     
     /**
-     * Validate permission for specific operation
+     * Validate permission for specific operation using JWT
      */
     public static AuthorizationResult validatePermission(HttpServletRequest request, String permission) {
         AuthorizationResult result = validateAdminAccess(request);
@@ -200,14 +207,14 @@ public class AdminAuthorizationUtil {
     }
     
     /**
-     * Log admin action for audit trail
-     * Uses SessionSecurityUtil.getClientIP() for consistent IP extraction
+     * Log admin action for audit trail using JWT
      */
     public static void logAdminAction(HttpServletRequest request, String action, String details) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            String userId = (String) session.getAttribute("userId");
-            String clientIP = SessionSecurityUtil.getClientIP(request);
+        AuthContext authContext = AuthContext.fromRequest(request);
+        
+        if (authContext.isAuthenticated()) {
+            String userId = authContext.getUserId();
+            String clientIP = authContext.getClientIP();
             
             logger.info("Admin Action - User: {}, Action: {}, Details: {}, IP: {}", 
                 userId, action, details, clientIP);

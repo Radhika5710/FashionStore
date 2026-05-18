@@ -123,4 +123,104 @@ test.describe('Responsive Layout Tests', () => {
       await expect(heroMedia).toBeVisible();
     });
   });
+
+  // RENDERING STABILITY TESTS
+  test.describe('Rendering Stability', () => {
+    test('should maintain layout on window resize', async ({ page }) => {
+      await page.goto('/');
+      
+      // Start with desktop
+      await page.setViewportSize(breakpoints.desktop);
+      await expect(page.locator('.fs-storefront-nav')).toBeVisible();
+      
+      // Resize to tablet
+      await page.setViewportSize(breakpoints.tablet);
+      await expect(page.locator('.fs-storefront-nav')).toBeVisible();
+      
+      // Resize to mobile
+      await page.setViewportSize(breakpoints.mobile);
+      await expect(page.locator('.fs-storefront-nav')).not.toBeVisible();
+      await expect(page.locator('.fs-mobile-nav')).toBeVisible();
+      
+      // Resize back to desktop
+      await page.setViewportSize(breakpoints.desktop);
+      await expect(page.locator('.fs-storefront-nav')).toBeVisible();
+      await expect(page.locator('.fs-mobile-nav')).not.toBeVisible();
+    });
+
+    test('should prevent layout shift on image load', async ({ page }) => {
+      await page.goto('/products');
+      
+      // Get initial grid dimensions
+      const grid = page.locator('.product-grid');
+      const initialBox = await grid.boundingBox();
+      
+      // Wait for images to load
+      await page.waitForLoadState('networkidle');
+      
+      // Check if layout shifted
+      const finalBox = await grid.boundingBox();
+      
+      // Allow small differences but prevent major shifts
+      const heightDiff = Math.abs(initialBox.height - finalBox.height);
+      expect(heightDiff).toBeLessThan(100);
+    });
+
+    test('should handle orientation change gracefully', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto('/');
+      
+      // Portrait mode
+      await expect(page.locator('.fs-mobile-nav')).toBeVisible();
+      
+      // Rotate to landscape
+      await page.setViewportSize({ width: 667, height: 375 });
+      
+      // Should still render without breaking
+      const body = page.locator('body');
+      await expect(body).toBeVisible();
+    });
+
+    test('should maintain scroll position on resize', async ({ page }) => {
+      await page.setViewportSize(breakpoints.desktop);
+      await page.goto('/products');
+      
+      // Scroll down
+      await page.evaluate(() => window.scrollTo(0, 500));
+      
+      // Resize
+      await page.setViewportSize(breakpoints.tablet);
+      
+      // Check scroll position is reasonable (not reset to 0)
+      const scrollY = await page.evaluate(() => window.scrollY);
+      expect(scrollY).toBeGreaterThan(0);
+    });
+
+    test('should prevent horizontal scroll on mobile', async ({ page }) => {
+      await page.setViewportSize(breakpoints.mobile);
+      await page.goto('/');
+      
+      // Check body width
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      
+      // Body should not exceed viewport
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 10);
+    });
+
+    test('should handle font loading gracefully', async ({ page }) => {
+      await page.goto('/');
+      
+      // Wait for fonts to load
+      await page.waitForLoadState('networkidle');
+      
+      // Check that text is visible
+      const heading = page.locator('h1, h2, h3').first();
+      await expect(heading).toBeVisible();
+      
+      // Check that text has reasonable font size
+      const fontSize = await heading.evaluate(el => window.getComputedStyle(el).fontSize);
+      expect(parseInt(fontSize)).toBeGreaterThan(0);
+    });
+  });
 });

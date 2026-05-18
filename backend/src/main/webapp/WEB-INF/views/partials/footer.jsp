@@ -24,18 +24,6 @@
         <div class="footer-support">
           <h4>Support</h4>
           <a href="<%= request.getContextPath() %>/login">Sign In / Account</a>
-          <a href="#">Shipping & Returns</a>
-          <a href="#">Size Guide</a>
-          <a href="#">Contact Us</a>
-        </div>
-
-        <div class="footer-newsletter">
-          <h4>Stay Updated</h4>
-          <p>Subscribe for exclusive offers, new arrivals, and editorial content.</p>
-          <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed!');">
-            <input type="email" placeholder="Email address" required>
-            <button type="submit">→</button>
-          </form>
         </div>
     </div>
   </div>
@@ -45,11 +33,6 @@
     <div class="footer-container footer-bottom-inner">
       <div class="footer-copyright">
         &copy; 2026 FashionStore. All rights reserved.
-      </div>
-      <div class="footer-legal">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Cookie Settings</a>
       </div>
     </div>
   </div>

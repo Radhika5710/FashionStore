@@ -16,11 +16,9 @@ public class UserService {
     }
 
     public int registerUser(User user) {
-        // Business logic: Hash password before saving
         String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
         user.setPassword(hashedPassword);
         
-        // Set default role if not provided
         String role = user.getRole();
         if (role == null || role.isBlank()) {
             role = "customer";
@@ -30,8 +28,14 @@ public class UserService {
         return userDAO.registerUser(user);
     }
 
-    public User loginUser(String email, String password) {
-        // Business logic: Verify password using BCrypt
+    public User validateAndLoginUser(String email, String password) throws IllegalArgumentException {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+        
         User user = userDAO.getUserByEmail(email);
         if (user != null && BCrypt.checkpw(password, user.getPassword())) {
             return user;
@@ -56,7 +60,6 @@ public class UserService {
     }
 
     public boolean changePassword(int userId, String newPassword) {
-        // Business logic: Hash new password
         String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         return userDAO.changePassword(userId, hashedPassword);
     }

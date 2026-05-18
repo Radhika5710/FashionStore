@@ -7,25 +7,35 @@ services:
     container_name: fashionstore-backend-dev
     restart: unless-stopped
     environment:
-      - FASHIONSTORE_PROFILE=development
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=fashionstore
-      - DB_USER=fashionstore
-      - DB_PASSWORD=Tarun@1605
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CSRF_ENABLED=false
-      - RATE_LIMIT_ENABLED=false
-      - QA_MODE=true
-      - LOG_LEVEL=DEBUG
+      - FASHIONSTORE_PROFILE=${ENVIRONMENT:-development}
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-fashionstore}
+      - DB_USER=${DB_USER:-fashionstore}
+      - DB_PASSWORD=${DB_PASSWORD:-Tarun@1605}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - CSRF_ENABLED=${CSRF_ENABLED:-false}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-false}
+      - QA_MODE=${QA_MODE:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEMO_MODE=${DEMO_MODE:-true}
+      - DEMO_HARDENING_MODE=${DEMO_HARDENING_MODE:-true}
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - fashionstore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Admin Frontend
   admin:
@@ -35,11 +45,18 @@ services:
     container_name: fashionstore-admin-dev
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "${ADMIN_PORT:-8081}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - fashionstore-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # Development MySQL
   mysql:
@@ -47,12 +64,17 @@ services:
     container_name: fashionstore-mysql-dev
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=Tarun@1605
-      - MYSQL_DATABASE=fashionstore
-      - MYSQL_USER=fashionstore
-      - MYSQL_PASSWORD=Tarun@1605
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-Tarun@1605}
+      - MYSQL_DATABASE=${DB_NAME:-fashionstore}
+      - MYSQL_USER=${DB_USER:-fashionstore}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-Tarun@1605}
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-Tarun@1605}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - fashionstore-network
 
@@ -61,9 +83,14 @@ services:
     image: redis:7-alpine
     container_name: fashionstore-redis-dev
     restart: unless-stopped
-    command: redis-server
+    command: ["sh", "-c", "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"]
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - fashionstore-network
 

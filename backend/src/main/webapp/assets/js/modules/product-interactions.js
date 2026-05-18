@@ -1,6 +1,13 @@
 /**
  * FashionStore - Product Interactions Module
  * Wishlist, reviews, quick view, and product-related interactions
+ * 
+ * REFACTORED FOR MVC ARCHITECTURE:
+ * - No product filtering or manipulation
+ * - Only handles UI interactions (wishlist, reviews, quick view)
+ * - All product data from backend (ProductController)
+ * - All AJAX calls to backend endpoints
+ * - No client-side product calculations or filtering
  */
 
 const FashionStoreProductInteractions = (function() {

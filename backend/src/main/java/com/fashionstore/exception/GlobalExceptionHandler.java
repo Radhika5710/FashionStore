@@ -217,7 +217,8 @@ public class GlobalExceptionHandler {
      * Generate error code for tracking
      */
     private static String generateErrorCode(ExceptionType exceptionType) {
-        String timestamp = String.valueOf(System.currentTimeMillis()).substring(-6);
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        timestamp = timestamp.length() >= 6 ? timestamp.substring(timestamp.length() - 6) : timestamp;
         return switch (exceptionType) {
             case VALIDATION_ERROR -> "VAL_" + timestamp;
             case AUTHENTICATION_ERROR -> "AUTH_" + timestamp;

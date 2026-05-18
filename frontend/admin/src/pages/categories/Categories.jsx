@@ -1,41 +1,26 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash2, Save, X, ImageIcon } from 'lucide-react';
 import { CategoriesApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { useDataTable } from '../../hooks/useDataTable.js';
 
 export default function Categories() {
   const { addToast } = useToast();
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const [saving, setSaving] = useState(false);
-  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    fetchCats();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const fetchCats = async () => {
-    try {
-      const data = await CategoriesApi.list();
-      if (mountedRef.current) {
-        setCategories(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      if (mountedRef.current) {
-        addToast('Failed to load categories', 'error');
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-    }
-  };
+  const {
+    items: categories,
+    setItems: setCategories,
+    loading,
+    handleDelete,
+  } = useDataTable(CategoriesApi.list, CategoriesApi.delete, {
+    deleteConfirmMessage: 'Delete this category?',
+    deleteSuccessMessage: 'Category deleted',
+    deleteErrorMessage: 'Delete failed',
+    loadErrorMessage: 'Failed to load categories',
+  });
 
   const handleSave = async () => {
     if (!form.name.trim()) return;
@@ -50,7 +35,9 @@ export default function Categories() {
       }
       setForm({ name: '', description: '' });
       setEditingId(null);
-      fetchCats();
+      // Refresh data
+      const data = await CategoriesApi.list();
+      setCategories(Array.isArray(data) ? data : []);
     } catch {
       addToast('Save failed', 'error');
     } finally {
@@ -61,17 +48,6 @@ export default function Categories() {
   const handleEdit = (cat) => {
     setEditingId(cat.id);
     setForm({ name: cat.name || '', description: cat.description || '' });
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this category?')) return;
-    try {
-      await CategoriesApi.delete(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      addToast('Category deleted', 'success');
-    } catch {
-      addToast('Delete failed', 'error');
-    }
   };
 
   const cancelEdit = () => {

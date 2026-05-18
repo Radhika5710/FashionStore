@@ -98,7 +98,7 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
 
     @Override
     public ProductSize getProductSizeById(int productSizeId) {
-        String sql = "SELECT * FROM product_sizes WHERE product_size_id=?";
+        String sql = "SELECT product_size_id, product_id, size_label, stock_quantity, sku_code, is_available FROM product_sizes WHERE product_size_id=?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -119,7 +119,7 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
     @Override
     public List<ProductSize> getSizesByProductId(int productId) {
         List<ProductSize> list = new ArrayList<>();
-        String sql = "SELECT * FROM product_sizes WHERE product_id=?";
+        String sql = "SELECT product_size_id, product_id, size_label, stock_quantity, sku_code, is_available FROM product_sizes WHERE product_id=?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -141,7 +141,7 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
     @Override
     public List<ProductSize> getAvailableSizesByProductId(int productId) {
         List<ProductSize> list = new ArrayList<>();
-        String sql = "SELECT * FROM product_sizes WHERE product_id=? AND is_available=true AND stock_quantity>0";
+        String sql = "SELECT product_size_id, product_id, size_label, stock_quantity, sku_code, is_available FROM product_sizes WHERE product_id=? AND is_available=true AND stock_quantity>0";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -223,35 +223,41 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
                           "WHERE product_size_id = ?";
 
         try (Connection con = DBConnection.getConnection()) {
-            con.setAutoCommit(false);
-            
-            try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
-                selectPs.setInt(1, productId);
-                selectPs.setString(2, sizeLabel);
-                selectPs.setInt(3, quantity);
-                
-                try (ResultSet rs = selectPs.executeQuery()) {
-                    if (rs.next()) {
-                        int productSizeId = rs.getInt("product_size_id");
-                        
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
-                            updatePs.setInt(1, quantity);
-                            updatePs.setInt(2, quantity);
-                            updatePs.setInt(3, productSizeId);
-                            
-                            int rows = updatePs.executeUpdate();
-                            con.commit();
-                            return rows > 0;
+            boolean originalAutoCommit = con.getAutoCommit();
+
+            try {
+                con.setAutoCommit(false);
+
+                try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                    selectPs.setInt(1, productId);
+                    selectPs.setString(2, sizeLabel);
+                    selectPs.setInt(3, quantity);
+
+                    try (ResultSet rs = selectPs.executeQuery()) {
+                        if (rs.next()) {
+                            int productSizeId = rs.getInt("product_size_id");
+
+                            try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
+                                updatePs.setInt(1, quantity);
+                                updatePs.setInt(2, quantity);
+                                updatePs.setInt(3, productSizeId);
+
+                                int rows = updatePs.executeUpdate();
+                                con.commit();
+                                return rows > 0;
+                            }
+                        } else {
+                            // Insufficient stock
+                            con.rollback();
+                            return false;
                         }
-                    } else {
-                        // Insufficient stock
-                        con.rollback();
-                        return false;
                     }
                 }
             } catch (Exception e) {
                 con.rollback();
                 throw e;
+            } finally {
+                con.setAutoCommit(originalAutoCommit);
             }
         } catch (Exception e) {
             logger.error("ProductSizeDAOImpl.reduceStock (with row lock) Error: {}", e.getMessage(), e);
@@ -276,34 +282,40 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
                           "WHERE product_size_id = ?";
 
         try (Connection con = DBConnection.getConnection()) {
-            con.setAutoCommit(false);
-            
-            try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
-                selectPs.setInt(1, productId);
-                selectPs.setString(2, sizeLabel);
-                
-                try (ResultSet rs = selectPs.executeQuery()) {
-                    if (rs.next()) {
-                        int productSizeId = rs.getInt("product_size_id");
-                        
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
-                            updatePs.setInt(1, quantity);
-                            updatePs.setInt(2, quantity);
-                            updatePs.setInt(3, productSizeId);
-                            
-                            int rows = updatePs.executeUpdate();
-                            con.commit();
-                            return rows > 0;
+            boolean originalAutoCommit = con.getAutoCommit();
+
+            try {
+                con.setAutoCommit(false);
+
+                try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                    selectPs.setInt(1, productId);
+                    selectPs.setString(2, sizeLabel);
+
+                    try (ResultSet rs = selectPs.executeQuery()) {
+                        if (rs.next()) {
+                            int productSizeId = rs.getInt("product_size_id");
+
+                            try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
+                                updatePs.setInt(1, quantity);
+                                updatePs.setInt(2, quantity);
+                                updatePs.setInt(3, productSizeId);
+
+                                int rows = updatePs.executeUpdate();
+                                con.commit();
+                                return rows > 0;
+                            }
+                        } else {
+                            // Record not found
+                            con.rollback();
+                            return false;
                         }
-                    } else {
-                        // Record not found
-                        con.rollback();
-                        return false;
                     }
                 }
             } catch (Exception e) {
                 con.rollback();
                 throw e;
+            } finally {
+                con.setAutoCommit(originalAutoCommit);
             }
         } catch (Exception e) {
             logger.error("ProductSizeDAOImpl.increaseStock (with row lock) Error: {}", e.getMessage(), e);
@@ -319,34 +331,41 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
         String insertSql = "INSERT INTO product_sizes (product_id, size_label, stock_quantity, is_available) VALUES (?, ?, ?, ?)";
 
         try (Connection con = DBConnection.getConnection()) {
-            con.setAutoCommit(false);
-            try (PreparedStatement checkPs = con.prepareStatement(checkSql)) {
-                checkPs.setInt(1, size.getProductId());
-                checkPs.setString(2, size.getSizeLabel());
+            boolean originalAutoCommit = con.getAutoCommit();
 
-                try (ResultSet rs = checkPs.executeQuery()) {
-                    if (rs.next()) {
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
-                            updatePs.setInt(1, size.getStockQuantity());
-                            updatePs.setBoolean(2, size.getStockQuantity() > 0);
-                            updatePs.setInt(3, rs.getInt("product_size_id"));
-                            updatePs.executeUpdate();
-                            con.commit();
-                        }
-                    } else {
-                        try (PreparedStatement insertPs = con.prepareStatement(insertSql)) {
-                            insertPs.setInt(1, size.getProductId());
-                            insertPs.setString(2, size.getSizeLabel());
-                            insertPs.setInt(3, size.getStockQuantity());
-                            insertPs.setBoolean(4, size.getStockQuantity() > 0);
-                            insertPs.executeUpdate();
-                            con.commit();
+            try {
+                con.setAutoCommit(false);
+
+                try (PreparedStatement checkPs = con.prepareStatement(checkSql)) {
+                    checkPs.setInt(1, size.getProductId());
+                    checkPs.setString(2, size.getSizeLabel());
+
+                    try (ResultSet rs = checkPs.executeQuery()) {
+                        if (rs.next()) {
+                            try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
+                                updatePs.setInt(1, size.getStockQuantity());
+                                updatePs.setBoolean(2, size.getStockQuantity() > 0);
+                                updatePs.setInt(3, rs.getInt("product_size_id"));
+                                updatePs.executeUpdate();
+                                con.commit();
+                            }
+                        } else {
+                            try (PreparedStatement insertPs = con.prepareStatement(insertSql)) {
+                                insertPs.setInt(1, size.getProductId());
+                                insertPs.setString(2, size.getSizeLabel());
+                                insertPs.setInt(3, size.getStockQuantity());
+                                insertPs.setBoolean(4, size.getStockQuantity() > 0);
+                                insertPs.executeUpdate();
+                                con.commit();
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
                 con.rollback();
                 throw e;
+            } finally {
+                con.setAutoCommit(originalAutoCommit);
             }
         } catch (Exception e) {
             logger.error("ProductSizeDAOImpl.addOrUpdateSize Error: {}", e.getMessage(), e);

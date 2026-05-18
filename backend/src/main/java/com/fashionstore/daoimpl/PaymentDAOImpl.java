@@ -58,7 +58,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public Payment getPaymentById(int paymentId) {
-        String sql = "SELECT * FROM payments WHERE payment_id = ?";
+        String sql = "SELECT payment_id, order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified, created_at, updated_at FROM payments WHERE payment_id = ?";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -78,7 +78,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public Payment getPaymentByTransactionId(String transactionId) {
-        String sql = "SELECT * FROM payments WHERE transaction_id = ?";
+        String sql = "SELECT payment_id, order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified, created_at, updated_at FROM payments WHERE transaction_id = ?";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -98,7 +98,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public Payment getPaymentByOrderId(int orderId) {
-        String sql = "SELECT * FROM payments WHERE order_id = ? ORDER BY payment_id DESC LIMIT 1";
+        String sql = "SELECT payment_id, order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified, created_at, updated_at FROM payments WHERE order_id = ? ORDER BY payment_id DESC LIMIT 1";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -118,7 +118,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public Payment getPaymentByStripePaymentIntentId(String stripePaymentIntentId) {
-        String sql = "SELECT * FROM payments WHERE stripe_payment_intent_id = ?";
+        String sql = "SELECT payment_id, order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified, created_at, updated_at FROM payments WHERE stripe_payment_intent_id = ?";
         
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -212,7 +212,7 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public List<Payment> getPaymentsByOrderId(int orderId) {
-        String sql = "SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT payment_id, order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified, created_at, updated_at FROM payments WHERE order_id = ? ORDER BY created_at DESC";
         List<Payment> payments = new ArrayList<>();
         
         try (Connection con = DBConnection.getConnection();

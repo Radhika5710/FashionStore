@@ -85,6 +85,9 @@
 <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/main.css">
 <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/premium-core.css">
 
+<%-- DEMO HARDENING MODE CSS (loads last to override all animations) --%>
+<link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/demo-hardening.css">
+
 <%-- DNS prefetch for external resources --%>
 <link rel="dns-prefetch" href="//fonts.googleapis.com">
 <link rel="dns-prefetch" href="//fonts.gstatic.com">
@@ -129,8 +132,11 @@
 <%-- Core utilities (must load first) --%>
 <script src="<%= request.getContextPath() %>/assets/js/modules/utilities.js" defer></script>
 
-<%-- Notifications (used by other modules) --%>
-<script src="<%= request.getContextPath() %>/assets/js/modules/notifications.js" defer></script>
+<%-- API client (must load before modules that use it) --%>
+<script src="<%= request.getContextPath() %>/assets/js/api/client.js" defer></script>
+
+<%-- State manager (used by search, checkout, product-interactions) --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/state-manager.js" defer></script>
 
 <%-- Theme module --%>
 <script src="<%= request.getContextPath() %>/assets/js/modules/theme.js" defer></script>
@@ -141,19 +147,14 @@
 <%-- Search module --%>
 <script src="<%= request.getContextPath() %>/assets/js/modules/search.js" defer></script>
 
-<%-- Cart drawer module --%>
-<% if (_pageCSS == null || !_pageCSS.contains("auth")) { %>
-<script src="<%= request.getContextPath() %>/assets/js/modules/cart-drawer.js" defer></script>
-<% } %>
-
 <%-- Product interactions module --%>
 <% if (_pageCSS == null || !_pageCSS.contains("auth")) { %>
 <script src="<%= request.getContextPath() %>/assets/js/modules/product-interactions.js" defer></script>
 <% } %>
 
-<%-- Cart.js - skip on auth pages to reduce loading --%>
+<%-- CartManager.js - Consolidated cart operations - skip on auth pages to reduce loading --%>
 <% if (_pageCSS == null || !_pageCSS.contains("auth")) { %>
-<script src="<%= request.getContextPath() %>/assets/js/cart.js" defer></script>
+<script src="<%= request.getContextPath() %>/assets/js/managers/CartManager.js" defer></script>
 <% } %>
 
 <%-- Lazy-loading.js - skip on auth pages to reduce loading --%>

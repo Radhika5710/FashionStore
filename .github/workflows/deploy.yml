@@ -52,7 +52,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: Dockerfile.production
+        file: docker/Dockerfile.production
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         cache-from: type=gha

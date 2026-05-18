@@ -5,27 +5,47 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Enhanced Session Security Utilities
- * Provides session fixation protection, concurrent session management, and session timeout
+ * Session Security Utilities - Minimal Session Validation
+ * 
+ * PURPOSE:
+ * =======
+ * Provides basic session security validation for customer MVC authentication.
+ * Validates session expiration and inactivity only.
+ * 
+ * USAGE:
+ * ======
+ * - Use SecurityUtil for simple session attribute retrieval (getAuthenticatedCustomer, isAuthenticated)
+ * - Use SessionSecurityUtil for session validation (expiration, inactivity)
+ * - Use AuthContext for JWT-based authentication (admin APIs only)
+ * 
+ * SEPARATION OF CONCERNS:
+ * ========================
+ * - SecurityUtil: Simple session attribute checks (used by controllers)
+ * - SessionSecurityUtil: Basic session validation (expiration, inactivity)
+ * - AuthContext: JWT-based authentication (used by admin APIs only)
+ * 
+ * EXAMPLE:
+ * ========
+ * // Simple attribute check (controller level)
+ * User customer = SecurityUtil.getAuthenticatedCustomer(request);
+ * 
+ * // Basic session validation (filter level)
+ * SessionValidationResult result = SessionSecurityUtil.validateSession(request);
+ * if (!result.isValid()) {
+ *     // Handle invalid session (expired or inactive)
+ * }
  */
 public class SessionSecurityUtil {
     private static final Logger logger = LoggerFactory.getLogger(SessionSecurityUtil.class);
     
     // Session configuration
     private static final int MAX_SESSION_AGE_SECONDS = 30 * 60; // 30 minutes
-    private static final int MAX_CONCURRENT_SESSIONS = 3;
     private static final int SESSION_INACTIVITY_TIMEOUT_SECONDS = 15 * 60; // 15 minutes
-    
-    // Session registry for concurrent session management
-    private static final Map<String, SessionInfo> sessionRegistry = new ConcurrentHashMap<>();
     
     /**
      * Create secure session with protection against session fixation
-     * This should ALWAYS be called after successful admin login
      */
     public static HttpSession createSecureSession(HttpServletRequest request) {
         // Invalidate existing session if present
@@ -54,13 +74,10 @@ public class SessionSecurityUtil {
         
         session.setAttribute("sessionCreationTime", System.currentTimeMillis());
         session.setAttribute("sessionLastAccessedTime", System.currentTimeMillis());
-        session.setAttribute("sessionIP", getClientIP(request));
-        session.setAttribute("sessionUserAgent", request.getHeader("User-Agent"));
     }
     
     /**
      * Validate session security
-     * Routes to appropriate validator based on session type
      */
     public static SessionValidationResult validateSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -86,14 +103,12 @@ public class SessionSecurityUtil {
     }
     
     /**
-     * Validate user session with full security checks
-     * This is the SINGLE source of truth for user session validation
+     * Validate user session with basic security checks
      */
     public static SessionValidationResult validateUserSession(HttpServletRequest request) {
         SessionValidationResult result = new SessionValidationResult();
         HttpSession session = request.getSession(false);
         String path = request.getRequestURI();
-        String userId = (String) (session != null ? session.getAttribute("userId") : null);
         
         if (session == null) {
             result.setValid(false);
@@ -108,30 +123,14 @@ public class SessionSecurityUtil {
             return result;
         }
         
-        // Validate session metadata
+        // Validate session metadata (expiration and inactivity only)
         SessionValidationResult metadataResult = validateSessionMetadata(session, request);
         if (!metadataResult.isValid()) {
             result.setValid(false);
             result.setReason(metadataResult.getReason());
-            logger.warn("validateUserSession failed: {} - Path: {}, Session ID: {}, User ID: {}", 
-                metadataResult.getReason(), path, session.getId(), userId);
+            logger.warn("validateUserSession failed: {} - Path: {}, Session ID: {}", 
+                metadataResult.getReason(), path, session.getId());
             return result;
-        }
-        
-        // Copy metadata validation results
-        result.setIPMismatch(metadataResult.isIPMismatch());
-        result.setUserAgentMismatch(metadataResult.isUserAgentMismatch());
-        
-        // Check concurrent sessions
-        if (userId != null) {
-            if (!validateConcurrentSessions(userId, session.getId())) {
-                result.setValid(false);
-                result.setReason("Concurrent session limit exceeded");
-                session.invalidate();
-                logger.warn("validateUserSession failed: Concurrent session limit - Path: {}, Session ID: {}, User ID: {}", 
-                    path, session.getId(), userId);
-                return result;
-            }
         }
         
         result.setValid(true);
@@ -142,13 +141,11 @@ public class SessionSecurityUtil {
     
     /**
      * Validate admin session with admin-specific checks
-     * This is the SINGLE source of truth for admin session validation
      */
     public static SessionValidationResult validateAdminSession(HttpServletRequest request) {
         SessionValidationResult result = new SessionValidationResult();
         HttpSession session = request.getSession(false);
         String path = request.getRequestURI();
-        String userId = (String) (session != null ? session.getAttribute("userId") : null);
         
         if (session == null) {
             result.setValid(false);
@@ -173,19 +170,15 @@ public class SessionSecurityUtil {
             return result;
         }
         
-        // Validate session metadata
+        // Validate session metadata (expiration and inactivity only)
         SessionValidationResult metadataResult = validateSessionMetadata(session, request);
         if (!metadataResult.isValid()) {
             result.setValid(false);
             result.setReason(metadataResult.getReason());
-            logger.warn("validateAdminSession failed: {} - Path: {}, Session ID: {}, User ID: {}", 
-                metadataResult.getReason(), path, session.getId(), userId);
+            logger.warn("validateAdminSession failed: {} - Path: {}, Session ID: {}", 
+                metadataResult.getReason(), path, session.getId());
             return result;
         }
-        
-        // Copy metadata validation results
-        result.setIPMismatch(metadataResult.isIPMismatch());
-        result.setUserAgentMismatch(metadataResult.isUserAgentMismatch());
         
         result.setValid(true);
         result.setSessionId(session.getId());
@@ -195,7 +188,6 @@ public class SessionSecurityUtil {
     
     /**
      * Validate session metadata (creation time, expiration, IP, User-Agent)
-     * This is the SINGLE source of truth for session metadata validation
      */
     public static SessionValidationResult validateSessionMetadata(HttpSession session, HttpServletRequest request) {
         SessionValidationResult result = new SessionValidationResult();
@@ -242,59 +234,9 @@ public class SessionSecurityUtil {
         // Update last accessed time
         session.setAttribute("sessionLastAccessedTime", System.currentTimeMillis());
         
-        // Check session IP binding
-        String sessionIP = (String) session.getAttribute("sessionIP");
-        String currentIP = getClientIP(request);
-        
-        if (sessionIP != null && !sessionIP.equals(currentIP)) {
-            logger.warn("Session IP mismatch - Path: {}, Expected: {}, Got: {}, Session ID: {}", 
-                path, sessionIP, currentIP, session.getId());
-            result.setIPMismatch(true);
-        }
-        
-        // Check session User-Agent binding
-        String sessionUA = (String) session.getAttribute("sessionUserAgent");
-        String currentUA = request.getHeader("User-Agent");
-        
-        if (sessionUA != null && !sessionUA.equals(currentUA)) {
-            logger.warn("Session User-Agent mismatch - Path: {}, Session ID: {}", path, session.getId());
-            result.setUserAgentMismatch(true);
-        }
-        
         result.setValid(true);
         
         return result;
-    }
-    
-    /**
-     * Validate concurrent sessions
-     */
-    private static boolean validateConcurrentSessions(String userId, String sessionId) {
-        SessionInfo sessionInfo = sessionRegistry.get(userId);
-        
-        if (sessionInfo == null) {
-            // First session for this user
-            sessionRegistry.put(userId, new SessionInfo(sessionId, System.currentTimeMillis()));
-            return true;
-        }
-        
-        // Check if this is the same session
-        if (sessionInfo.getSessionId().equals(sessionId)) {
-            sessionInfo.setLastAccessedTime(System.currentTimeMillis());
-            return true;
-        }
-        
-        // Check concurrent session limit
-        if (sessionInfo.getSessionCount() >= MAX_CONCURRENT_SESSIONS) {
-            return false;
-        }
-        
-        // Add new session
-        sessionInfo.addSession(sessionId);
-        sessionInfo.setLastAccessedTime(System.currentTimeMillis());
-        sessionRegistry.put(userId, sessionInfo);
-        
-        return true;
     }
     
     /**
@@ -303,95 +245,8 @@ public class SessionSecurityUtil {
     public static void invalidateSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            String userId = (String) session.getAttribute("userId");
-            String sessionId = session.getId();
-            
-            // Remove from registry
-            if (userId != null) {
-                SessionInfo sessionInfo = sessionRegistry.get(userId);
-                if (sessionInfo != null) {
-                    sessionInfo.removeSession(sessionId);
-                    if (sessionInfo.getSessionCount() == 0) {
-                        sessionRegistry.remove(userId);
-                    } else {
-                        sessionRegistry.put(userId, sessionInfo);
-                    }
-                }
-            }
-            
             session.invalidate();
-            logger.info("Session invalidated: {}", sessionId);
-        }
-    }
-    
-    /**
-     * Invalidate all sessions for a user
-     */
-    public static void invalidateAllUserSessions(String userId) {
-        SessionInfo sessionInfo = sessionRegistry.get(userId);
-        if (sessionInfo != null) {
-            sessionRegistry.remove(userId);
-            logger.info("All sessions invalidated for user: {}", userId);
-        }
-    }
-    
-    /**
-     * Get client IP address
-     * Made public for use by other security classes
-     */
-    public static String getClientIP(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIP = request.getHeader("X-Real-IP");
-        if (xRealIP != null && !xRealIP.isEmpty()) {
-            return xRealIP;
-        }
-        
-        return request.getRemoteAddr();
-    }
-    
-    /**
-     * Session info class for concurrent session management
-     */
-    private static class SessionInfo {
-        private String sessionId;
-        private java.util.Set<String> sessionIds = new java.util.HashSet<>();
-        private long lastAccessedTime;
-        
-        public SessionInfo(String sessionId, long lastAccessedTime) {
-            this.sessionId = sessionId;
-            this.sessionIds.add(sessionId);
-            this.lastAccessedTime = lastAccessedTime;
-        }
-        
-        public String getSessionId() {
-            return sessionId;
-        }
-        
-        public int getSessionCount() {
-            return sessionIds.size();
-        }
-        
-        public void addSession(String sessionId) {
-            this.sessionIds.add(sessionId);
-        }
-        
-        public void removeSession(String sessionId) {
-            this.sessionIds.remove(sessionId);
-            if (this.sessionId.equals(sessionId) && !this.sessionIds.isEmpty()) {
-                this.sessionId = this.sessionIds.iterator().next();
-            }
-        }
-        
-        public long getLastAccessedTime() {
-            return lastAccessedTime;
-        }
-        
-        public void setLastAccessedTime(long lastAccessedTime) {
-            this.lastAccessedTime = lastAccessedTime;
+            logger.info("Session invalidated: {}", session.getId());
         }
     }
     
@@ -402,8 +257,6 @@ public class SessionSecurityUtil {
         private boolean valid;
         private String reason;
         private String sessionId;
-        private boolean ipMismatch;
-        private boolean userAgentMismatch;
         
         public boolean isValid() {
             return valid;
@@ -427,22 +280,6 @@ public class SessionSecurityUtil {
         
         public void setSessionId(String sessionId) {
             this.sessionId = sessionId;
-        }
-        
-        public boolean isIPMismatch() {
-            return ipMismatch;
-        }
-        
-        public void setIPMismatch(boolean ipMismatch) {
-            this.ipMismatch = ipMismatch;
-        }
-        
-        public boolean isUserAgentMismatch() {
-            return userAgentMismatch;
-        }
-        
-        public void setUserAgentMismatch(boolean userAgentMismatch) {
-            this.userAgentMismatch = userAgentMismatch;
         }
     }
 }

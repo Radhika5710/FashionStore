@@ -1,20 +1,17 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Eye, PackageCheck, PackageX, Truck, CheckCircle, RotateCcw } from 'lucide-react';
 import DataTable from '../../components/DataTable.jsx';
 import { OrdersApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { useDataTableWithFilter } from '../../hooks/useDataTable.js';
 
 const STATUS_TABS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 export default function Orders() {
   const { addToast } = useToast();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
   const [actionId, setActionId] = useState(null);
   const [detailOrder, setDetailOrder] = useState(null);
-  const mountedRef = useRef(true);
   const modalRef = useRef(null);
 
   // Lock body scroll when modal is open
@@ -36,28 +33,17 @@ export default function Orders() {
     }
   }, [detailOrder]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    (async () => {
-      try {
-        const data = await OrdersApi.list(100);
-        if (mountedRef.current) {
-          setOrders(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        if (mountedRef.current) {
-          addToast('Failed to load orders', 'error');
-        }
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, [addToast]);
+  const {
+    items: orders,
+    setItems: setOrders,
+    loading,
+    statusFilter: activeTab,
+    setStatusFilter: setActiveTab,
+  } = useDataTableWithFilter(() => OrdersApi.list(100), null, {
+    statusOptions: STATUS_TABS,
+    filterKey: 'status',
+    loadErrorMessage: 'Failed to load orders',
+  });
 
   const filtered = useMemo(() => {
     if (activeTab === 'all') return orders;

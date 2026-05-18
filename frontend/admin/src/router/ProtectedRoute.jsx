@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * ProtectedRoute — used as a layout route element:
@@ -12,9 +13,30 @@ import { useAuth } from '../auth/AuthContext.jsx';
 export default function ProtectedRoute() {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const timeoutRef = useRef(null);
+
+  // Add 10-second timeout for auth check
+  useEffect(() => {
+    if (loading && !hasTimedOut) {
+      timeoutRef.current = setTimeout(() => {
+        setHasTimedOut(true);
+      }, 10000);
+    }
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [loading, hasTimedOut]);
 
   // Show loading spinner while checking authentication
   if (loading) {
+    // If timeout reached, redirect to login
+    if (hasTimedOut) {
+      return <Navigate to="../login" replace state={{ from: location, error: 'auth_timeout' }} />;
+    }
+
     return (
       <div
         className="min-h-screen flex items-center justify-center"
@@ -41,7 +63,7 @@ export default function ProtectedRoute() {
 
   // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="../login" replace state={{ from: location }} />;
   }
 
   // Render nested routes via Outlet

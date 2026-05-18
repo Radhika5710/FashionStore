@@ -5,6 +5,34 @@
 <%@ page import="com.fashionstore.model.User" %>
 <%@ page import="java.util.Map" %>
 
+<%--
+CHECKOUT PAGE - MVC ARCHITECTURE
+
+REFACTORED FOR PROPER MVC:
+- Backend (CheckoutController) calculates ALL totals
+- Backend provides cart items, addresses, totals via request attributes
+- JSP displays backend-calculated values (NO calculations)
+- JavaScript only handles UI interactions (address selection, payment method)
+- NO frontend order total calculations
+- NO frontend payment amount calculations
+- NO frontend discount/tax calculations
+- Backend is single source of truth
+
+Data Flow:
+1. CheckoutController.displayCheckoutPage() loads cart items and calculates totals
+2. CheckoutService.calculateCheckoutTotals() computes subtotal, tax, shipping, discount
+3. JSP displays backend-calculated values
+4. JavaScript handles address/payment selection UI only
+5. Form submission sends address and payment method to backend
+6. CheckoutController validates and creates order
+
+Security:
+- All calculations performed on backend
+- Frontend cannot modify prices or totals
+- Payment amount validated on backend before processing
+- CSRF token required for form submission
+--%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

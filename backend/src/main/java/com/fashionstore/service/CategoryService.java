@@ -26,6 +26,10 @@ public class CategoryService {
         return categoryDAO.getCategoryById(categoryId);
     }
 
+    public int addCategory(Category category) {
+        return categoryDAO.addCategory(category);
+    }
+
     public boolean updateCategory(Category category) {
         return categoryDAO.updateCategory(category);
     }

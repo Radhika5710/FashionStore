@@ -1,8 +1,10 @@
 package com.fashionstore.controller.api;
 
 import com.fashionstore.controller.ApiResponse;
-import com.fashionstore.dao.*;
-import com.fashionstore.daoimpl.*;
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.service.OrderService;
+import com.fashionstore.service.UserService;
+import com.fashionstore.service.ProductService;
 import com.fashionstore.model.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,16 +22,17 @@ public class AdminStatsApiController extends AdminApiBaseController {
 
     private static final long serialVersionUID = 1L;
 
-    private OrderDAO orderDAO;
-    private UserDAO userDAO;
-    private ProductDAO productDAO;
+    private OrderService orderService;
+    private UserService userService;
+    private ProductService productService;
 
     @Override
     public void init() {
         super.init();
-        orderDAO = new OrderDAOImpl();
-        userDAO = new UserDAOImpl();
-        productDAO = new ProductDAOImpl();
+        ServiceRegistry registry = ServiceRegistry.getInstance();
+        orderService = registry.getOrderService();
+        userService = registry.getUserService();
+        productService = registry.getProductService();
     }
 
     @Override
@@ -43,16 +46,16 @@ public class AdminStatsApiController extends AdminApiBaseController {
             
             if (servletPath != null && servletPath.contains("/stats")) {
                 // GET /api/admin/stats
-                double totalRevenue = orderDAO.getTotalRevenue();
-                int totalUsers = userDAO.getTotalUserCount();
-                int totalOrders = orderDAO.getTotalOrderCount();
-                int lowStockCount = productDAO.getLowStockProductCount(10);
+                double totalRevenue = orderService.getTotalRevenue();
+                int totalUsers = userService.getTotalUserCount();
+                int totalOrders = orderService.getTotalOrderCount();
+                int lowStockCount = productService.getLowStockProductCount(10);
                 Map<String, Object> stats = Map.of(
                         "revenue", totalRevenue,
                         "orders", totalOrders,
-                        "products", productDAO.getAllProducts().size(),
+                        "products", productService.getAllProducts().size(),
                         "customers", totalUsers,
-                        "pending", orderDAO.getRecentOrders(1000).stream().filter(o -> "Pending".equalsIgnoreCase(o.getStatus())).count(),
+                        "pending", orderService.getRecentOrders(1000).stream().filter(o -> "Pending".equalsIgnoreCase(o.getStatus())).count(),
                         "lowStock", lowStockCount
                 );
                 writeApiResponse(response, 200, ApiResponse.success("Stats retrieved successfully", stats));
@@ -61,11 +64,11 @@ public class AdminStatsApiController extends AdminApiBaseController {
             
             if (pathInfo == null || pathInfo.equals("/")) {
                 // GET /api/admin/dashboard - Dashboard with stats and recent orders
-                double totalRevenue = orderDAO.getTotalRevenue();
-                int totalUsers = userDAO.getTotalUserCount();
-                int totalOrders = orderDAO.getTotalOrderCount();
-                int lowStockCount = productDAO.getLowStockProductCount(10);
-                List<Order> recentOrders = orderDAO.getRecentOrders(10);
+                double totalRevenue = orderService.getTotalRevenue();
+                int totalUsers = userService.getTotalUserCount();
+                int totalOrders = orderService.getTotalOrderCount();
+                int lowStockCount = productService.getLowStockProductCount(10);
+                List<Order> recentOrders = orderService.getRecentOrders(10);
                 writeApiResponse(response, 200, ApiResponse.success("Dashboard data retrieved successfully", Map.of(
                         "stats", Map.of("totalRevenue", totalRevenue, "totalUsers", totalUsers, "totalOrders", totalOrders, "lowStockCount", lowStockCount),
                         "recentOrders", recentOrders.stream().map(this::publicOrder).toList()

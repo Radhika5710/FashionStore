@@ -9,14 +9,50 @@ import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * CSRF Protection Implementation for FashionStore
+ * CSRFProtection - Hybrid MVC + React Admin Architecture
  * 
- * Provides comprehensive Cross-Site Request Forgery protection:
+ * ARCHITECTURE:
+ * =============
+ * - JSP Customer Frontend: Uses CSRF protection
+ *   * Session-based authentication
+ *   * Form submissions require CSRF token
+ *   * AJAX requests include CSRF token
+ *   * Token stored in HttpSession
+ * 
+ * - React Admin APIs: NO CSRF protection (uses JWT instead)
+ *   * JWT token-based authentication
+ *   * No HttpSession required
+ *   * No CSRF token needed
+ *   * Routes: /api/admin/*
+ * 
+ * CSRF PROTECTION DETAILS:
+ * =======================
  * - Secure token generation using cryptographically strong random numbers
  * - Session-based token storage and validation
  * - Token rotation for enhanced security
- * - AJAX request support
- * - Configurable token expiration
+ * - AJAX request support (X-CSRF-Token header)
+ * - Configurable token expiration (1 hour)
+ * - Token reuse prevention via cache
+ * 
+ * HYBRID ARCHITECTURE BENEFITS:
+ * =============================
+ * ✓ CSRF protection for JSP forms (session-based)
+ * ✓ No CSRF overhead for admin APIs (JWT-based)
+ * ✓ Separate authentication methods for different frontends
+ * ✓ No session conflicts between customer and admin auth
+ * ✓ Clear separation of concerns
+ * 
+ * USAGE:
+ * ======
+ * Customer Frontend (JSP):
+ * - Generate token: CSRFProtection.generateToken(request)
+ * - Validate token: CSRFProtection.validateToken(request, token)
+ * - Add to request attributes: CSRFProtection.addTokenToRequest(request)
+ * 
+ * Admin APIs (React):
+ * - No CSRF protection needed
+ * - JWT validation handles security
+ * - No session required
  */
 public class CSRFProtection {
     
@@ -30,6 +66,32 @@ public class CSRFProtection {
     
     // Cache for storing tokens to prevent reuse
     private static final ConcurrentHashMap<String, Long> usedTokens = new ConcurrentHashMap<>();
+    
+    // CSRF enabled flag
+    private static volatile boolean csrfEnabled = true;
+    
+    static {
+        // Check if CSRF is enabled via environment variable
+        String csrfEnv = System.getenv("CSRF_ENABLED");
+        if (csrfEnv != null && csrfEnv.equalsIgnoreCase("false")) {
+            csrfEnabled = false;
+            logger.info("CSRF protection disabled via CSRF_ENABLED=false");
+        }
+        
+        // Check if demo mode is enabled
+        String demoMode = System.getenv("DEMO_MODE");
+        if (demoMode != null && demoMode.equalsIgnoreCase("true")) {
+            csrfEnabled = false;
+            logger.info("CSRF protection disabled via DEMO_MODE=true");
+        }
+    }
+    
+    /**
+     * Checks if CSRF protection is enabled
+     */
+    public static boolean isEnabled() {
+        return csrfEnabled;
+    }
     
     /**
      * Generates a new CSRF token for the session
@@ -297,6 +359,11 @@ public class CSRFProtection {
      * @return true if CSRF validation passes
      */
     public static boolean validateRequest(HttpServletRequest request) {
+        // Skip CSRF validation if disabled
+        if (!csrfEnabled) {
+            return true;
+        }
+        
         if (!requiresProtection(request)) {
             return true;
         }

@@ -1,7 +1,6 @@
 package com.fashionstore.service;
 
 import com.fashionstore.dao.WishlistDAO;
-import com.fashionstore.daoimpl.WishlistDAOImpl;
 import com.fashionstore.model.WishlistItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +14,22 @@ import java.util.HashMap;
  */
 public class WishlistService {
     private static final Logger logger = LoggerFactory.getLogger(WishlistService.class);
-    private final WishlistDAO wishlistDAO;
+    private WishlistDAO wishlistDAO;
 
     public WishlistService() {
-        this.wishlistDAO = new WishlistDAOImpl();
+        this.wishlistDAO = null;
+    }
+
+    public void setWishlistDAO(WishlistDAO wishlistDAO) {
+        if (this.wishlistDAO == null) {
+            try {
+                java.lang.reflect.Field field = WishlistService.class.getDeclaredField("wishlistDAO");
+                field.setAccessible(true);
+                field.set(this, wishlistDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set wishlistDAO", e);
+            }
+        }
     }
 
     /**
@@ -26,6 +37,12 @@ public class WishlistService {
      */
     public Map<String, Object> addToWishlist(int userId, int productId) {
         Map<String, Object> result = new HashMap<>();
+        if (wishlistDAO == null) {
+            logger.warn("WishlistDAO not initialized");
+            result.put("success", false);
+            result.put("message", "Service not available");
+            return result;
+        }
         try {
             boolean added = wishlistDAO.addWishlistItem(userId, productId);
             result.put("success", added);
@@ -43,6 +60,12 @@ public class WishlistService {
      */
     public Map<String, Object> removeFromWishlist(int userId, int productId) {
         Map<String, Object> result = new HashMap<>();
+        if (wishlistDAO == null) {
+            logger.warn("WishlistDAO not initialized");
+            result.put("success", false);
+            result.put("message", "Service not available");
+            return result;
+        }
         try {
             boolean removed = wishlistDAO.removeWishlistItem(userId, productId);
             result.put("success", removed);
@@ -60,6 +83,12 @@ public class WishlistService {
      */
     public Map<String, Object> getWishlist(int userId) {
         Map<String, Object> result = new HashMap<>();
+        if (wishlistDAO == null) {
+            logger.warn("WishlistDAO not initialized");
+            result.put("success", false);
+            result.put("message", "Service not available");
+            return result;
+        }
         try {
             List<WishlistItem> wishlist = wishlistDAO.getWishlistByUserId(userId);
             result.put("success", true);
@@ -77,6 +106,10 @@ public class WishlistService {
      * Get wishlist items for a user
      */
     public List<WishlistItem> getWishlistItems(int userId) {
+        if (wishlistDAO == null) {
+            logger.warn("WishlistDAO not initialized");
+            return new java.util.ArrayList<>();
+        }
         try {
             return wishlistDAO.getWishlistByUserId(userId);
         } catch (Exception e) {
@@ -89,6 +122,10 @@ public class WishlistService {
      * Check if product is in wishlist
      */
     public boolean isProductInWishlist(int userId, int productId) {
+        if (wishlistDAO == null) {
+            logger.warn("WishlistDAO not initialized");
+            return false;
+        }
         try {
             return wishlistDAO.isProductInWishlist(userId, productId);
         } catch (Exception e) {

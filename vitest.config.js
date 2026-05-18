@@ -19,9 +19,17 @@ export default defineConfig({
         '**/dist/**',
         '**/build/**',
       ],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 70,
+        statements: 70,
+      },
     },
-    include: ['**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    include: ['frontend/admin/src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    retry: 2,
+    maxConcurrency: 4,
   },
   resolve: {
     alias: {

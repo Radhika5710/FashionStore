@@ -1,75 +1,44 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Pencil, Trash2, Filter } from 'lucide-react';
 import DataTable from '../../components/DataTable.jsx';
+import OptimizedImage from '../../components/OptimizedImage.jsx';
 import { ProductsApi } from '../../api/client.js';
-import { useToast } from '../../context/ToastContext.jsx';
+import { useDataTableWithFilter } from '../../hooks/useDataTable.js';
 
 const STATUS_OPTIONS = ['all', 'active', 'inactive', 'out_of_stock'];
 
 export default function Products() {
   const navigate = useNavigate();
-  const { addToast } = useToast();
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [deletingId, setDeletingId] = useState(null);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    (async () => {
-      try {
-        const data = await ProductsApi.list();
-        if (mountedRef.current) {
-          setProducts(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        if (mountedRef.current) {
-          addToast('Failed to load products', 'error');
-        }
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
+  const {
+    items: products,
+    loading,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    filtered,
+    deletingId,
+    handleDelete,
+  } = useDataTableWithFilter(ProductsApi.list, ProductsApi.delete, {
+    statusOptions: STATUS_OPTIONS,
+    filterKey: 'status',
+    deleteConfirmMessage: 'Are you sure you want to delete this product?',
+    deleteSuccessMessage: 'Product deleted',
+    deleteErrorMessage: 'Delete failed',
+    loadErrorMessage: 'Failed to load products',
+    filterFn: (rows, search) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        return rows.filter((r) =>
+          (r.name || '').toLowerCase().includes(q) ||
+          (r.sku || '').toLowerCase().includes(q) ||
+          (r.category || '').toLowerCase().includes(q)
+        );
       }
-    })();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, [addToast]);
-
-  const filtered = useMemo(() => {
-    let rows = products;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      rows = rows.filter((r) =>
-        (r.name || '').toLowerCase().includes(q) ||
-        (r.sku || '').toLowerCase().includes(q) ||
-        (r.category || '').toLowerCase().includes(q)
-      );
-    }
-    if (statusFilter !== 'all') {
-      rows = rows.filter((r) => (r.status || 'active') === statusFilter);
-    }
-    return rows;
-  }, [products, search, statusFilter]);
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    setDeletingId(id);
-    try {
-      await ProductsApi.delete?.(id);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      addToast('Product deleted', 'success');
-    } catch {
-      addToast('Delete failed', 'error');
-    } finally {
-      setDeletingId(null);
-    }
-  };
+      return rows;
+    },
+  });
 
   const columns = [
     {
@@ -79,7 +48,7 @@ export default function Products() {
       render: (r) => (
         <div className="w-10 h-10 rounded-lg bg-ink-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden">
           {r.imageUrl ? (
-            <img src={r.imageUrl} alt="" className="w-full h-full object-cover" />
+            <OptimizedImage src={r.imageUrl} alt="" width={40} height={40} />
           ) : (
             <span className="text-xs text-ink-400">—</span>
           )}

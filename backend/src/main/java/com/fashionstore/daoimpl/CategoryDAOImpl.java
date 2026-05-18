@@ -100,7 +100,7 @@ public class CategoryDAOImpl implements CategoryDAO {
 
     @Override
     public Category getCategoryById(int categoryId) {
-        String sql = "SELECT * FROM categories WHERE category_id = ?";
+        String sql = "SELECT category_id, category_name, description, is_active FROM categories WHERE category_id = ?";
 
         long startTime = System.currentTimeMillis();
         try (Connection con = DBConnection.getConnection();
@@ -130,7 +130,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     @Override
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
-        String sql = "SELECT * FROM categories ORDER BY " +
+        String sql = "SELECT category_id, category_name, description, is_active FROM categories ORDER BY " +
                 "CASE LOWER(TRIM(category_name)) " +
                 "WHEN 'men' THEN 1 WHEN 'women' THEN 2 WHEN 'footwear' THEN 3 WHEN 'accessories' THEN 4 ELSE 99 END, category_name";
 
@@ -160,7 +160,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     @Override
     public List<Category> getActiveCategories() {
         List<Category> list = new ArrayList<>();
-        String sql = "SELECT * FROM categories WHERE is_active = true ORDER BY " +
+        String sql = "SELECT category_id, category_name, description, is_active FROM categories WHERE is_active = true ORDER BY " +
                 "CASE LOWER(TRIM(category_name)) " +
                 "WHEN 'men' THEN 1 WHEN 'women' THEN 2 WHEN 'footwear' THEN 3 WHEN 'accessories' THEN 4 ELSE 99 END, category_name";
 

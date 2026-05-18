@@ -7,7 +7,7 @@
 <html lang="en">
 <head>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
-<script src="<%= request.getContextPath() %>/assets/js/modules/password-validation.js"></script>
+<script src="<%= request.getContextPath() %>/assets/js/auth.js" defer></script>
 </head>
 
 <body class="auth-page">

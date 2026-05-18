@@ -10,7 +10,6 @@
     request.setAttribute("_pageCSS", "wishlist");
 %>
 <jsp:include page="/WEB-INF/views/partials/head.jsp" />
-<script src="<%= request.getContextPath() %>/assets/js/modules/wishlist.js"></script>
 </head>
 
 <body>
@@ -53,7 +52,7 @@
                         <div class="product-card__footer">
                             <p class="product-card__price">₹<%= String.format("%.2f", item.getPrice()) %></p>
                             <div class="product-card__actions">
-                                <button class="product-card__btn product-card__btn--primary" data-product-id="<%= item.getProductId() %>" onclick="FashionStore.cartDrawer.addToCart(this.getAttribute('data-product-id'))">Add to Cart</button>
+                                <button class="product-card__btn product-card__btn--primary" data-product-id="<%= item.getProductId() %>" onclick="CartManager.addToCart(this.getAttribute('data-product-id'))">Add to Cart</button>
                             </div>
                         </div>
                     </div>

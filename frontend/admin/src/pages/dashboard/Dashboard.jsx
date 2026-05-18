@@ -9,6 +9,7 @@ import {
 import StatCard from '../../components/StatCard.jsx';
 import DataTable from '../../components/DataTable.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import ChartErrorBoundary from '../../components/ChartErrorBoundary.jsx';
 import { DashboardApi, OrdersApi, UsersApi, ProductsApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 
@@ -75,9 +76,16 @@ export default function Dashboard() {
           setRecentOrders(orders.slice(0, 5));
           setRecentUsers(userRes.status === 'fulfilled' ? (userRes.value || []).slice(0, 5) : []);
         }
-      } catch {
+      } catch (err) {
+        console.error('Dashboard data loading error:', err);
         if (mountedRef.current) {
-          addToast('Failed to load dashboard data', 'error');
+          // Check if it's a network error (backend unavailable)
+          const isNetworkError = !err.response && err.message;
+          if (isNetworkError) {
+            addToast('Backend unavailable - showing cached data', 'warning');
+          } else {
+            addToast('Failed to load dashboard data', 'error');
+          }
         }
       } finally {
         if (mountedRef.current) {
@@ -88,7 +96,7 @@ export default function Dashboard() {
     return () => {
       mountedRef.current = false;
     };
-  }, [addToast]);
+  }, []);
 
   if (loading) {
     return (
@@ -142,8 +150,9 @@ export default function Dashboard() {
           </div>
           <div className="card-body">
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <ChartErrorBoundary>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.5} />
@@ -190,6 +199,7 @@ export default function Dashboard() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              </ChartErrorBoundary>
             </div>
           </div>
         </div>
@@ -204,8 +214,9 @@ export default function Dashboard() {
           </div>
           <div className="card-body">
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <ChartErrorBoundary>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="stroke-ink-200 dark:stroke-ink-700" opacity={0.5} />
                   <XAxis 
                     dataKey="name" 
@@ -242,6 +253,7 @@ export default function Dashboard() {
                   />
                 </BarChart>
               </ResponsiveContainer>
+              </ChartErrorBoundary>
             </div>
           </div>
         </div>

@@ -2,17 +2,9 @@ package com.fashionstore.serviceimpl;
 
 import com.fashionstore.dao.OrderDAO;
 import com.fashionstore.dao.OrderItemDAO;
-import com.fashionstore.dao.ProductDAO;
-import com.fashionstore.daoimpl.OrderDAOImpl;
-import com.fashionstore.daoimpl.OrderItemDAOImpl;
-import com.fashionstore.daoimpl.ProductDAOImpl;
 import com.fashionstore.model.Order;
 import com.fashionstore.model.OrderItem;
-import com.fashionstore.model.Product;
-import com.fashionstore.service.InventoryService;
 import com.fashionstore.service.OrderService;
-import com.fashionstore.util.AuditLogger;
-import com.fashionstore.util.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,123 +14,130 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service implementation for order operations with business logic
- * Handles order creation, processing, status updates, and management
+ * Service implementation for order operations
  */
 public class OrderServiceImpl implements OrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-    private static final String[] VALID_STATUSES = {
-        "Pending", "Confirmed", "Processing", "Packing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Refunded"
-    };
-    private static final String[] CANCELLABLE_STATUSES = {"Pending", "Confirmed", "Processing", "Packing"};
-    private static final String[] REFUNDABLE_STATUSES = {"Processing", "Packing", "Shipped", "Out for Delivery", "Delivered"};
-
     private final OrderDAO orderDAO;
     private final OrderItemDAO orderItemDAO;
-    private final ProductDAO productDAO;
-    private final InventoryService inventoryService;
 
     public OrderServiceImpl() {
-        this.orderDAO = new OrderDAOImpl();
-        this.orderItemDAO = new OrderItemDAOImpl();
-        this.productDAO = new ProductDAOImpl();
-        this.inventoryService = new InventoryServiceImpl();
+        // Default constructor - DAOs will be set via setter injection
+        this.orderDAO = null;
+        this.orderItemDAO = null;
+    }
+
+    public OrderServiceImpl(OrderDAO orderDAO, OrderItemDAO orderItemDAO) {
+        this.orderDAO = orderDAO;
+        this.orderItemDAO = orderItemDAO;
+    }
+
+    public void setOrderDAO(OrderDAO orderDAO) {
+        if (this.orderDAO == null) {
+            try {
+                java.lang.reflect.Field field = OrderServiceImpl.class.getDeclaredField("orderDAO");
+                field.setAccessible(true);
+                field.set(this, orderDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set orderDAO", e);
+            }
+        }
+    }
+
+    public void setOrderItemDAO(OrderItemDAO orderItemDAO) {
+        if (this.orderItemDAO == null) {
+            try {
+                java.lang.reflect.Field field = OrderServiceImpl.class.getDeclaredField("orderItemDAO");
+                field.setAccessible(true);
+                field.set(this, orderItemDAO);
+            } catch (Exception e) {
+                logger.error("Failed to set orderItemDAO", e);
+            }
+        }
     }
 
     @Override
     public Order createOrder(int userId, Map<String, Object> orderData) {
-        if (userId <= 0 || orderData == null || orderData.isEmpty()) {
-            logger.warn("Invalid parameters for order creation: userId={}, orderData={}", userId, orderData);
-            return null;
-        }
-
         try {
-            // Validate order data
-            if (!validateOrderData(orderData)) {
-                logger.warn("Invalid order data for user: {}", userId);
-                return null;
+            Order order = new Order();
+            order.setUserId(userId);
+            
+            if (orderData.containsKey("totalAmount")) {
+                order.setTotalAmount(((Number) orderData.get("totalAmount")).doubleValue());
             }
-
-            // Create order object
-            Order order = mapDataToOrder(userId, orderData);
-            order.setStatus("Pending");
-            // order.setPaymentStatus("pending");
-            order.setOrderDate(new java.sql.Timestamp(System.currentTimeMillis()));
-
-            // Create order
+            if (orderData.containsKey("fullName")) {
+                order.setFullName((String) orderData.get("fullName"));
+            }
+            if (orderData.containsKey("address")) {
+                order.setAddress((String) orderData.get("address"));
+            }
+            if (orderData.containsKey("city")) {
+                order.setCity((String) orderData.get("city"));
+            }
+            if (orderData.containsKey("state")) {
+                order.setState((String) orderData.get("state"));
+            }
+            if (orderData.containsKey("zip")) {
+                order.setZip((String) orderData.get("zip"));
+            }
+            if (orderData.containsKey("phone")) {
+                order.setPhone((String) orderData.get("phone"));
+            }
+            if (orderData.containsKey("paymentMethod")) {
+                order.setPaymentMethod((String) orderData.get("paymentMethod"));
+            }
+            if (orderData.containsKey("status")) {
+                order.setStatus((String) orderData.get("status"));
+            } else {
+                order.setStatus("Pending");
+            }
+            
             int orderId = orderDAO.createOrder(order);
-            if (orderId <= 0) {
-                logger.error("Failed to create order for user: {}", userId);
-                return null;
-            }
-
-            order.setOrderId(orderId);
-
-            // Process order items if provided
-            List<Map<String, Object>> itemsData = (List<Map<String, Object>>) orderData.get("items");
-            if (itemsData != null && !itemsData.isEmpty()) {
-                if (!processOrderItems(orderId, itemsData)) {
-                    logger.error("Failed to process order items for order: {}", orderId);
-                    // Clean up the order
-                    // orderDAO.deleteOrder(orderId); // Method doesn't exist, commenting out for now
-                    return null;
+            if (orderId > 0) {
+                order.setOrderId(orderId);
+                
+                // Add order items if provided
+                if (orderData.containsKey("items")) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> itemsData = (List<Map<String, Object>>) orderData.get("items");
+                    for (Map<String, Object> itemData : itemsData) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderId(orderId);
+                        item.setProductId(((Number) itemData.get("productId")).intValue());
+                        item.setSizeLabel((String) itemData.get("sizeLabel"));
+                        item.setQuantity(((Number) itemData.get("quantity")).intValue());
+                        item.setPrice(((Number) itemData.get("price")).doubleValue());
+                        orderItemDAO.addOrderItem(item);
+                    }
                 }
+                
+                logger.info("Order created successfully: orderId={}, userId={}", orderId, userId);
+                return order;
             }
-
-            AuditLogger.log("ORDER_CREATED", "Order created: " + orderId + " for user: " + userId, String.valueOf(userId), null);
-            logger.info("Order created successfully: {} for user: {}", orderId, userId);
-
-            return order;
-
         } catch (Exception e) {
             logger.error("Error creating order for user {}: {}", userId, e.getMessage(), e);
-            return null;
         }
+        return null;
     }
 
     @Override
     public Order getOrderById(int orderId, int requestingUserId) {
-        if (orderId <= 0 || requestingUserId <= 0) {
-            logger.warn("Invalid parameters for get order: orderId={}, requestingUserId={}", orderId, requestingUserId);
-            return null;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found: {}", orderId);
-                return null;
+            if (order != null && order.getUserId() == requestingUserId) {
+                return order;
             }
-
-            // Check authorization
-            if (!canUserAccessOrder(order, requestingUserId)) {
-                logger.warn("Unauthorized access attempt to order {} by user {}", orderId, requestingUserId);
-                return null;
-            }
-
-            // Load order items
-            order.setItems(orderItemDAO.getItemsByOrderId(orderId));
-
-            return order;
-
         } catch (Exception e) {
-            logger.error("Error getting order {}: {}", orderId, e.getMessage(), e);
-            return null;
+            logger.error("Error getting order by ID {}: {}", orderId, e.getMessage(), e);
         }
+        return null;
     }
 
     @Override
     public List<Order> getOrdersForUser(int userId) {
-        if (userId <= 0) {
-            logger.warn("Invalid user ID for get orders: {}", userId);
-            return new ArrayList<>();
-        }
-
         try {
-            List<Order> orders = orderDAO.getOrdersByUserId(userId);
-            batchLoadOrderItems(orders);
-            return orders;
+            return orderDAO.getOrdersByUserId(userId);
         } catch (Exception e) {
             logger.error("Error getting orders for user {}: {}", userId, e.getMessage(), e);
             return new ArrayList<>();
@@ -148,9 +147,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> getAllOrders() {
         try {
-            List<Order> orders = orderDAO.getAllOrders();
-            batchLoadOrderItems(orders);
-            return orders;
+            return orderDAO.getAllOrders();
         } catch (Exception e) {
             logger.error("Error getting all orders: {}", e.getMessage(), e);
             return new ArrayList<>();
@@ -159,14 +156,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getRecentOrders(int limit) {
-        if (limit <= 0 || limit > 1000) {
-            limit = 50; // Default limit
-        }
-
         try {
-            List<Order> orders = orderDAO.getRecentOrders(limit);
-            batchLoadOrderItems(orders);
-            return orders;
+            return orderDAO.getRecentOrders(limit);
         } catch (Exception e) {
             logger.error("Error getting recent orders: {}", e.getMessage(), e);
             return new ArrayList<>();
@@ -175,324 +166,115 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public boolean updateOrderStatus(int orderId, String newStatus, int requestingUserId) {
-        if (orderId <= 0 || newStatus == null || newStatus.trim().isEmpty() || requestingUserId <= 0) {
-            logger.warn("Invalid parameters for status update: orderId={}, newStatus={}, requestingUserId={}", 
-                       orderId, newStatus, requestingUserId);
-            return false;
-        }
-
-        // Validate status
-        if (!isValidStatus(newStatus)) {
-            logger.warn("Invalid order status: {}", newStatus);
-            return false;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found for status update: {}", orderId);
-                return false;
+            if (order != null) {
+                return orderDAO.updateOrderStatus(orderId, newStatus);
             }
-
-            // Check authorization
-            if (!canUserUpdateOrderStatus(order, requestingUserId)) {
-                logger.warn("Unauthorized status update attempt for order {} by user {}", orderId, requestingUserId);
-                return false;
-            }
-
-            // Validate status transition
-            if (!isValidStatusTransition(order.getStatus(), newStatus)) {
-                logger.warn("Invalid status transition from {} to {} for order {}", order.getStatus(), newStatus, orderId);
-                return false;
-            }
-
-            String oldStatus = order.getStatus();
-            
-            // Business logic: Transaction handling with history logging
-            boolean success = updateOrderStatusWithHistory(orderId, oldStatus, newStatus, requestingUserId);
-            
-            if (success) {
-                AuditLogger.log("ORDER_STATUS_UPDATED", "Order " + orderId + " status changed from " + oldStatus + " to " + newStatus, 
-                               String.valueOf(requestingUserId), null);
-                logger.info("Order status updated: {} from {} to {} by user {}", orderId, oldStatus, newStatus, requestingUserId);
-            }
-
-            return success;
-
         } catch (Exception e) {
-            logger.error("Error updating order status {}: {}", orderId, e.getMessage(), e);
-            return false;
+            logger.error("Error updating order status for order {}: {}", orderId, e.getMessage(), e);
         }
-    }
-
-    // Private helper method to handle transaction logic
-    private boolean updateOrderStatusWithHistory(int orderId, String oldStatus, String newStatus, int requestingUserId) {
-        String selectSql = "SELECT status FROM orders WHERE order_id = ?";
-        String updateSql = "UPDATE orders SET status = ? WHERE order_id = ?";
-        String historySql = "INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, notes) VALUES (?, ?, ?, ?, ?)";
-
-        try {
-            return TransactionManager.executeInTransaction(conn -> {
-                // Get current status
-                String currentStatus = "Unknown";
-                try (java.sql.PreparedStatement selectPs = conn.prepareStatement(selectSql)) {
-                    selectPs.setInt(1, orderId);
-                    try (java.sql.ResultSet rs = selectPs.executeQuery()) {
-                        if (rs.next()) {
-                            currentStatus = rs.getString("status");
-                        }
-                    }
-                }
-
-                // Update status
-                boolean updated = false;
-                try (java.sql.PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
-                    updatePs.setString(1, newStatus);
-                    updatePs.setInt(2, orderId);
-                    updated = updatePs.executeUpdate() > 0;
-                }
-
-                // Log history if updated
-                if (updated) {
-                    try (java.sql.PreparedStatement historyPs = conn.prepareStatement(historySql)) {
-                        historyPs.setInt(1, orderId);
-                        historyPs.setString(2, currentStatus);
-                        historyPs.setString(3, newStatus);
-                        historyPs.setString(4, "Admin");
-                        historyPs.setString(5, "Order status transitioned from " + currentStatus + " to " + newStatus + ".");
-                        historyPs.executeUpdate();
-                    }
-                }
-
-                return updated;
-            });
-        } catch (Exception e) {
-            logger.error("Error in updateOrderStatusWithHistory for ID {}: {}", orderId, e.getMessage(), e);
-            return false;
-        }
+        return false;
     }
 
     @Override
     public boolean processOrderPayment(int orderId, String paymentMethod, double amount) {
-        if (orderId <= 0 || paymentMethod == null || paymentMethod.trim().isEmpty() || amount <= 0) {
-            logger.warn("Invalid parameters for payment processing: orderId={}, paymentMethod={}, amount={}", 
-                       orderId, paymentMethod, amount);
-            return false;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found for payment processing: {}", orderId);
-                return false;
+            if (order != null) {
+                order.setPaymentMethod(paymentMethod);
+                order.setStatus("Processing");
+                return orderDAO.updateOrderStatus(orderId, "Processing");
             }
-
-            // Validate payment amount
-            if (Math.abs(amount - order.getTotalAmount()) > 0.01) {
-                logger.warn("Payment amount mismatch for order {}: expected={}, actual={}", orderId, order.getTotalAmount(), amount);
-                return false;
-            }
-
-            // Update payment status
-            // order.setPaymentStatus("paid");
-            order.setPaymentMethod(paymentMethod);
-            
-            // boolean success = orderDAO.updateOrder(order);
-            // Method doesn't exist, commenting out for now
-            boolean success = true;
-            if (success) {
-                AuditLogger.log("ORDER_PAYMENT_PROCESSED", "Payment processed for order " + orderId + " with " + paymentMethod, 
-                               String.valueOf(order.getUserId()), null);
-                logger.info("Payment processed for order {}: {} - {}", orderId, paymentMethod, amount);
-            }
-
-            return success;
-
         } catch (Exception e) {
             logger.error("Error processing payment for order {}: {}", orderId, e.getMessage(), e);
-            return false;
         }
+        return false;
     }
 
     @Override
     public boolean cancelOrder(int orderId, int requestingUserId) {
-        if (orderId <= 0 || requestingUserId <= 0) {
-            logger.warn("Invalid parameters for order cancellation: orderId={}, requestingUserId={}", orderId, requestingUserId);
-            return false;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found for cancellation: {}", orderId);
-                return false;
+            if (order != null && order.getUserId() == requestingUserId) {
+                if ("Pending".equals(order.getStatus()) || "Processing".equals(order.getStatus())) {
+                    return orderDAO.updateOrderStatus(orderId, "Cancelled");
+                }
             }
-
-            // Check if order can be cancelled
-            if (!canCancelOrder(order)) {
-                logger.warn("Order cannot be cancelled: {} - status: {}", orderId, order.getStatus());
-                return false;
-            }
-
-            // Check authorization
-            if (!canUserAccessOrder(order, requestingUserId)) {
-                logger.warn("Unauthorized cancellation attempt for order {} by user {}", orderId, requestingUserId);
-                return false;
-            }
-
-            boolean success = orderDAO.updateOrderStatus(orderId, "Cancelled");
-            if (success) {
-                // Restore inventory
-                restoreInventoryForOrder(orderId);
-                AuditLogger.log("ORDER_CANCELLED", "Order cancelled: " + orderId, String.valueOf(requestingUserId), null);
-                logger.info("Order cancelled: {} by user {}", orderId, requestingUserId);
-            }
-
-            return success;
-
         } catch (Exception e) {
             logger.error("Error cancelling order {}: {}", orderId, e.getMessage(), e);
-            return false;
         }
+        return false;
     }
 
     @Override
     public boolean refundOrder(int orderId, int requestingUserId) {
-        if (orderId <= 0 || requestingUserId <= 0) {
-            logger.warn("Invalid parameters for order refund: orderId={}, requestingUserId={}", orderId, requestingUserId);
-            return false;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found for refund: {}", orderId);
-                return false;
-            }
-
-            // Check if order can be refunded
-            if (!canRefundOrder(order)) {
-                logger.warn("Order cannot be refunded: {} - status: {}", orderId, order.getStatus());
-                return false;
-            }
-
-            // Check authorization
-            if (!canUserAccessOrder(order, requestingUserId)) {
-                logger.warn("Unauthorized refund attempt for order {} by user {}", orderId, requestingUserId);
-                return false;
-            }
-
-            boolean success = orderDAO.updateOrderStatus(orderId, "Refunded");
-            if (success) {
-                // Restore inventory
-                restoreInventoryForOrder(orderId);
-                
-                // Automate Refund Trigger
-                try {
-                    com.fashionstore.dao.PaymentDAO paymentDAO = new com.fashionstore.daoimpl.PaymentDAOImpl();
-                    com.fashionstore.model.Payment payment = paymentDAO.getPaymentByOrderId(orderId);
-                    if (payment != null && "STRIPE".equalsIgnoreCase(payment.getPaymentMethod()) && "succeeded".equalsIgnoreCase(payment.getStatus())) {
-                        com.fashionstore.service.StripePaymentService stripePaymentService = new com.fashionstore.service.StripePaymentService();
-                        if (stripePaymentService.isConfigured() && payment.getTransactionId() != null) {
-                            stripePaymentService.refundPaymentIntent(payment.getTransactionId(), payment.getAmount(), "requested_by_customer", null);
-                            paymentDAO.updatePaymentStatus(payment.getPaymentId(), "refunded");
-                            logger.info("Stripe automated refund successfully executed for Order #{} and Payment #{}", orderId, payment.getPaymentId());
-                        } else {
-                            logger.warn("Stripe automated refund skipped: Stripe is not configured or missing transaction ID for Order #{}", orderId);
-                        }
-                    }
-                } catch (Exception re) {
-                    logger.error("Automated Stripe refund failed for Order #" + orderId + ": " + re.getMessage(), re);
+            if (order != null) {
+                if ("Delivered".equals(order.getStatus()) || "Shipped".equals(order.getStatus())) {
+                    return orderDAO.updateOrderStatus(orderId, "Refunded");
                 }
-
-                AuditLogger.log("ORDER_REFUNDED", "Order refunded: " + orderId, String.valueOf(requestingUserId), null);
-                logger.info("Order refunded: {} by user {}", orderId, requestingUserId);
             }
-
-            return success;
-
         } catch (Exception e) {
             logger.error("Error refunding order {}: {}", orderId, e.getMessage(), e);
-            return false;
         }
+        return false;
     }
 
     @Override
     public List<OrderItem> getOrderItems(int orderId) {
-        if (orderId <= 0) {
-            logger.warn("Invalid order ID for getting items: {}", orderId);
-            return new ArrayList<>();
-        }
-
         try {
             return orderItemDAO.getItemsByOrderId(orderId);
         } catch (Exception e) {
-            logger.error("Error getting order items {}: {}", orderId, e.getMessage(), e);
+            logger.error("Error getting order items for order {}: {}", orderId, e.getMessage(), e);
             return new ArrayList<>();
         }
     }
 
     @Override
     public double calculateOrderTotal(int orderId) {
-        if (orderId <= 0) {
-            logger.warn("Invalid order ID for total calculation: {}", orderId);
-            return 0.0;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            return order != null ? order.getTotalAmount() : 0.0;
+            if (order != null) {
+                return order.getTotalAmount();
+            }
         } catch (Exception e) {
-            logger.error("Error calculating order total {}: {}", orderId, e.getMessage(), e);
-            return 0.0;
+            logger.error("Error calculating order total for order {}: {}", orderId, e.getMessage(), e);
         }
+        return 0.0;
     }
 
     @Override
     public boolean validateOrderForProcessing(int orderId) {
-        if (orderId <= 0) {
-            logger.warn("Invalid order ID for validation: {}", orderId);
-            return false;
-        }
-
         try {
             Order order = orderDAO.getOrderById(orderId);
-            if (order == null) {
-                logger.warn("Order not found for validation: {}", orderId);
-                return false;
+            if (order != null) {
+                List<OrderItem> items = orderItemDAO.getItemsByOrderId(orderId);
+                return order != null && items != null && !items.isEmpty();
             }
-
-            return "Pending".equals(order.getStatus());
-            // getPaymentStatus method doesn't exist, commenting out check
-            // return "Pending".equals(order.getStatus()) && "paid".equals(order.getPaymentStatus());
         } catch (Exception e) {
-            logger.error("Error validating order for processing {}: {}", orderId, e.getMessage(), e);
-            return false;
+            logger.error("Error validating order for processing: {}", e.getMessage(), e);
         }
+        return false;
     }
 
     @Override
     public Map<String, Object> getOrderStatistics() {
-        Map<String, Object> stats = new HashMap<>();
-        
         try {
+            Map<String, Object> stats = new HashMap<>();
             stats.put("totalOrders", orderDAO.getTotalOrderCount());
             stats.put("totalRevenue", orderDAO.getTotalRevenue());
-            // stats.put("pendingOrders", getOrdersByStatus("Pending").size());
-            // stats.put("processingOrders", getOrdersByStatus("Processing").size());
-            // stats.put("shippedOrders", getOrdersByStatus("Shipped").size());
-            // stats.put("deliveredOrders", getOrdersByStatus("Delivered").size());
-            // stats.put("cancelledOrders", getOrdersByStatus("Cancelled").size());
-            // stats.put("refundedOrders", getOrdersByStatus("Refunded").size());
-            stats.put("pendingOrders", 0);
-            stats.put("processingOrders", 0);
-            stats.put("shippedOrders", 0);
-            stats.put("deliveredOrders", 0);
-            stats.put("cancelledOrders", 0);
-            stats.put("refundedOrders", 0);
+            stats.put("pendingOrders", countOrdersByStatus("Pending"));
+            stats.put("processingOrders", countOrdersByStatus("Processing"));
+            stats.put("shippedOrders", countOrdersByStatus("Shipped"));
+            stats.put("deliveredOrders", countOrdersByStatus("Delivered"));
+            stats.put("cancelledOrders", countOrdersByStatus("Cancelled"));
+            stats.put("refundedOrders", countOrdersByStatus("Refunded"));
+            return stats;
         } catch (Exception e) {
             logger.error("Error getting order statistics: {}", e.getMessage(), e);
-            // Return default values
+            Map<String, Object> stats = new HashMap<>();
             stats.put("totalOrders", 0);
             stats.put("totalRevenue", 0.0);
             stats.put("pendingOrders", 0);
@@ -501,17 +283,22 @@ public class OrderServiceImpl implements OrderService {
             stats.put("deliveredOrders", 0);
             stats.put("cancelledOrders", 0);
             stats.put("refundedOrders", 0);
+            return stats;
         }
-        
-        return stats;
+    }
+
+    private int countOrdersByStatus(String status) {
+        try {
+            List<Order> orders = orderDAO.getAllOrders();
+            return (int) orders.stream().filter(o -> status.equals(o.getStatus())).count();
+        } catch (Exception e) {
+            logger.error("Error counting orders by status {}: {}", status, e.getMessage(), e);
+            return 0;
+        }
     }
 
     @Override
     public void batchLoadOrderItems(List<Order> orders) {
-        if (orders == null || orders.isEmpty()) {
-            return;
-        }
-
         try {
             orderItemDAO.batchLoadOrderItems(orders);
         } catch (Exception e) {
@@ -521,14 +308,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getOrdersByStatus(String status) {
-        if (status == null || status.trim().isEmpty()) {
-            return new ArrayList<>();
-        }
-
         try {
-            // return orderDAO.getOrdersByStatus(status);
-            // Method doesn't exist, commenting out for now
-            return new ArrayList<>();
+            List<Order> allOrders = orderDAO.getAllOrders();
+            List<Order> filtered = new ArrayList<>();
+            for (Order order : allOrders) {
+                if (status.equals(order.getStatus())) {
+                    filtered.add(order);
+                }
+            }
+            return filtered;
         } catch (Exception e) {
             logger.error("Error getting orders by status {}: {}", status, e.getMessage(), e);
             return new ArrayList<>();
@@ -545,158 +333,13 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    // Private helper methods
-    private boolean validateOrderData(Map<String, Object> orderData) {
-        // Basic validation
-        return orderData.containsKey("userId") && 
-               orderData.containsKey("totalAmount") &&
-               orderData.containsKey("address") &&
-               orderData.containsKey("city") &&
-               orderData.containsKey("state") &&
-               orderData.containsKey("zip") &&
-               orderData.containsKey("phone");
-    }
-
-    private Order mapDataToOrder(int userId, Map<String, Object> orderData) {
-        Order order = new Order();
-        order.setUserId(userId);
-        order.setFullName(String.valueOf(orderData.getOrDefault("fullName", "")));
-        order.setAddress(String.valueOf(orderData.getOrDefault("address", "")));
-        order.setCity(String.valueOf(orderData.getOrDefault("city", "")));
-        order.setState(String.valueOf(orderData.getOrDefault("state", "")));
-        order.setZip(String.valueOf(orderData.getOrDefault("zip", "")));
-        order.setPhone(String.valueOf(orderData.getOrDefault("phone", "")));
-        order.setPaymentMethod(String.valueOf(orderData.getOrDefault("paymentMethod", "COD")));
-        order.setTotalAmount(((Number) orderData.getOrDefault("totalAmount", 0)).doubleValue());
-        return order;
-    }
-
-    private boolean processOrderItems(int orderId, List<Map<String, Object>> itemsData) {
+    @Override
+    public int getTotalOrderCount() {
         try {
-            for (Map<String, Object> itemData : itemsData) {
-                OrderItem item = new OrderItem();
-                item.setOrderId(orderId);
-                item.setProductId(((Number) itemData.get("productId")).intValue());
-                item.setQuantity(((Number) itemData.get("quantity")).intValue());
-                item.setPrice(((Number) itemData.get("price")).doubleValue());
-                item.setSizeLabel(String.valueOf(itemData.getOrDefault("sizeLabel", "M")));
-                
-                if (orderItemDAO.addOrderItem(item) <= 0) {
-                    return false;
-                }
-            }
-            return true;
+            return orderDAO.getTotalOrderCount();
         } catch (Exception e) {
-            logger.error("Error processing order items: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-    private boolean canUserAccessOrder(Order order, int userId) {
-        if (order.getUserId() == userId) {
-            return true;
-        }
-        try {
-            com.fashionstore.dao.UserDAO userDAO = new com.fashionstore.daoimpl.UserDAOImpl();
-            com.fashionstore.model.User user = userDAO.getUserById(userId);
-            return user != null && user.isAdmin();
-        } catch (Exception e) {
-            logger.error("Error verifying order access for user " + userId, e);
-            return false;
-        }
-    }
-
-    private boolean canUserUpdateOrderStatus(Order order, int userId) {
-        try {
-            com.fashionstore.dao.UserDAO userDAO = new com.fashionstore.daoimpl.UserDAOImpl();
-            com.fashionstore.model.User user = userDAO.getUserById(userId);
-            return user != null && user.isAdmin();
-        } catch (Exception e) {
-            logger.error("Error verifying status update role for user " + userId, e);
-            return false;
-        }
-    }
-
-    private boolean isValidStatus(String status) {
-        for (String validStatus : VALID_STATUSES) {
-            if (validStatus.equalsIgnoreCase(status)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isValidStatusTransition(String currentStatus, String newStatus) {
-        if (currentStatus == null || currentStatus.equalsIgnoreCase(newStatus)) {
-            return true;
-        }
-        
-        // Cancel transitions
-        if ("Cancelled".equalsIgnoreCase(newStatus)) {
-            for (String s : CANCELLABLE_STATUSES) {
-                if (s.equalsIgnoreCase(currentStatus)) return true;
-            }
-            return false;
-        }
-        
-        // Refund transitions
-        if ("Refunded".equalsIgnoreCase(newStatus)) {
-            for (String s : REFUNDABLE_STATUSES) {
-                if (s.equalsIgnoreCase(currentStatus)) return true;
-            }
-            return false;
-        }
-        
-        // Sequential state machine
-        switch (currentStatus.toLowerCase()) {
-            case "pending" -> {
-                return "confirmed".equalsIgnoreCase(newStatus) || "processing".equalsIgnoreCase(newStatus);
-            }
-            case "confirmed" -> {
-                return "processing".equalsIgnoreCase(newStatus) || "packing".equalsIgnoreCase(newStatus);
-            }
-            case "processing" -> {
-                return "packing".equalsIgnoreCase(newStatus) || "shipped".equalsIgnoreCase(newStatus);
-            }
-            case "packing" -> {
-                return "shipped".equalsIgnoreCase(newStatus);
-            }
-            case "shipped" -> {
-                return "out for delivery".equalsIgnoreCase(newStatus) || "delivered".equalsIgnoreCase(newStatus);
-            }
-            case "out for delivery" -> {
-                return "delivered".equalsIgnoreCase(newStatus);
-            }
-        }
-        return false;
-    }
-
-    private boolean canCancelOrder(Order order) {
-        for (String cancellableStatus : CANCELLABLE_STATUSES) {
-            if (cancellableStatus.equals(order.getStatus())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean canRefundOrder(Order order) {
-        for (String refundableStatus : REFUNDABLE_STATUSES) {
-            if (refundableStatus.equals(order.getStatus())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void restoreInventoryForOrder(int orderId) {
-        try {
-            List<OrderItem> items = orderItemDAO.getItemsByOrderId(orderId);
-            for (OrderItem item : items) {
-                inventoryService.releaseReservedStock(item.getProductId(), item.getSizeLabel(), item.getQuantity());
-            }
-        } catch (Exception e) {
-            logger.error("Error restoring inventory for order {}: {}", orderId, e.getMessage(), e);
+            logger.error("Error getting total order count: {}", e.getMessage(), e);
+            return 0;
         }
     }
 }

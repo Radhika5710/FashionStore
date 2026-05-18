@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, Package, Save } from 'lucide-react';
 import DataTable from '../../components/DataTable.jsx';
+import OptimizedImage from '../../components/OptimizedImage.jsx';
 import { InventoryApi, ProductsApi } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 
@@ -59,8 +60,8 @@ export default function Inventory() {
 
   const columns = [
     { key: 'image', header: '', width: '48px', render: (r) => (
-      <div className="w-8 h-8 rounded bg-ink-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden">
-        {r.imageUrl ? <img src={r.imageUrl} alt="" className="w-full h-full object-cover" /> : <Package size={14} className="text-ink-400" />}
+      <div className="w-10 h-10 rounded-lg bg-ink-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden">
+        {r.imageUrl ? <OptimizedImage src={r.imageUrl} alt="" width={40} height={40} /> : <Package size={14} className="text-ink-400" />}
       </div>
     )},
     { key: 'name', header: 'Product' },

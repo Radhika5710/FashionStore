@@ -1,38 +1,99 @@
 /**
- * FashionStore - Centralized API Client
- * Axios instance with base configuration, interceptors, and error handling
+ * FashionStore - MVC/JSP API Client
+ * Session-based authentication ONLY
+ * 
+ * HYBRID ARCHITECTURE:
+ * ====================
+ * - This client: Customer MVC Frontend (JSP pages)
+ * - Admin client: React Admin Frontend (/api/admin/*)
+ * 
+ * CRITICAL: This client is for CUSTOMER MVC FRONTEND ONLY.
+ * Uses HttpSession (JSESSIONID cookie) for authentication.
+ * DO NOT add JWT logic here. JWT is for admin APIs only (/api/admin/*).
+ * 
+ * AUTHENTICATION METHOD:
+ * =====================
+ * - Session-based via HttpSession
+ * - JSESSIONID cookie (HTTP-only, secure)
+ * - CSRF token injection for POST requests
+ * - No JWT tokens
+ * - No Authorization header
+ * 
+ * FEATURES:
+ * =========
+ * - CSRF token injection from meta tags
+ * - Session-based authentication via JSESSIONID cookie
+ * - Retry logic with exponential backoff
+ * - Centralized error handling
+ * - Request/response logging in debug mode
+ * - Session expiry detection and redirect
+ * - CSRF error handling
+ * - Network error handling
+ * 
+ * IMPORTANT SEPARATION:
+ * ====================
+ * ✓ Uses ONLY CSRF tokens
+ * ✓ Uses ONLY JSESSIONID cookie
+ * ✓ NO JWT token injection
+ * ✓ NO Authorization header
+ * ✓ NO token refresh logic
+ * ✓ NO admin API endpoints
+ * 
+ * Admin API client is separate:
+ * - frontend/admin/src/core/api/client.js
+ * - Uses JWT tokens
+ * - Uses Authorization header
+ * - Uses token refresh logic
+ * - Only for /api/admin/* endpoints
+ * 
+ * REQUEST FLOW:
+ * =============
+ * 1. Request interceptor:
+ *    - Injects CSRF token from meta tag
+ *    - Adds timestamp to prevent caching (GET requests)
+ *    - Logs request in debug mode
+ * 
+ * 2. Request execution:
+ *    - JSESSIONID cookie automatically included
+ *    - Retry on network errors and 5xx
+ *    - Exponential backoff (1s, 2s, 4s)
+ * 
+ * 3. Response interceptor:
+ *    - Normalizes response structure
+ *    - Detects session expiry (401)
+ *    - Detects CSRF errors (403)
+ *    - Handles server errors (5xx)
+ *    - Handles network errors
+ * 
+ * ERROR HANDLING:
+ * ===============
+ * - 401: Session expired → redirect to /login
+ * - 403 (CSRF): Security token expired → reload page
+ * - 5xx: Server error → show error message
+ * - Network: Connection error → show error message
+ * 
+ * USAGE EXAMPLES:
+ * ===============
+ * // GET request
+ * FashionStoreAPI.get('/api/products').then(response => {
+ *   console.log(response.data);
+ * });
+ * 
+ * // POST request with CSRF token (auto-injected)
+ * FashionStoreAPI.post('/api/cart', { productId: 1, quantity: 2 }).then(response => {
+ *   console.log(response.data);
+ * });
+ * 
+ * // PUT request
+ * FashionStoreAPI.put('/api/profile', { name: 'John' }).then(response => {
+ *   console.log(response.data);
+ * });
+ * 
+ * // DELETE request
+ * FashionStoreAPI.delete('/api/cart/1').then(response => {
+ *   console.log(response.data);
+ * });
  */
-
-// Check if axios is available, if not provide a fallback
-const axios = window.axios || (function() {
-    // Simple fetch-based fallback if axios is not loaded
-    return {
-        get: (url, config) => fetch(url, { ...config, method: 'GET' }).then(res => {
-            const data = res.json();
-            return res.ok ? data : Promise.reject({ response: { status: res.status, data } });
-        }),
-        post: (url, data, config) => fetch(url, { ...config, method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json', ...config?.headers } }).then(res => {
-            const responseData = res.json();
-            return res.ok ? responseData : Promise.reject({ response: { status: res.status, data: responseData } });
-        }),
-        put: (url, data, config) => fetch(url, { ...config, method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json', ...config?.headers } }).then(res => {
-            const responseData = res.json();
-            return res.ok ? responseData : Promise.reject({ response: { status: res.status, data: responseData } });
-        }),
-        delete: (url, config) => fetch(url, { ...config, method: 'DELETE' }).then(res => {
-            const data = res.json();
-            return res.ok ? data : Promise.reject({ response: { status: res.status, data } });
-        }),
-        create: (config) => ({
-            ...axios,
-            defaults: config,
-            interceptors: {
-                request: { use: (fn) => { /* No-op for fallback */ } },
-                response: { use: (fn) => { /* No-op for fallback */ } }
-            }
-        })
-    };
-})();
 
 // API Configuration
 const API_CONFIG = {
@@ -44,122 +105,52 @@ const API_CONFIG = {
     },
     retryConfig: {
         retries: 3,
-        retryDelay: 1000,
-        retryCondition: (error) => {
-            // Retry on network errors and 5xx errors
-            return !error.response && (error.code === 'ECONNABORTED' || error.code === 'ENETDOWN') ||
-                   error.response && error.response.status >= 500;
-        }
+        retryDelay: 1000
     }
 };
 
-// Create axios instance
-const apiClient = axios.create(API_CONFIG);
+/**
+ * Get CSRF token from meta tag or window variable
+ */
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    return metaToken || window.csrfToken || '';
+}
 
-// Request interceptor
-apiClient.interceptors.request.use(
-    (config) => {
-        // Add CSRF token if available
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (csrfToken) {
-            config.headers['X-CSRF-Token'] = csrfToken;
-        }
-
-        // Add timestamp to prevent caching
-        if (config.method === 'GET') {
-            config.params = {
-                ...config.params,
-                _t: Date.now()
-            };
-        }
-
-        // Log request in development
-        if (window.DEBUG_MODE) {
-            console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data || config.params);
-        }
-
-        return config;
-    },
-    (error) => {
-        console.error('[API Request Error]', error);
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor
-apiClient.interceptors.response.use(
-    (response) => {
-        // Log response in development
-        if (window.DEBUG_MODE) {
-            console.log(`[API Response] ${response.config.url}`, response.data);
-        }
-
-        // Normalize response structure
-        return normalizeResponse(response);
-    },
-    async (error) => {
-        // Log error
-        console.error('[API Response Error]', error);
-
-        // Handle session expiry
-        if (error.response?.status === 401) {
-            handleSessionExpiry();
-            return Promise.reject(createApiError(error, 'Session expired. Please login again.', 401));
-        }
-
-        // Handle CSRF errors
-        if (error.response?.status === 403 && error.response?.data?.includes('CSRF')) {
-            handleCsrfError();
-            return Promise.reject(createApiError(error, 'Security token expired. Please refresh the page.', 403));
-        }
-
-        // Handle server errors
-        if (error.response?.status >= 500) {
-            return Promise.reject(createApiError(error, 'Server error. Please try again later.', error.response.status));
-        }
-
-        // Handle network errors
-        if (!error.response) {
-            return Promise.reject(createApiError(error, 'Network error. Please check your connection.', 0));
-        }
-
-        // Handle other errors
-        return Promise.reject(createApiError(error, error.response?.data?.message || 'An error occurred', error.response?.status || 0));
-    }
-);
+/**
+ * Build URL with query parameters
+ */
+function buildUrl(url, params) {
+    if (!params) return url;
+    const queryString = new URLSearchParams(params).toString();
+    return queryString ? `${url}?${queryString}` : url;
+}
 
 /**
  * Normalize response structure
  */
-function normalizeResponse(response) {
-    const data = response.data;
-
+function normalizeResponse(data) {
     // If response already has standard structure, return as-is
     if (data && typeof data === 'object' && ('success' in data || 'status' in data)) {
-        return response;
+        return data;
     }
 
     // Wrap plain data in standard structure
     return {
-        ...response,
-        data: {
-            success: true,
-            status: 'success',
-            data: data
-        }
+        success: true,
+        status: 'success',
+        data: data
     };
 }
 
 /**
  * Create standardized API error
  */
-function createApiError(originalError, message, statusCode) {
+function createApiError(message, statusCode, originalError) {
     const error = new Error(message);
     error.name = 'ApiError';
     error.statusCode = statusCode;
     error.originalError = originalError;
-    error.response = originalError.response;
-    error.config = originalError.config;
     return error;
 }
 
@@ -197,15 +188,92 @@ function handleCsrfError() {
 /**
  * Retry logic with exponential backoff
  */
-async function retryRequest(config, retryCount = 0) {
+async function retryRequest(fn, retryCount = 0) {
     try {
-        return await apiClient(config);
+        return await fn();
     } catch (error) {
-        if (retryCount < API_CONFIG.retryConfig.retries && 
-            API_CONFIG.retryConfig.retryCondition(error)) {
+        if (retryCount < API_CONFIG.retryConfig.retries) {
             const delay = API_CONFIG.retryConfig.retryDelay * Math.pow(2, retryCount);
             await new Promise(resolve => setTimeout(resolve, delay));
-            return retryRequest(config, retryCount + 1);
+            return retryRequest(fn, retryCount + 1);
+        }
+        throw error;
+    }
+}
+
+/**
+ * Core fetch wrapper
+ */
+async function fetchAPI(url, options = {}) {
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    
+    const config = {
+        method: options.method || 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...options.headers
+        },
+        ...options
+    };
+    
+    // Add CSRF token for non-GET requests
+    if (!isGet) {
+        config.headers['X-CSRF-Token'] = getCsrfToken();
+    }
+    
+    // Add body if provided
+    if (options.data) {
+        config.body = JSON.stringify(options.data);
+    }
+    
+    // Add timestamp to prevent caching for GET requests
+    let finalUrl = API_CONFIG.baseURL + url;
+    if (isGet) {
+        finalUrl += (finalUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+        if (options.params) {
+            finalUrl += '&' + new URLSearchParams(options.params).toString();
+        }
+    }
+    
+    // Log request in development
+    if (window.DEBUG_MODE) {
+        console.log(`[API Request] ${config.method.toUpperCase()} ${finalUrl}`, config.body);
+    }
+    
+    try {
+        const response = await fetch(finalUrl, config);
+        
+        // Log response in development
+        if (window.DEBUG_MODE) {
+            console.log(`[API Response] ${finalUrl}`, response.status);
+        }
+        
+        // Handle session expiry
+        if (response.status === 401) {
+            handleSessionExpiry();
+            throw createApiError('Session expired. Please login again.', 401);
+        }
+        
+        // Handle CSRF errors
+        if (response.status === 403) {
+            handleCsrfError();
+            throw createApiError('Security token expired. Please refresh the page.', 403);
+        }
+        
+        // Handle server errors
+        if (response.status >= 500) {
+            throw createApiError('Server error. Please try again later.', response.status);
+        }
+        
+        // Parse JSON response
+        const data = await response.json();
+        
+        return normalizeResponse(data);
+    } catch (error) {
+        // Handle network errors
+        if (!error.statusCode) {
+            throw createApiError('Network error. Please check your connection.', 0, error);
         }
         throw error;
     }
@@ -215,31 +283,23 @@ async function retryRequest(config, retryCount = 0) {
  * Enhanced API client with retry support
  */
 const api = {
-    get: (url, config) => retryRequest({ ...apiClient.defaults, ...config, method: 'GET', url }),
-    post: (url, data, config) => retryRequest({ ...apiClient.defaults, ...config, method: 'POST', url, data }),
-    put: (url, data, config) => retryRequest({ ...apiClient.defaults, ...config, method: 'PUT', url, data }),
-    delete: (url, config) => retryRequest({ ...apiClient.defaults, ...config, method: 'DELETE', url }),
-    patch: (url, data, config) => retryRequest({ ...apiClient.defaults, ...config, method: 'PATCH', url, data }),
-    
-    // Direct access to axios instance for advanced use cases
-    instance: apiClient,
+    get: (url, config) => retryRequest(() => fetchAPI(url, { ...config, method: 'GET' })),
+    post: (url, data, config) => retryRequest(() => fetchAPI(url, { ...config, method: 'POST', data })),
+    put: (url, data, config) => retryRequest(() => fetchAPI(url, { ...config, method: 'PUT', data })),
+    delete: (url, config) => retryRequest(() => fetchAPI(url, { ...config, method: 'DELETE' })),
+    patch: (url, data, config) => retryRequest(() => fetchAPI(url, { ...config, method: 'PATCH', data })),
     
     // Configuration
     setBaseURL: (baseURL) => {
-        apiClient.defaults.baseURL = baseURL;
+        API_CONFIG.baseURL = baseURL;
     },
     setHeader: (key, value) => {
-        apiClient.defaults.headers[key] = value;
+        API_CONFIG.headers[key] = value;
     },
     removeHeader: (key) => {
-        delete apiClient.defaults.headers[key];
+        delete API_CONFIG.headers[key];
     }
 };
-
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = api;
-}
 
 // Make available globally for backward compatibility
 window.FashionStoreAPI = api;

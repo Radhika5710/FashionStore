@@ -49,7 +49,7 @@ public class OrderItemDAOImpl implements OrderItemDAO {
                 .collect(Collectors.toList());
 
         // Fetch all order items in a single query using IN clause
-        String sql = "SELECT * FROM order_items WHERE order_id IN (" +
+        String sql = "SELECT order_item_id, order_id, product_id, size_label, quantity, price FROM order_items WHERE order_id IN (" +
                 String.join(",", Collections.nCopies(orderIds.size(), "?")) + ") " +
                 "ORDER BY order_id, order_item_id";
 
@@ -89,6 +89,16 @@ public class OrderItemDAOImpl implements OrderItemDAO {
     // ✅ INSERT
     @Override
     public int addOrderItem(OrderItem item) {
+        try (Connection con = DBConnection.getConnection()) {
+            return addOrderItem(con, item);
+        } catch (Exception e) {
+            logger.error("OrderItemDAOImpl.addOrderItem Error: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    @Override
+    public int addOrderItem(Connection conn, OrderItem item) throws Exception {
         // order_items requires price, unit_price AND total_price (all NOT NULL).
         // Compute with BigDecimal so we never lose currency precision.
         String sql = "INSERT INTO order_items " +
@@ -101,8 +111,7 @@ public class OrderItemDAOImpl implements OrderItemDAO {
                 .multiply(java.math.BigDecimal.valueOf(item.getQuantity()))
                 .setScale(2, java.math.RoundingMode.HALF_UP);
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, item.getOrderId());
             ps.setInt(2, item.getProductId());
@@ -113,12 +122,7 @@ public class OrderItemDAOImpl implements OrderItemDAO {
             ps.setBigDecimal(7, totalPrice);
 
             return ps.executeUpdate();
-
-        } catch (Exception e) {
-            logger.error("OrderItemDAOImpl.addOrderItem Error: {}", e.getMessage());
         }
-
-        return 0;
     }
 
     // ✅ GET ITEMS BY ORDER
@@ -127,7 +131,7 @@ public class OrderItemDAOImpl implements OrderItemDAO {
 
         List<OrderItem> list = new ArrayList<>();
 
-        String sql = "SELECT * FROM order_items WHERE order_id = ?";
+        String sql = "SELECT order_item_id, order_id, product_id, size_label, quantity, price FROM order_items WHERE order_id = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

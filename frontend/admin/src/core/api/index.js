@@ -3,26 +3,8 @@
  * Single entry point for all API-related functionality
  */
 
-// Core client
-export { default as apiClient } from './client.js';
-
-// Modules
-export { setupRequestInterceptors, setupResponseInterceptors } from './interceptors.js';
-export {
-  getAuthToken,
-  setAuthToken,
-  clearAuthToken,
-  isAuthenticated,
-  addAuthHeaders,
-  refreshToken,
-} from './auth.js';
-export {
-  handleAuthError,
-  handleNetworkError,
-  handleServerError,
-  APIError,
-  createErrorFromAxios,
-} from './errors.js';
+// Core client (includes error handling utilities)
+export { default as apiClient, handleAuthError, handleNetworkError, handleServerError, APIError, createErrorFromAxios } from './client.js';
 export {
   isValidEmail,
   isValidPassword,

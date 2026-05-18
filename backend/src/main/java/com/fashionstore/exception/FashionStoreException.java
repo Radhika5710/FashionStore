@@ -52,7 +52,8 @@ public class FashionStoreException extends RuntimeException {
     }
 
     private String generateErrorCode(ExceptionType type) {
-        String timestamp = String.valueOf(System.currentTimeMillis()).substring(-6);
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        timestamp = timestamp.length() >= 6 ? timestamp.substring(timestamp.length() - 6) : timestamp;
         return switch (type) {
             case VALIDATION_ERROR -> "VAL_" + timestamp;
             case AUTHENTICATION_ERROR -> "AUTH_" + timestamp;

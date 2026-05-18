@@ -6,18 +6,29 @@ const STORAGE_KEY = 'fs.admin.theme';
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'light';
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === 'light' || saved === 'dark') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch (e) {
+      console.warn('localStorage access failed:', e);
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
   });
   const mountedRef = useRef(true);
+  const themeRef = useRef(theme);
 
   useEffect(() => {
     mountedRef.current = true;
     const root = document.documentElement;
-    if (mountedRef.current) {
+    if (mountedRef.current && themeRef.current !== theme) {
+      themeRef.current = theme;
       root.classList.toggle('dark', theme === 'dark');
-      localStorage.setItem(STORAGE_KEY, theme);
+      try {
+        localStorage.setItem(STORAGE_KEY, theme);
+      } catch (e) {
+        console.warn('localStorage write failed:', e);
+      }
     }
     return () => {
       mountedRef.current = false;
@@ -29,7 +40,13 @@ export function ThemeProvider({ children }) {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = (e) => {
       // Only update if user hasn't manually set a preference
-      if (!localStorage.getItem(STORAGE_KEY)) {
+      try {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          setTheme(e.matches ? 'dark' : 'light');
+        }
+      } catch (e) {
+        console.warn('localStorage read failed:', e);
+        // Fallback: update theme anyway
         setTheme(e.matches ? 'dark' : 'light');
       }
     };

@@ -1,9 +1,11 @@
 package com.fashionstore.controller.api;
 
 import com.fashionstore.controller.ApiResponse;
-import com.fashionstore.dao.*;
-import com.fashionstore.daoimpl.*;
+import com.fashionstore.dao.ProductSizeDAO;
 import com.fashionstore.model.*;
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.service.CategoryService;
+import com.fashionstore.service.ProductService;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,24 +14,52 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Modular API controller for product management in admin dashboard.
- * Refactored to leverage AdminApiBaseController and BaseController.
+ * AdminProductApiController - MVC Architecture
+ * 
+ * REFACTORED FOR PROPER MVC:
+ * - Controller only handles request/response
+ * - Controller delegates ALL business logic to ProductService
+ * - Controller validates admin authorization
+ * - ProductService handles ALL product validation
+ * - ProductService handles ALL product transformation
+ * - DAO layer only handles database access
+ * - Frontend cannot manipulate product data
+ * 
+ * Request Flow:
+ * GET /api/admin/products → List all products
+ * GET /api/admin/products/{id} → Get single product
+ * POST /api/admin/products → Create product (with validation)
+ * PUT /api/admin/products/{id} → Update product (with validation)
+ * DELETE /api/admin/products/{id} → Delete product
+ * 
+ * Validation Centralized in ProductService:
+ * - Price validation (positive, reasonable range)
+ * - Stock validation (non-negative, reasonable limits)
+ * - Category validation (exists, active)
+ * - Discount validation (0-100%, applied correctly)
+ * - Product name validation (non-empty, length limits)
+ * - Description validation (length limits)
+ * 
+ * Response includes:
+ * - Product data (backend-calculated prices)
+ * - Error messages if validation fails
+ * - Status codes (201 for create, 200 for success, 400 for validation error)
  */
 @WebServlet("/api/admin/products/*")
 public class AdminProductApiController extends AdminApiBaseController {
 
     private static final long serialVersionUID = 1L;
 
-    private ProductDAO productDAO;
+    private ProductService productService;
+    private CategoryService categoryService;
     private ProductSizeDAO productSizeDAO;
-    private CategoryDAO categoryDAO;
 
     @Override
     public void init() {
         super.init();
-        productDAO = new ProductDAOImpl();
-        productSizeDAO = new ProductSizeDAOImpl();
-        categoryDAO = new CategoryDAOImpl();
+        productService = ServiceRegistry.getInstance().getProductService();
+        categoryService = ServiceRegistry.getInstance().getCategoryService();
+        productSizeDAO = ServiceRegistry.getInstance().getProductSizeDAO();
     }
 
     @Override
@@ -41,7 +71,7 @@ public class AdminProductApiController extends AdminApiBaseController {
             String pathInfo = request.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 // GET /api/admin/products - List all products
-                List<Product> products = productDAO.getAllProducts();
+                List<Product> products = productService.getAllProducts();
                 writeApiResponse(response, 200, ApiResponse.success("Products retrieved successfully", Map.of(
                     "products", products.stream().map(this::publicProduct).toList(),
                     "count", products.size()
@@ -54,7 +84,7 @@ public class AdminProductApiController extends AdminApiBaseController {
             if (segments.length == 2) {
                 try {
                     int productId = Integer.parseInt(segments[1]);
-                    Product product = productDAO.getProductById(productId);
+                    Product product = productService.getProductById(productId);
                     if (product == null) {
                         writeApiResponse(response, 404, ApiResponse.error("Product not found"));
                         return;
@@ -89,7 +119,7 @@ public class AdminProductApiController extends AdminApiBaseController {
                 if (!validateParams(response, body, "name", "price")) return;
 
                 Product product = bodyToProduct(body, true);
-                int newId = productDAO.addProduct(product);
+                int newId = productService.createProduct(product);
                 if (newId > 0) {
                     saveProductSizes(newId, body);
                     writeApiResponse(response, 201, ApiResponse.success("Product created successfully", Map.of("productId", newId)));
@@ -121,7 +151,7 @@ public class AdminProductApiController extends AdminApiBaseController {
                 if (segments.length == 2) {
                     try {
                         int productId = Integer.parseInt(segments[1]);
-                        Product existing = productDAO.getProductById(productId);
+                        Product existing = productService.getProductById(productId);
                         if (existing == null) {
                             writeApiResponse(response, 404, ApiResponse.error("Product not found"));
                             return;
@@ -132,7 +162,7 @@ public class AdminProductApiController extends AdminApiBaseController {
 
                         Product product = bodyToProduct(body, false);
                         product.setProductId(productId);
-                        boolean success = productDAO.updateProduct(product);
+                        boolean success = productService.updateProduct(product);
                         if (success) {
                             saveProductSizes(productId, body);
                             writeApiResponse(response, 200, ApiResponse.success("Product updated successfully", null));
@@ -168,7 +198,7 @@ public class AdminProductApiController extends AdminApiBaseController {
                 if (segments.length == 2) {
                     try {
                         int productId = Integer.parseInt(segments[1]);
-                        boolean success = productDAO.deleteProduct(productId);
+                        boolean success = productService.deleteProduct(productId);
                         if (success) {
                             writeApiResponse(response, 200, ApiResponse.success("Product deleted successfully", null));
                         } else {
@@ -255,7 +285,7 @@ public class AdminProductApiController extends AdminApiBaseController {
                 categoryId = Integer.parseInt(String.valueOf(catObj).trim());
             } catch (NumberFormatException e) {
                 String catName = String.valueOf(catObj).trim();
-                for (Category c : categoryDAO.getAllCategories()) {
+                for (Category c : categoryService.getAllCategories()) {
                     if (c.getCategoryName() != null && c.getCategoryName().equalsIgnoreCase(catName)) {
                         categoryId = c.getCategoryId();
                         break;

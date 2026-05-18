@@ -2,21 +2,15 @@ package com.fashionstore.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fashionstore.dao.CategoryDAO;
-import com.fashionstore.dao.ProductDAO;
-import com.fashionstore.daoimpl.CategoryDAOImpl;
-import com.fashionstore.daoimpl.ProductDAOImpl;
-import com.fashionstore.domain.CategoryType;
-import com.fashionstore.model.Category;
 import com.fashionstore.model.Product;
 import com.fashionstore.model.ProductQuery;
-
+import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.service.ProductService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,14 +21,13 @@ public class ProductController extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+    private static final int PAGE_SIZE = 12;
 
-    private ProductDAO productDAO;
-    private CategoryDAO categoryDAO;
+    private ProductService productService;
 
     @Override
     public void init() {
-        productDAO = new ProductDAOImpl();
-        categoryDAO = new CategoryDAOImpl();
+        productService = ServiceRegistry.getInstance().getProductService();
     }
 
     @Override
@@ -42,146 +35,53 @@ public class ProductController extends HttpServlet {
             throws ServletException, IOException {
 
         try {
+            // Extract basic query parameters
             String search = request.getParameter("search");
-            String tag = request.getParameter("tag");
             String categoryIdStr = request.getParameter("categoryId");
-            String categorySlug = request.getParameter("category");
-            String minPriceStr = request.getParameter("minPrice");
-            String maxPriceStr = request.getParameter("maxPrice");
-            String[] sizes = request.getParameterValues("size");
-            String brand = request.getParameter("brand");
             String sortBy = request.getParameter("sortBy");
             String pageStr = request.getParameter("page");
 
-            Integer categoryId = parseIntOrNull(categoryIdStr);
-            if (categoryId == null && categorySlug != null && !categorySlug.isBlank()) {
-                categoryId = resolveCategoryId(categorySlug);
-            }
-            Integer maxPrice = parsePriceOrNull(maxPriceStr);
-            Integer minPrice = parsePriceOrNull(minPriceStr);
-            if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
-                int temp = minPrice;
-                minPrice = maxPrice;
-                maxPrice = temp;
-            }
-            minPriceStr = minPrice != null ? String.valueOf(minPrice) : "";
-            maxPriceStr = maxPrice != null ? String.valueOf(maxPrice) : "";
+            // Parse pagination
+            int page = parseIntOrNull(pageStr) != null ? parseIntOrNull(pageStr) : 1;
+            page = Math.max(1, page);
+            int offset = (page - 1) * PAGE_SIZE;
 
-            // Only resolve category from search if no explicit category/tag filter is set
-            if (categoryId == null && (tag == null || tag.isBlank()) && search != null && !search.isBlank()) {
-                Category resolved = resolveCategoryFromSearch(search);
-                if (resolved != null) {
-                    categoryId = resolved.getCategoryId();
-                    search = null;
-                    logger.debug("Resolved search '{}' to category ID {}", search, categoryId);
+            // Build query
+            ProductQuery query = new ProductQuery();
+            query.setSearch(search);
+            if (categoryIdStr != null && !categoryIdStr.isBlank()) {
+                try {
+                    query.setCategoryId(Integer.parseInt(categoryIdStr));
+                } catch (NumberFormatException ignored) {
                 }
             }
+            query.setSortBy(sortBy != null ? sortBy : "newest");
+            query.setOffset(offset);
+            query.setLimit(PAGE_SIZE);
+            query.setActiveOnly(true);
 
-            // Track search in session for recent searches
-            if (search != null && !search.isBlank()) {
-                HttpSession session = request.getSession();
-                @SuppressWarnings("unchecked")
-                List<String> recentSearches = (List<String>) session.getAttribute("recentSearches");
-                if (recentSearches == null) {
-                    recentSearches = new ArrayList<>();
-                }
-                // Remove if already exists and add to front
-                recentSearches.remove(search);
-                recentSearches.add(0, search);
-                // Keep only last 10 searches. Wrap in a fresh ArrayList because
-                // ArrayList#subList returns a non-Serializable view backed by the parent
-                // list; storing the view in the session breaks session replication and
-                // creates aliasing bugs on subsequent mutations.
-                if (recentSearches.size() > 10) {
-                    recentSearches = new ArrayList<>(recentSearches.subList(0, 10));
-                }
-                session.setAttribute("recentSearches", recentSearches);
-            }
+            // Get products and count
+            List<Product> products = productService.getProducts(query);
+            int totalCount = productService.countProducts(query);
+            int totalPages = (totalCount + PAGE_SIZE - 1) / PAGE_SIZE;
 
-            int page = 1;
-            if (pageStr != null && !pageStr.isBlank()) {
-                page = Math.max(1, Integer.parseInt(pageStr));
-            }
-            int pageSize = 8;
-            int offset = (page - 1) * pageSize;
-
-            ProductQuery countQuery = new ProductQuery();
-            countQuery.setSearch(search);
-            countQuery.setCategoryId(categoryId);
-            countQuery.setTag(tag);
-            countQuery.setMinPrice(minPrice);
-            countQuery.setMaxPrice(maxPrice);
-            countQuery.setSizes(sizes);
-            countQuery.setBrand(brand);
-            countQuery.setActiveOnly(true);
-
-            int totalProducts = productDAO.countProducts(countQuery);
-            int totalPages = Math.max(1, (int) Math.ceil((double) totalProducts / pageSize));
-            if (page > totalPages) {
-                page = totalPages;
-                offset = (page - 1) * pageSize;
-            }
-
-            ProductQuery listQuery = new ProductQuery();
-            listQuery.setSearch(search);
-            listQuery.setCategoryId(categoryId);
-            listQuery.setTag(tag);
-            listQuery.setMinPrice(minPrice);
-            listQuery.setMaxPrice(maxPrice);
-            listQuery.setSizes(sizes);
-            listQuery.setBrand(brand);
-            listQuery.setSortBy(sortBy);
-            listQuery.setOffset(offset);
-            listQuery.setLimit(pageSize);
-            listQuery.setActiveOnly(true);
-
-            List<Product> products = productDAO.getProducts(listQuery);
-            
-            // Debug: Log query results
-            logger.info("Product query results: search={}, categoryId={}, tag={}, sizes={}, brand={}, totalProducts={}, returnedProducts={}", 
-                search, categoryId, tag, sizes != null ? List.of(sizes) : "null", brand, totalProducts, products.size());
-            
-            // Fallback: If no products returned with activeOnly=true, try without active filter
-            if (products.isEmpty() && totalProducts > 0) {
-                logger.warn("No active products found but total count is {}, retrying without active filter", totalProducts);
-                listQuery.setActiveOnly(false);
-                products = productDAO.getProducts(listQuery);
-                logger.info("Fallback query returned {} products", products.size());
-            }
-            
-            List<Category> categories = categoryDAO.getActiveCategories();
-
-            // Set all request attributes with defensive null handling
+            // Set request attributes
             request.setAttribute("products", products != null ? products : new ArrayList<>());
-            request.setAttribute("categories", categories != null ? categories : new ArrayList<>());
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
-            request.setAttribute("sortBy", sortBy != null ? sortBy : "");
-            request.setAttribute("minPrice", minPriceStr != null ? minPriceStr : "");
-            request.setAttribute("maxPrice", maxPriceStr != null ? maxPriceStr : "");
-            request.setAttribute("search", search != null ? search : "");
-            request.setAttribute("brand", brand != null ? brand : "");
-            request.setAttribute("categoryId", categoryId);
-            String resolvedCategorySlug = CategoryType.fromId(categoryId)
-                    .map(CategoryType::getSlug)
-                    .orElse(categorySlug != null ? categorySlug : "");
-            request.setAttribute("categorySlug", resolvedCategorySlug);
-            request.setAttribute("tag", tag != null ? tag : "");
-            request.setAttribute("selectedSizes", sizes != null ? List.of(sizes) : new ArrayList<>());
+            request.setAttribute("search", search);
+            request.setAttribute("categoryId", categoryIdStr);
+            request.setAttribute("sortBy", sortBy);
 
             request.getRequestDispatcher("/WEB-INF/views/products.jsp")
                     .forward(request, response);
 
         } catch (Exception e) {
             logger.error("Error in ProductController.doGet: {}", e.getMessage(), e);
-            // Render an empty catalog instead of redirecting back to /products
-            // (avoids infinite redirect loop when the underlying error is persistent).
-            request.setAttribute("products", new ArrayList<Product>());
-            request.setAttribute("categories", new ArrayList<Category>());
+            request.setAttribute("products", new ArrayList<>());
             request.setAttribute("currentPage", 1);
             request.setAttribute("totalPages", 1);
-            request.setAttribute("errorMessage",
-                    "We hit a snag loading the catalog. Please try again in a moment.");
+            request.setAttribute("errorMessage", "Error loading products. Please try again.");
             request.getRequestDispatcher("/WEB-INF/views/products.jsp")
                     .forward(request, response);
         }
@@ -197,54 +97,5 @@ public class ProductController extends HttpServlet {
         } catch (NumberFormatException e) {
             return null;
         }
-    }
-
-    private Integer parsePriceOrNull(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            int parsed = Integer.parseInt(value.trim());
-            return parsed >= 0 ? parsed : null;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Category resolveCategoryFromSearch(String search) {
-        String key = CategoryType.normalize(search);
-        if (key.isEmpty()) {
-            return null;
-        }
-
-        List<Category> categories = categoryDAO.getActiveCategories();
-        for (Category c : categories) {
-            if (CategoryType.normalize(c.getCategoryName()).equals(key)) {
-                return c;
-            }
-        }
-
-        return CategoryType.fromName(search)
-                .map(type -> findCategoryByKey(categories, type.getSlug()))
-                .orElse(null);
-    }
-
-    private Integer resolveCategoryId(String value) {
-        List<Category> categories = categoryDAO.getActiveCategories();
-        Category category = CategoryType.fromName(value)
-                .map(type -> findCategoryByKey(categories, type.getSlug()))
-                .orElseGet(() -> findCategoryByKey(categories, value));
-        return category != null ? category.getCategoryId() : null;
-    }
-
-    private Category findCategoryByKey(List<Category> categories, String key) {
-        for (Category c : categories) {
-            String categorySlug = c.getCategorySlug();
-            if (CategoryType.normalize(categorySlug).equals(CategoryType.normalize(key))
-                    || CategoryType.normalize(c.getCategoryName()).equals(CategoryType.normalize(key))) {
-                return c;
-            }
-        }
-        return null;
     }
 }

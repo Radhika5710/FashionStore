@@ -1,6 +1,7 @@
 package com.fashionstore.controller;
 
 import com.fashionstore.model.User;
+import com.fashionstore.registry.ServiceRegistry;
 import com.fashionstore.service.WishlistService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,7 +26,7 @@ public class WishlistPageController extends HttpServlet {
 
     @Override
     public void init() {
-        wishlistService = new WishlistService();
+        wishlistService = ServiceRegistry.getInstance().getWishlistService();
     }
 
     @Override
@@ -42,7 +43,7 @@ public class WishlistPageController extends HttpServlet {
             if (user != null) {
                 // Get wishlist items for authenticated user
                 Map<String, Object> wishlistData = wishlistService.getWishlist(user.getUserId());
-                Object items = wishlistData.get("items");
+                Object items = (wishlistData != null) ? wishlistData.get("items") : null;
                 if (items instanceof java.util.List<?>) {
                     wishlistItems = (java.util.List<?>) items;
                 }

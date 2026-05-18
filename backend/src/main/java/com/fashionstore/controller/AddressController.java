@@ -2,6 +2,7 @@ package com.fashionstore.controller;
 
 import com.fashionstore.model.Address;
 import com.fashionstore.model.User;
+import com.fashionstore.registry.ServiceRegistry;
 import com.fashionstore.security.CSRFProtection;
 import com.fashionstore.service.AddressService;
 import com.fashionstore.util.JsonUtil;
@@ -25,7 +26,7 @@ public class AddressController extends HttpServlet {
     private final AddressService addressService;
 
     public AddressController() {
-        this.addressService = new AddressService();
+        this.addressService = ServiceRegistry.getInstance().getAddressService();
     }
 
     @Override
@@ -128,6 +129,10 @@ public class AddressController extends HttpServlet {
     private void showEditAddressForm(HttpServletRequest request, HttpServletResponse response, User user, String pathInfo) 
             throws ServletException, IOException {
         try {
+            if (pathInfo == null || pathInfo.length() < 7) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid address ID format");
+                return;
+            }
             int addressId = Integer.parseInt(pathInfo.substring(6));
             Address address = addressService.getAddressById(addressId, user.getUserId());
             

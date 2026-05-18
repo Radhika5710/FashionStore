@@ -12,8 +12,51 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Request Logging Filter for tracing HTTP requests
- * Adds request ID to MDC for structured logging
+ * RequestLoggingFilter - Lightweight Request Tracing
+ * 
+ * FILTER CHAIN ARCHITECTURE:
+ * ==========================
+ * Filter execution order (from web.xml):
+ * 1. RequestLoggingFilter - Adds request ID to MDC (THIS FILTER)
+ * 2. CORSFilter - Handles CORS preflight (OPTIONS)
+ * 3. SecurityHardeningFilter - Rate limiting, attack prevention
+ * 4. JWTAuthenticationFilter - JWT validation for /api/admin/*
+ * 5. Servlet/Controller - Handles request
+ * 
+ * RESPONSIBILITIES:
+ * =================
+ * ✓ Generate unique request ID (8-char UUID)
+ * ✓ Add request ID to MDC (Mapped Diagnostic Context)
+ * ✓ Log request method, URI, remote address
+ * ✓ Track request duration
+ * ✓ Log slow requests (> 1 second)
+ * ✓ Add X-Request-ID header to response
+ * ✓ Clear MDC after request
+ * 
+ * DOES NOT HANDLE:
+ * ================
+ * ✗ Authentication (JWTAuthenticationFilter)
+ * ✗ Authorization (JWTAuthenticationFilter)
+ * ✗ Rate limiting (SecurityHardeningFilter)
+ * ✗ CORS (CORSFilter)
+ * ✗ Security headers (SecurityHardeningFilter)
+ * 
+ * APPLIES TO:
+ * ===========
+ * - ALL requests (logging is first in chain)
+ * - JSP pages and MVC controllers
+ * - Customer APIs (/api/*)
+ * - Admin APIs (/api/admin/*)
+ * - Static assets
+ * - CORS preflight (OPTIONS)
+ * 
+ * PERFORMANCE NOTES:
+ * ==================
+ * - Minimal overhead (UUID generation + MDC put)
+ * - No blocking operations
+ * - Lightweight logging (info level)
+ * - Slow request detection (> 1 second)
+ * - MDC cleared in finally block (no memory leaks)
  */
 public class RequestLoggingFilter implements Filter {
     

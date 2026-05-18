@@ -185,7 +185,7 @@ public class AddressDAOImpl implements AddressDAO {
 
     @Override
     public Address getDefaultAddress(int userId, String addressType) {
-        String sql = "SELECT * FROM addresses WHERE user_id = ? AND " +
+        String sql = "SELECT address_id, user_id, address_type, full_name, phone, address_line1, address_line2, city, state, postal_code, country, is_default, created_at, updated_at FROM addresses WHERE user_id = ? AND " +
                      "(address_type = ? OR address_type = 'both') AND is_default = TRUE " +
                      "ORDER BY address_type = 'both' DESC LIMIT 1";
         

@@ -149,6 +149,78 @@ public class Validator {
         return this;
     }
     
+    /**
+     * Validates address fields (consolidated from AddressValidator)
+     */
+    public Validator validateAddress(String fullName, String phone, String addressLine1, String city, String state, String postalCode, String country) {
+        Pattern phoneInPattern = Pattern.compile("^[6-9]\\d{9}$");
+        Pattern phoneGenericPattern = Pattern.compile("^[+]?\\d{7,15}$");
+        Pattern pinPattern = Pattern.compile("^\\d{6}$");
+        Pattern postalGenericPattern = Pattern.compile("^[A-Za-z0-9 -]{3,12}$");
+        Pattern namePattern = Pattern.compile("^[\\p{L} .'-]{2,100}$");
+        
+        // Validate full name
+        if (fullName == null || fullName.trim().isEmpty()) {
+            errors.add("Full name is required");
+        } else if (fullName.length() < 2 || fullName.length() > 100) {
+            errors.add("Full name must be between 2 and 100 characters");
+        } else if (!namePattern.matcher(fullName).matches()) {
+            errors.add("Full name contains invalid characters");
+        }
+        
+        // Validate phone
+        if (phone == null || phone.trim().isEmpty()) {
+            errors.add("Phone number is required");
+        } else if ("India".equalsIgnoreCase(country)) {
+            if (!phoneInPattern.matcher(phone).matches()) {
+                errors.add("Enter a valid 10-digit Indian mobile number");
+            }
+        } else if (!phoneGenericPattern.matcher(phone).matches()) {
+            errors.add("Enter a valid phone number (7-15 digits)");
+        }
+        
+        // Validate address line 1
+        if (addressLine1 == null || addressLine1.trim().isEmpty()) {
+            errors.add("Address line 1 is required");
+        } else if (addressLine1.length() > 255) {
+            errors.add("Address line 1 must be 255 characters or less");
+        }
+        
+        // Validate city
+        if (city == null || city.trim().isEmpty()) {
+            errors.add("City is required");
+        } else if (city.length() > 100) {
+            errors.add("City must be 100 characters or less");
+        }
+        
+        // Validate state
+        if (state == null || state.trim().isEmpty()) {
+            errors.add("State is required");
+        } else if (state.length() > 100) {
+            errors.add("State must be 100 characters or less");
+        }
+        
+        // Validate postal code
+        if (postalCode == null || postalCode.trim().isEmpty()) {
+            errors.add("Postal code is required");
+        } else if ("India".equalsIgnoreCase(country)) {
+            if (!pinPattern.matcher(postalCode).matches()) {
+                errors.add("Enter a valid 6-digit Indian PIN code");
+            }
+        } else if (!postalGenericPattern.matcher(postalCode).matches()) {
+            errors.add("Enter a valid postal code");
+        }
+        
+        // Validate country
+        if (country == null || country.trim().isEmpty()) {
+            errors.add("Country is required");
+        } else if (country.length() > 100) {
+            errors.add("Country must be 100 characters or less");
+        }
+        
+        return this;
+    }
+    
     public List<String> getErrors() {
         return errors;
     }
