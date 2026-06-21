@@ -75,22 +75,22 @@
  * USAGE EXAMPLES:
  * ===============
  * // GET request
- * FashionStoreAPI.get('/api/products').then(response => {
+ * FashionStoreAPI.get('/products').then(response => {
  *   console.log(response.data);
  * });
  * 
  * // POST request with CSRF token (auto-injected)
- * FashionStoreAPI.post('/api/cart', { productId: 1, quantity: 2 }).then(response => {
+ * FashionStoreAPI.post('/cart', { productId: 1, quantity: 2 }).then(response => {
  *   console.log(response.data);
  * });
  * 
  * // PUT request
- * FashionStoreAPI.put('/api/profile', { name: 'John' }).then(response => {
+ * FashionStoreAPI.put('/account/profile', { name: 'John' }).then(response => {
  *   console.log(response.data);
  * });
  * 
  * // DELETE request
- * FashionStoreAPI.delete('/api/cart/1').then(response => {
+ * FashionStoreAPI.delete('/cart?action=remove&productId=1').then(response => {
  *   console.log(response.data);
  * });
  */

@@ -47,22 +47,62 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        String fullName = request.getParameter("fullName");
-        String email = request.getParameter("email");
-        String phone = request.getParameter("phone");
-        String password = request.getParameter("password");
-        String confirmPassword = request.getParameter("confirmPassword");
-        String gender = request.getParameter("gender");
-        String address = request.getParameter("address");
+        String fullName = null;
+        String email = null;
+        String phone = null;
+        String password = null;
+        String confirmPassword = null;
+        String gender = null;
+        String address = null;
+
+        // Try to get parameters from JSON body (AJAX request)
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.contains("application/json")) {
+            try {
+                StringBuilder buffer = new StringBuilder();
+                String line;
+                while ((line = request.getReader().readLine()) != null) {
+                    buffer.append(line);
+                }
+                String payload = buffer.toString();
+
+                if (!payload.isEmpty()) {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.Map<String, String> data = mapper.readValue(payload, java.util.Map.class);
+                    fullName = data.get("fullName");
+                    email = data.get("email");
+                    phone = data.get("phone");
+                    password = data.get("password");
+                    confirmPassword = data.get("confirmPassword");
+                    gender = data.get("gender");
+                    address = data.get("address");
+                }
+            } catch (Exception e) {
+                // If JSON parsing fails, fall back to form parameters
+            }
+        }
+
+        // Fall back to form parameters if JSON parsing failed or not JSON request
+        if (fullName == null) fullName = request.getParameter("fullName");
+        if (email == null) email = request.getParameter("email");
+        if (phone == null) phone = request.getParameter("phone");
+        if (password == null) password = request.getParameter("password");
+        if (confirmPassword == null) confirmPassword = request.getParameter("confirmPassword");
+        if (gender == null) gender = request.getParameter("gender");
+        if (address == null) address = request.getParameter("address");
 
         // Centralized validation
         Validator validator = Validator.create()
-            .validateName(fullName, "Full name")
             .validateEmail(email, "Email")
             .validatePhone(phone, "Phone")
             .validatePassword(password, "Password")
             .validateMatch(password, confirmPassword, "Passwords")
             .validateOptionalAddress(address, "Address", 500);
+
+        // Full name is optional - set default if not provided
+        if (fullName == null || fullName.trim().isEmpty()) {
+            fullName = "User";
+        }
 
         if (validator.hasErrors()) {
             sendError(request, response, validator.getFirstError(), "/WEB-INF/views/register.jsp", HttpServletResponse.SC_BAD_REQUEST);

@@ -5,8 +5,7 @@
  */
 
 import React from 'react';
-import ThemeProvider from './ThemeProvider.jsx';
-import { useTheme } from './ThemeProvider.jsx';
+import { ThemeProvider, useTheme } from '../auth/ThemeContext.jsx';
 
 /**
  * Design System Component

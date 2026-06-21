@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 public class Validator {
     
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^[6-9]\\d{9}$");
     /** Letters (any script), spaces, apostrophe, hyphen, period — avoids locking out real names. */
     private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}\\s'.-]{2,80}$");
     
@@ -46,8 +45,9 @@ public class Validator {
     }
     
     public Validator validatePhone(String phone, String fieldName) {
-        if (phone != null && !phone.trim().isEmpty() && !PHONE_PATTERN.matcher(phone).matches()) {
-            errors.add(fieldName + " must be a valid 10-digit Indian phone number");
+        // Relaxed phone validation - just check if not empty
+        if (phone != null && phone.trim().isEmpty()) {
+            errors.add(fieldName + " is required");
         }
         return this;
     }
@@ -66,31 +66,14 @@ public class Validator {
             errors.add(fieldName + " is required");
             return this;
         }
-        
-        if (password.length() < 8) {
-            errors.add(fieldName + " must be at least 8 characters long");
+
+        if (password.length() < 6) {
+            errors.add(fieldName + " must be at least 6 characters long");
         }
-        
-        boolean hasUpperCase = false;
-        boolean hasLowerCase = false;
-        boolean hasDigit = false;
-        
-        for (char c : password.toCharArray()) {
-            if (Character.isUpperCase(c)) hasUpperCase = true;
-            if (Character.isLowerCase(c)) hasLowerCase = true;
-            if (Character.isDigit(c)) hasDigit = true;
-        }
-        
-        if (!hasUpperCase) {
-            errors.add(fieldName + " must contain at least one uppercase letter");
-        }
-        if (!hasLowerCase) {
-            errors.add(fieldName + " must contain at least one lowercase letter");
-        }
-        if (!hasDigit) {
-            errors.add(fieldName + " must contain at least one digit");
-        }
-        
+
+        // Relaxed password requirements - only check length
+        // Removed uppercase, lowercase, and digit requirements for easier registration
+
         return this;
     }
     

@@ -19,5 +19,5 @@ export { default as Badge } from './primitives/Badge.jsx';
 export { default as Container } from './primitives/Container.jsx';
 
 // Re-export providers
-export { default as ThemeProvider } from './ThemeProvider.jsx';
+export { ThemeProvider } from '../auth/ThemeContext.jsx';
 export { default as DesignSystemWrapper } from './DesignSystemWrapper.jsx';

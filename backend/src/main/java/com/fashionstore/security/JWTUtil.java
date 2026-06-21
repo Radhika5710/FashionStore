@@ -64,9 +64,11 @@ public class JWTUtil {
     /**
      * Generate JWT refresh token
      */
-    public static String generateRefreshToken(String userId) {
+    public static String generateRefreshToken(String userId, String email, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
+        claims.put("email", email);
+        claims.put("role", role);
         claims.put("type", "refresh");
         
         return createToken(claims, REFRESH_TOKEN_EXPIRATION);

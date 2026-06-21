@@ -1,7 +1,6 @@
 package com.fashionstore.service;
 
 import com.fashionstore.dao.PaymentDAO;
-import com.fashionstore.daoimpl.PaymentDAOImpl;
 import com.fashionstore.model.Payment;
 import com.fashionstore.util.AuditLogger;
 import com.stripe.Stripe;
@@ -33,8 +32,11 @@ public class StripePaymentService {
     private String stripePublishableKey;
     
     public StripePaymentService() {
-        this.paymentDAO = new PaymentDAOImpl();
         loadConfiguration();
+    }
+    
+    public void setPaymentDAO(PaymentDAO paymentDAO) {
+        this.paymentDAO = paymentDAO;
     }
     
     private void loadConfiguration() {

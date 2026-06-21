@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
 <%-- 
     head.jsp: Shared meta tags and font loading.
@@ -20,7 +20,8 @@
 <meta name="description" content="<%= org.apache.commons.text.StringEscapeUtils.escapeHtml4(_pageDescription) %>">
 
 <%-- Skip to content link for keyboard accessibility --%>
-<style nonce="<%= request.getAttribute("cspNonce") %>">
+<% String cspNonce = (String) request.getAttribute("cspNonce"); %>
+<style nonce='<%= cspNonce %>'>
     .skip-to-content {
         position: absolute;
         top: -40px;
@@ -93,13 +94,13 @@
 <link rel="dns-prefetch" href="//fonts.gstatic.com">
 
 <%-- Global context and CSRF must be set before any external script reads them --%>
-<script nonce="<%= request.getAttribute("cspNonce") %>">
+<script nonce='<%= request.getAttribute("cspNonce") %>'>
     window.contextPath = '<%= request.getContextPath() %>';
     window.csrfToken = '<%= request.getAttribute("csrfToken") != null ? org.apache.commons.text.StringEscapeUtils.escapeEcmaScript(request.getAttribute("csrfToken").toString()) : "" %>';
 </script>
 
 <%-- Critical JavaScript (inline for performance) --%>
-<script nonce="<%= request.getAttribute("cspNonce") %>">
+<script nonce='<%= request.getAttribute("cspNonce") %>'>
     // Theme initialization MUST run before CSS loads to prevent flicker
     (function() {
         const STORAGE_KEY = 'fashionstore-theme';
@@ -129,8 +130,20 @@
 </script>
 
 <%-- Modular JavaScript - deferred for non-blocking load --%>
+<%-- App bootstrap (must load first for centralized initialization) --%>
+<script src="<%= request.getContextPath() %>/assets/js/app.js" defer></script>
+
+<%-- Event delegation (must load before modules that use it) --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/event-delegation.js" defer></script>
+
+<%-- Overlay manager (must load before modules that use overlays) --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/overlay-manager.js" defer></script>
+
 <%-- Core utilities (must load first) --%>
 <script src="<%= request.getContextPath() %>/assets/js/modules/utilities.js" defer></script>
+
+<%-- UI utilities (toast notifications, loading states) --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/ui.js" defer></script>
 
 <%-- API client (must load before modules that use it) --%>
 <script src="<%= request.getContextPath() %>/assets/js/api/client.js" defer></script>
@@ -161,6 +174,12 @@
 <% if (_pageCSS == null || !_pageCSS.contains("auth")) { %>
 <script src="<%= request.getContextPath() %>/assets/js/lazy-loading.js" defer></script>
 <% } %>
+
+<%-- Error pages module --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/error-pages.js" defer></script>
+
+<%-- Orders page module --%>
+<script src="<%= request.getContextPath() %>/assets/js/modules/orders.js" defer></script>
 
 <%-- 3. PAGE CSS (Synchronous – page CSS is render-critical) --%>
 <% if (_pageCSS != null && !_pageCSS.trim().isEmpty()) {

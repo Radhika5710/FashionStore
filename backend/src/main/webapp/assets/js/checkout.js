@@ -37,6 +37,7 @@ const Checkout = (function() {
         initAddressSelection();
         initPaymentMethodSelection();
         initFormValidation();
+        initNavigationButtons();
         
         // Initialize Stripe if key is available
         if (stripePublishableKey && stripePublishableKey.trim() !== '') {
@@ -106,6 +107,30 @@ const Checkout = (function() {
         });
     }
     
+    /**
+     * Initialize navigation buttons
+     */
+    function initNavigationButtons() {
+        // Register event handlers with centralized event delegation
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('click', '#modify-payment-btn', function() {
+                goToCheckoutStep(2);
+            });
+
+            EventDelegation.on('click', '#back-to-shipping-btn', function() {
+                goToCheckoutStep(1);
+            });
+
+            EventDelegation.on('click', '#review-order-btn', function() {
+                reviewOrder();
+            });
+
+            EventDelegation.on('click', '#continueToPaymentBtn', function() {
+                validateAndProceedToPayment();
+            });
+        }
+    }
+
     /**
      * Initialize form validation and submission
      */
@@ -376,52 +401,60 @@ const Checkout = (function() {
                 StateManager.showOverlay(true, 'Processing payment...');
             }
             
-            // Collect form data
+            // Collect form data and submit to CheckoutController for proper order creation
             const formData = new FormData(form);
-            formData.append('action', 'initiate');
+            formData.append('action', 'submitOrder');
             formData.append('paymentMethod', 'STRIPE');
             
             // Add idempotency key for duplicate prevention
             const idempotencyKey = checkoutIdempotencyKey || generateIdempotencyKey();
             
-            const response = await fetch(contextPath + '/payment', {
+            const response = await fetch(contextPath + '/checkout', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-Idempotency-Key': idempotencyKey
+                    'X-Idempotency-Key': idempotencyKey,
+                    'X-CSRF-Token': window.csrfToken || ''
                 }
             });
             
             const data = await response.json();
             
-            if (!response.ok || !data.clientSecret) {
-                throw new Error(data.error || 'Failed to create payment intent');
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to create order');
             }
             
-            // Confirm the payment with Stripe
-            const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name: formData.get('fullName'),
-                        email: userEmail,
-                        phone: formData.get('phone'),
-                        address: {
-                            line1: formData.get('address'),
-                            city: formData.get('city'),
-                            state: formData.get('state'),
-                            postal_code: formData.get('zip'),
+            if (data.success && data.clientSecret) {
+                // Confirm the payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: formData.get('fullName'),
+                            email: userEmail,
+                            phone: formData.get('phone'),
+                            address: {
+                                line1: formData.get('address'),
+                                city: formData.get('city'),
+                                state: formData.get('state'),
+                                postal_code: formData.get('zip'),
+                            }
                         }
                     }
+                });
+                
+                if (error) {
+                    throw new Error(error.message);
                 }
-            });
-            
-            if (error) {
-                throw new Error(error.message);
+                
+                // Payment successful, redirect to success page
+                window.location.href = contextPath + '/payment?action=success&orderId=' + data.orderId;
+            } else if (data.success) {
+                // Order created successfully (COD), redirect to success page
+                window.location.href = contextPath + '/payment?action=success&orderId=' + data.orderId;
+            } else {
+                throw new Error(data.message || 'Order creation failed');
             }
-            
-            // Payment successful, redirect to success page
-            window.location.href = contextPath + '/payment?action=success&orderId=' + data.orderId;
             
         } catch (err) {
             console.error('Stripe payment error:', err);
@@ -460,11 +493,9 @@ const Checkout = (function() {
     };
 })();
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', Checkout.init);
-} else {
-    Checkout.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('checkout', Checkout.init, 50);
 }
 
 // Expose functions globally for inline handlers

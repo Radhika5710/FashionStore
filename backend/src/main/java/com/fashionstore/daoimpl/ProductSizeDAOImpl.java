@@ -209,6 +209,15 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
 
     @Override
     public boolean reduceStock(int productId, String sizeLabel, int quantity) {
+        return reduceStock(null, productId, sizeLabel, quantity);
+    }
+
+    /**
+     * Reduce stock with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    @Override
+    public boolean reduceStock(Connection conn, int productId, String sizeLabel, int quantity) {
         if (quantity <= 0) {
             return false;
         }
@@ -222,11 +231,21 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
                           "    is_available = CASE WHEN (stock_quantity - ?) > 0 THEN true ELSE false END " +
                           "WHERE product_size_id = ?";
 
-        try (Connection con = DBConnection.getConnection()) {
+        try {
+            Connection con = conn;
+            boolean shouldClose = false;
+            
+            if (con == null) {
+                con = DBConnection.getConnection();
+                shouldClose = true;
+            }
+            
             boolean originalAutoCommit = con.getAutoCommit();
 
             try {
-                con.setAutoCommit(false);
+                if (shouldClose) {
+                    con.setAutoCommit(false);
+                }
 
                 try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
                     selectPs.setInt(1, productId);
@@ -243,21 +262,29 @@ public class ProductSizeDAOImpl implements ProductSizeDAO {
                                 updatePs.setInt(3, productSizeId);
 
                                 int rows = updatePs.executeUpdate();
-                                con.commit();
+                                if (shouldClose) {
+                                    con.commit();
+                                }
                                 return rows > 0;
                             }
                         } else {
                             // Insufficient stock
-                            con.rollback();
+                            if (shouldClose) {
+                                con.rollback();
+                            }
                             return false;
                         }
                     }
                 }
             } catch (Exception e) {
-                con.rollback();
+                if (shouldClose) {
+                    con.rollback();
+                }
                 throw e;
             } finally {
-                con.setAutoCommit(originalAutoCommit);
+                if (shouldClose) {
+                    con.setAutoCommit(originalAutoCommit);
+                }
             }
         } catch (Exception e) {
             logger.error("ProductSizeDAOImpl.reduceStock (with row lock) Error: {}", e.getMessage(), e);

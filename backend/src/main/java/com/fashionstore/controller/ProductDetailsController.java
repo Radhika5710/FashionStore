@@ -96,7 +96,7 @@ public class ProductDetailsController extends HttpServlet {
             request.setAttribute("errorTitle", "Product Not Available");
             request.setAttribute("errorMessage", "We're unable to load this product right now. Please try again later.");
             request.setAttribute("errorDetails", e.getMessage());
-            request.getRequestDispatcher("/WEB-INF/views/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/errors/500.jsp").forward(request, response);
         }
     }
 }

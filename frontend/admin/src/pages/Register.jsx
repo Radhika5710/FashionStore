@@ -18,8 +18,8 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (!fullName || !email || !phone || !password || !confirmPassword || !adminKey) {
-      setError('Please fill in all fields.');
+    if (!email || !phone || !password || !confirmPassword || !adminKey) {
+      setError('Please fill in all required fields.');
       return;
     }
 

@@ -25,30 +25,64 @@ public class PaymentDAOImpl implements PaymentDAO {
 
     @Override
     public int createPayment(Payment payment) {
+        return createPayment(null, payment);
+    }
+
+    /**
+     * Create payment with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    @Override
+    public int createPayment(Connection conn, Payment payment) {
+        return createPaymentInTransaction(conn, payment);
+    }
+
+    /**
+     * Create payment in transaction (alias for createPayment with connection)
+     * This version is used within a transaction to ensure atomicity
+     */
+    @Override
+    public int createPaymentInTransaction(Connection conn, Payment payment) {
         String sql = "INSERT INTO payments (order_id, payment_method, transaction_id, amount, currency, status, gateway_response, payment_signature, webhook_id, verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try {
+            Connection con = conn;
+            boolean shouldClose = false;
             
-            ps.setInt(1, payment.getOrderId());
-            ps.setString(2, payment.getPaymentMethod());
-            ps.setString(3, payment.getTransactionId());
-            ps.setBigDecimal(4, payment.getAmount());
-            ps.setString(5, payment.getCurrency());
-            ps.setString(6, payment.getStatus());
-            ps.setString(7, payment.getGatewayResponse());
-            ps.setString(8, payment.getPaymentSignature());
-            ps.setString(9, payment.getWebhookId());
-            ps.setBoolean(10, payment.isVerified());
+            if (con == null) {
+                con = DBConnection.getConnection();
+                shouldClose = true;
+            }
             
-            int result = ps.executeUpdate();
-            
-            if (result > 0) {
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
+            try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                
+                ps.setInt(1, payment.getOrderId());
+                ps.setString(2, payment.getPaymentMethod());
+                ps.setString(3, payment.getTransactionId());
+                ps.setBigDecimal(4, payment.getAmount());
+                ps.setString(5, payment.getCurrency());
+                ps.setString(6, payment.getStatus());
+                ps.setString(7, payment.getGatewayResponse());
+                ps.setString(8, payment.getPaymentSignature());
+                ps.setString(9, payment.getWebhookId());
+                ps.setBoolean(10, payment.isVerified());
+                
+                int result = ps.executeUpdate();
+                
+                if (result > 0) {
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            int paymentId = rs.getInt(1);
+                            if (shouldClose) {
+                                con.close();
+                            }
+                            return paymentId;
+                        }
                     }
                 }
+            }
+            if (shouldClose) {
+                con.close();
             }
         } catch (SQLException e) {
             logger.error("PaymentDAOImpl.createPayment Error: {}", e.getMessage(), e);

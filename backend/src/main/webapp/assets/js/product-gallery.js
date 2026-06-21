@@ -38,6 +38,12 @@ const ProductGallery = (function() {
         // Setup mobile swipe
         setupMobileSwipe(mainImageContainer);
         
+        // Setup add to cart buttons
+        setupAddToCartButtons();
+        
+        // Setup quantity stepper
+        setupQuantityStepper();
+        
         // Hide swipe hint after animation
         const swipeHint = mainImageContainer.querySelector('.product-gallery__swipe-hint');
         if (swipeHint) {
@@ -212,6 +218,13 @@ const ProductGallery = (function() {
      * Add to cart from product page
      */
     function addToCart() {
+        // Check if CartManager is available
+        if (typeof CartManager === 'undefined') {
+            FashionStore.showToast('Cart not available. Please refresh the page.', 'error');
+            console.error('CartManager is not defined');
+            return;
+        }
+
         const productId = document.getElementById('detailsProductId')?.value;
         const sizeInput = document.querySelector('input[name="size"]:checked');
         const quantityInput = document.getElementById('detailsQuantity');
@@ -231,7 +244,51 @@ const ProductGallery = (function() {
         const size = sizeInput ? sizeInput.value : 'M';
         const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
         
-        FashionStore.addToCart(productId, size, quantity);
+        CartManager.addToCart(productId, size, quantity);
+    }
+
+    /**
+     * Setup add to cart buttons
+     */
+    function setupAddToCartButtons() {
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const mobileAddToCartBtn = document.getElementById('mobile-add-to-cart-btn');
+
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addToCart();
+            });
+        }
+
+        if (mobileAddToCartBtn) {
+            mobileAddToCartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addToCart();
+            });
+        }
+    }
+
+    /**
+     * Setup quantity stepper buttons
+     */
+    function setupQuantityStepper() {
+        const decreaseBtn = document.getElementById('decrease-qty-btn');
+        const increaseBtn = document.getElementById('increase-qty-btn');
+
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                adjustQuantity(-1);
+            });
+        }
+
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                adjustQuantity(1);
+            });
+        }
     }
     
     // Public API
@@ -244,9 +301,14 @@ const ProductGallery = (function() {
     };
 })();
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ProductGallery.init);
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('productGallery', ProductGallery.init, 25);
 } else {
-    ProductGallery.init();
+    // Fallback: Initialize on DOM ready if FashionStoreApp not available
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ProductGallery.init);
+    } else {
+        ProductGallery.init();
+    }
 }

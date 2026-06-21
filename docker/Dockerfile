@@ -35,7 +35,12 @@ COPY --from=builder /build/target/FashionStore-0.0.1-SNAPSHOT.war /usr/local/tom
 
 # Create non-root user for security
 RUN groupadd -r tomcat && useradd -r -g tomcat tomcat
-RUN chown -R tomcat:tomcat /usr/local/tomcat
+
+# Ensure work directory is writable by tomcat user for JSP compilation
+RUN mkdir -p /usr/local/tomcat/work/Catalina/localhost/ROOT && \
+    chown -R tomcat:tomcat /usr/local/tomcat && \
+    chmod -R 755 /usr/local/tomcat/work
+
 USER tomcat
 
 # Expose port 8080

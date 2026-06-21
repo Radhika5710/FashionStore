@@ -59,6 +59,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(int userId, Map<String, Object> orderData) {
+        return createOrder(userId, orderData, null);
+    }
+
+    /**
+     * Create order with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    public Order createOrder(int userId, Map<String, Object> orderData, java.sql.Connection conn) {
         try {
             Order order = new Order();
             order.setUserId(userId);
@@ -93,7 +101,13 @@ public class OrderServiceImpl implements OrderService {
                 order.setStatus("Pending");
             }
             
-            int orderId = orderDAO.createOrder(order);
+            int orderId;
+            if (conn != null) {
+                orderId = orderDAO.createOrder(conn, order);
+            } else {
+                orderId = orderDAO.createOrder(order);
+            }
+            
             if (orderId > 0) {
                 order.setOrderId(orderId);
                 
@@ -108,7 +122,12 @@ public class OrderServiceImpl implements OrderService {
                         item.setSizeLabel((String) itemData.get("sizeLabel"));
                         item.setQuantity(((Number) itemData.get("quantity")).intValue());
                         item.setPrice(((Number) itemData.get("price")).doubleValue());
-                        orderItemDAO.addOrderItem(item);
+                        
+                        if (conn != null) {
+                            orderItemDAO.addOrderItem(conn, item);
+                        } else {
+                            orderItemDAO.addOrderItem(item);
+                        }
                     }
                 }
                 

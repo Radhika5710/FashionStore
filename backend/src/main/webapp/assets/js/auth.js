@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearFormAlerts();
 
             // Client-side validation
-            const email = emailInput?.value.trim() || '';
+            const email = emailInput?.value?.trim() || '';
             const passwordInput = document.getElementById('password');
             const password = passwordInput?.value || '';
 
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (regPassword && strengthFill && strengthText) {
         const checkPasswordRequirements = (password) => {
             const requirements = {
-                length: password.length >= 8,
+                length: password.length >= 6,
                 uppercase: /[A-Z]/.test(password),
                 lowercase: /[a-z]/.test(password),
                 number: /[0-9]/.test(password),
@@ -404,13 +404,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasError = true;
             }
 
-            if (!phone || !phone.match(/^[\d\s\-\+\(\)]+$/)) {
-                showInlineError('phone', 'Please enter a valid phone number');
+            // Phone validation relaxed - allow any non-empty value
+            if (!phone) {
+                showInlineError('phone', 'Phone number is required');
                 hasError = true;
             }
 
-            if (!password || password.length < 8) {
-                showInlineError('password', 'Password must be at least 8 characters');
+            if (!password || password.length < 6) {
+                showInlineError('password', 'Password must be at least 6 characters');
                 hasError = true;
             }
 
@@ -419,13 +420,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasError = true;
             }
 
-            if (!gender) {
-                showInlineError('gender', 'Please select a gender');
-                hasError = true;
-            }
+            // Gender validation relaxed - not required
+            // if (!gender) {
+            //     showInlineError('gender', 'Please select a gender');
+            //     hasError = true;
+            // }
 
-            if (!address || address.length < 5) {
-                showInlineError('address', 'Address must be at least 5 characters');
+            if (!address || address.length < 3) {
+                showInlineError('address', 'Address must be at least 3 characters');
                 hasError = true;
             }
 

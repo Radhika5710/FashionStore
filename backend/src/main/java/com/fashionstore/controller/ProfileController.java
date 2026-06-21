@@ -145,7 +145,6 @@ public class ProfileController extends HttpServlet {
         boolean smsNotifications = "on".equals(request.getParameter("smsNotifications"));
         boolean orderUpdates = "on".equals(request.getParameter("orderUpdates"));
         boolean promotionalEmails = "on".equals(request.getParameter("promotionalEmails"));
-        boolean newsletterSubscription = "on".equals(request.getParameter("newsletterSubscription"));
 
         boolean profileVisible = "on".equals(request.getParameter("profileVisible"));
         boolean activityTracking = "on".equals(request.getParameter("activityTracking"));
@@ -161,7 +160,6 @@ public class ProfileController extends HttpServlet {
         settings.put("smsNotifications", smsNotifications);
         settings.put("orderUpdates", orderUpdates);
         settings.put("promotionalEmails", promotionalEmails);
-        settings.put("newsletterSubscription", newsletterSubscription);
         settings.put("language", language);
         settings.put("currency", currency);
         settings.put("themePreference", theme);
@@ -228,7 +226,6 @@ public class ProfileController extends HttpServlet {
         request.setAttribute("smsNotifications", false);
         request.setAttribute("orderUpdates", true);
         request.setAttribute("promotionalEmails", false);
-        request.setAttribute("newsletterSubscription", false);
         request.setAttribute("language", "en");
         request.setAttribute("currency", "USD");
         request.setAttribute("themePreference", "light");

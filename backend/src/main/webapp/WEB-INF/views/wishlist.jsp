@@ -40,7 +40,7 @@
                         <a href="<%= request.getContextPath() %>/product?id=<%= item.getProductId() %>">
                             <img data-src="<%= item.getImageUrl() %>" alt="<%= item.getProductName() %>" loading="lazy" class="lazy-load" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                         </a>
-                        <button class="product-card__wishlist product-card__wishlist--active" data-product-id="<%= item.getProductId() %>" onclick="removeWishlistItem(this.getAttribute('data-product-id'))" aria-label="Remove from wishlist">
+                        <button class="product-card__wishlist product-card__wishlist--active" data-product-id="<%= item.getProductId() %>" aria-label="Remove from wishlist">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                             </svg>
@@ -52,7 +52,7 @@
                         <div class="product-card__footer">
                             <p class="product-card__price">₹<%= String.format("%.2f", item.getPrice()) %></p>
                             <div class="product-card__actions">
-                                <button class="product-card__btn product-card__btn--primary" data-product-id="<%= item.getProductId() %>" onclick="CartManager.addToCart(this.getAttribute('data-product-id'))">Add to Cart</button>
+                                <button class="product-card__btn product-card__btn--primary" data-product-id="<%= item.getProductId() %>">Add to Cart</button>
                             </div>
                         </div>
                     </div>

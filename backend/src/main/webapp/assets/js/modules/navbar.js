@@ -61,6 +61,13 @@ const FashionStoreNavbar = (function() {
     
     // Conditional rendering for mobile navigation (not CSS-only hiding)
     function setupConditionalMobileNav() {
+        // Debounce resize handler to prevent excessive calls
+        let resizeTimeout;
+        const debouncedHandleViewportChange = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleViewportChange, 150);
+        };
+        
         function handleViewportChange() {
             const isMobile = useIsMobile();
             
@@ -83,9 +90,9 @@ const FashionStoreNavbar = (function() {
         // Initial check
         handleViewportChange();
         
-        // Listen to resize events
-        window.addEventListener('resize', handleViewportChange);
-        eventListeners.push({ target: window, event: 'resize', handler: handleViewportChange });
+        // Listen to resize events with debouncing
+        window.addEventListener('resize', debouncedHandleViewportChange);
+        eventListeners.push({ target: window, event: 'resize', handler: debouncedHandleViewportChange });
     }
     
     function createMobileNav() {
@@ -176,77 +183,82 @@ const FashionStoreNavbar = (function() {
         
         if (!mobileMenuBtn || !mobileNavOverlay) return;
         
-        // Toggle mobile menu on button click
-        const handleMenuClick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
-            const newState = !isExpanded;
-            
-            mobileMenuBtn.setAttribute('aria-expanded', String(newState));
-            
-            if (newState) {
-                mobileNavOverlay.classList.add('active');
-                document.body.classList.add('nav-drawer-open');
-                lockScroll();
-            } else {
-                mobileNavOverlay.classList.remove('active');
-                document.body.classList.remove('nav-drawer-open');
-                unlockScroll();
-            }
-        };
-        
-        mobileMenuBtn.addEventListener('click', handleMenuClick);
-        eventListeners.push({ target: mobileMenuBtn, event: 'click', handler: handleMenuClick });
-        
-        // Close menu when overlay is clicked
-        const handleOverlayClick = (e) => {
-            if (e.target === mobileNavOverlay) {
-                closeMobileMenu();
-            }
-        };
-        
-        mobileNavOverlay.addEventListener('click', handleOverlayClick);
-        eventListeners.push({ target: mobileNavOverlay, event: 'click', handler: handleOverlayClick });
-        
-        // Close menu when a navigation link is clicked
-        const handleDocumentClick = (e) => {
-            const link = e.target.closest('a');
-            if (!link || mobileMenuBtn.getAttribute('aria-expanded') !== 'true') return;
-            
-            const navbar = document.querySelector('.fs-storefront-nav');
-            if (navbar && navbar.contains(link)) {
-                closeMobileMenu();
-            }
-        };
-        
-        document.addEventListener('click', handleDocumentClick);
-        eventListeners.push({ target: document, event: 'click', handler: handleDocumentClick });
-        
-        // Close menu on escape key
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape' && mobileMenuBtn.getAttribute('aria-expanded') === 'true') {
-                closeMobileMenu();
-            }
-        };
-        
-        document.addEventListener('keydown', handleKeyDown);
-        eventListeners.push({ target: document, event: 'keydown', handler: handleKeyDown });
+        // Register event handlers with centralized event delegation
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('click', '#mobile-menu-btn', function() {
+                const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+                if (isExpanded) {
+                    closeMobileMenu();
+                } else {
+                    // Use OverlayManager for centralized overlay management
+                    if (typeof OverlayManager !== 'undefined') {
+                        // Register overlay if not already registered
+                        if (!mobileNavOverlay.dataset.overlayId) {
+                            mobileNavOverlay.dataset.overlayId = 'mobile-nav';
+                        }
+                        const mobileNavContent = document.querySelector('.mobile-nav-content');
+                        if (mobileNavContent && !mobileNavContent.dataset.overlayContent) {
+                            mobileNavContent.dataset.overlayContent = 'mobile-nav';
+                        }
+                        OverlayManager.openOverlay('mobile-nav', mobileNavOverlay, mobileNavContent);
+                        mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        // Fallback to direct manipulation
+                        mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                        mobileNavOverlay.classList.add('active');
+                        document.body.classList.add('nav-drawer-open');
+                        lockScroll();
+                    }
+                }
+            });
+
+            EventDelegation.on('click', '#mobile-nav-overlay', function(event, target) {
+                if (event.target === target) {
+                    closeMobileMenu();
+                }
+            });
+
+            // Close menu when a navigation link is clicked
+            EventDelegation.on('click', '.fs-storefront-nav a', function() {
+                const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                if (mobileMenuBtn && mobileMenuBtn.getAttribute('aria-expanded') === 'true') {
+                    closeMobileMenu();
+                }
+            });
+
+            // Close menu on escape key
+            EventDelegation.on('keydown', document, function(event) {
+                if (event.key === 'Escape') {
+                    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                    if (mobileMenuBtn && mobileMenuBtn.getAttribute('aria-expanded') === 'true') {
+                        closeMobileMenu();
+                    }
+                }
+            });
+        }
     }
     
     function closeMobileMenu() {
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
         
-        if (mobileMenuBtn) {
-            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        // Use OverlayManager for centralized overlay management
+        if (typeof OverlayManager !== 'undefined') {
+            OverlayManager.closeOverlay('mobile-nav');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+        } else {
+            // Fallback to direct manipulation
+            if (mobileMenuBtn) {
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+            if (mobileNavOverlay) {
+                mobileNavOverlay.classList.remove('active');
+            }
+            document.body.classList.remove('nav-drawer-open');
+            unlockScroll();
         }
-        if (mobileNavOverlay) {
-            mobileNavOverlay.classList.remove('active');
-        }
-        document.body.classList.remove('nav-drawer-open');
-        unlockScroll();
     }
     
     function setupCartDrawerToggle() {
@@ -255,18 +267,28 @@ const FashionStoreNavbar = (function() {
     }
     
     function lockScroll() {
-        const scrollY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollY}px`;
-        document.body.style.width = '100%';
+        if (typeof ScrollLock !== 'undefined') {
+            ScrollLock.lock();
+        } else {
+            // Fallback to local implementation
+            const scrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+        }
     }
     
     function unlockScroll() {
-        const scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        if (typeof ScrollLock !== 'undefined') {
+            ScrollLock.unlock();
+        } else {
+            // Fallback to local implementation
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
     }
     
     function cleanup() {
@@ -297,12 +319,19 @@ if (typeof window.FashionStore === 'undefined') {
 }
 window.FashionStore.navbar = FashionStoreNavbar;
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', FashionStoreNavbar.init);
-} else {
-    FashionStoreNavbar.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('navbar', FashionStoreNavbar.init, 5);
 }
+
+// Cleanup on page navigation to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    FashionStoreNavbar.cleanup();
+});
+
+window.addEventListener('pagehide', () => {
+    FashionStoreNavbar.cleanup();
+});
 
 // Export for ES6 modules
 if (typeof module !== 'undefined' && module.exports) {

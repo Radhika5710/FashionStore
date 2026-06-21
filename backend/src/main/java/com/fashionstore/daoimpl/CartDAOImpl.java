@@ -183,4 +183,17 @@ public class CartDAOImpl implements CartDAO {
         }
         return false;
     }
+
+    @Override
+    public boolean clearCartByUserIdInTransaction(Connection conn, int userId) throws Exception {
+        String sql = "DELETE FROM cart_items WHERE user_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            logger.error("Error clearing cart for user {} in transaction: {}", userId, e.getMessage(), e);
+            throw e;
+        }
+    }
 }

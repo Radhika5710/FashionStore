@@ -1,15 +1,18 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" isErrorPage="true" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <jsp:include page="/WEB-INF/views/partials/head.jsp" />
-    <script src="<%= request.getContextPath() %>/assets/js/modules/page-animations.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Error - FashionStore</title>
+    <title>500 - Server Error | FashionStore</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/design-tokens.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/reset.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/base.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/layout.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/components/buttons.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
     <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
@@ -47,8 +50,7 @@
                class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-dark transition-colors">
                 Go to Homepage
             </a>
-            <button onclick="history.back()" 
-                    class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+            <button type="button" class="fs-btn fs-btn--outline" id="back-btn">
                 Go Back
             </button>
         </div>
@@ -68,6 +70,5 @@
             </div>
         </div>
     </div>
-
 </body>
 </html>

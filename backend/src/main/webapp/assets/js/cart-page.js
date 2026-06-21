@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── Coupon Application ───────────────────────────────────────────────────────
     
     const couponCodeInput = document.getElementById('couponCode');
-    const applyCouponBtn = document.querySelector('.fs-cart-summary__coupon button');
+    const applyCouponBtn = document.getElementById('apply-coupon-btn');
     const couponMessage = document.getElementById('couponMessage');
     
     if (applyCouponBtn && couponCodeInput) {

@@ -90,42 +90,9 @@ const FashionStoreSearch = (function() {
     }
     
     function fetchSuggestions(query) {
-        // Show loading state
-        if (suggestionsContainer && typeof StateManager !== 'undefined') {
-            StateManager.showInlineLoading('search-suggestions-loading', true, 'Searching...');
-            suggestionsContainer.innerHTML = '<div id="search-suggestions-loading"></div>';
-            suggestionsContainer.style.display = 'block';
-        }
-        
-        FashionStoreAPI.get(`/search/suggestions?q=${encodeURIComponent(query)}`)
-        .then(data => {
-            // Hide loading state
-            if (typeof StateManager !== 'undefined') {
-                StateManager.showInlineLoading('search-suggestions-loading', false);
-            }
-            
-            if (Array.isArray(data)) {
-                displaySuggestions(data, query);
-            } else {
-                displayEmptyState(query);
-            }
-        })
-        .catch(err => {
-            console.error('Error fetching suggestions:', err);
-            // Show error state
-            if (suggestionsContainer && typeof StateManager !== 'undefined') {
-                suggestionsContainer.innerHTML = `
-                    <div class="suggestion-empty">
-                        <div class="empty-icon">⚠️</div>
-                        <div class="empty-text">Unable to load suggestions</div>
-                        <button class="fs-btn fs-btn--primary" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);" onclick="FashionStoreSearch.fetchSuggestions('${escapeHtml(query)}')">Retry</button>
-                    </div>
-                `;
-                suggestionsContainer.style.display = 'block';
-            } else {
-                suggestionsContainer.innerHTML = '';
-            }
-        });
+        // Search suggestions endpoint doesn't exist in backend
+        // Fall back to showing trending and recent searches
+        showTrendingAndRecent();
     }
     
     function displaySuggestions(suggestions, query) {
@@ -334,11 +301,16 @@ if (typeof window.FashionStore === 'undefined') {
 }
 window.FashionStore.search = FashionStoreSearch;
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', FashionStoreSearch.init);
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('search', FashionStoreSearch.init, 20);
 } else {
-    FashionStoreSearch.init();
+    // Fallback: Initialize on DOM ready if FashionStoreApp not available
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', FashionStoreSearch.init);
+    } else {
+        FashionStoreSearch.init();
+    }
 }
 
 // Export for ES6 modules

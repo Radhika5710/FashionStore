@@ -123,11 +123,16 @@ if (typeof window.FashionStore === 'undefined') {
 window.FashionStore.theme = FashionStoreTheme;
 window.FashionStore.darkMode = FashionStoreTheme; // For backward compatibility
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', FashionStoreTheme.init);
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('theme', FashionStoreTheme.init, 1);
 } else {
-    FashionStoreTheme.init();
+    // Fallback: Initialize on DOM ready if FashionStoreApp not available
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', FashionStoreTheme.init);
+    } else {
+        FashionStoreTheme.init();
+    }
 }
 
 // Export for ES6 modules

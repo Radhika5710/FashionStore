@@ -31,8 +31,9 @@ public class ServiceRegistry {
     private AddressService addressService;
     private CategoryService categoryService;
     private WishlistService wishlistService;
-    private PaymentRecoveryService paymentRecoveryService;
-    private RecentlyViewedService recentlyViewedService;
+    private InventoryService inventoryService;
+    private PaymentService paymentService;
+    private StripePaymentService stripePaymentService;
     
     // Core DAOs
     private CartDAO cartDAO;
@@ -47,7 +48,7 @@ public class ServiceRegistry {
     private CategoryDAO categoryDAO;
     private WishlistDAO wishlistDAO;
     private ProductSizeDAO productSizeDAO;
-    private RecentlyViewedDAO recentlyViewedDAO;
+    private PaymentDAO paymentDAO;
     
     private ServiceRegistry() {
         initializeDAOs();
@@ -79,8 +80,9 @@ public class ServiceRegistry {
         this.addressService = new AddressService();
         this.categoryService = new CategoryService();
         this.wishlistService = new WishlistService();
-        this.paymentRecoveryService = new PaymentRecoveryService();
-        this.recentlyViewedService = new RecentlyViewedServiceImpl();
+        this.inventoryService = new InventoryServiceImpl();
+        this.paymentService = new PaymentService();
+        this.stripePaymentService = new StripePaymentService();
     }
     
     private void initializeDAOs() {
@@ -96,7 +98,7 @@ public class ServiceRegistry {
         this.categoryDAO = new CategoryDAOImpl();
         this.wishlistDAO = new WishlistDAOImpl();
         this.productSizeDAO = new ProductSizeDAOImpl();
-        this.recentlyViewedDAO = new RecentlyViewedDAOImpl();
+        this.paymentDAO = new PaymentDAOImpl();
     }
 
     private void injectDependencies() {
@@ -113,6 +115,7 @@ public class ServiceRegistry {
             ((CheckoutServiceImpl) checkoutService).setProductDAO(productDAO);
             ((CheckoutServiceImpl) checkoutService).setAddressService(addressService);
             ((CheckoutServiceImpl) checkoutService).setCouponService(couponService);
+            ((CheckoutServiceImpl) checkoutService).setInventoryService(inventoryService);
         }
 
         // Inject DAOs into ProductReviewServiceImpl
@@ -142,10 +145,17 @@ public class ServiceRegistry {
         // Inject DAOs into WishlistService
         wishlistService.setWishlistDAO(wishlistDAO);
 
-        // Inject DAOs into RecentlyViewedService
-        if (recentlyViewedService instanceof RecentlyViewedServiceImpl) {
-            ((RecentlyViewedServiceImpl) recentlyViewedService).setRecentlyViewedDAO(recentlyViewedDAO);
+        // Inject DAOs into InventoryServiceImpl
+        if (inventoryService instanceof InventoryServiceImpl) {
+            ((InventoryServiceImpl) inventoryService).setProductDAO(productDAO);
+            ((InventoryServiceImpl) inventoryService).setProductSizeDAO(productSizeDAO);
         }
+
+        // Inject DAOs into PaymentService
+        paymentService.setPaymentDAO(paymentDAO);
+
+        // Inject DAOs into StripePaymentService
+        stripePaymentService.setPaymentDAO(paymentDAO);
     }
     
     public CartService getCartService() {
@@ -192,12 +202,8 @@ public class ServiceRegistry {
         return wishlistService;
     }
 
-    public PaymentRecoveryService getPaymentRecoveryService() {
-        return paymentRecoveryService;
-    }
-
-    public RecentlyViewedService getRecentlyViewedService() {
-        return recentlyViewedService;
+    public InventoryService getInventoryService() {
+        return inventoryService;
     }
 
     public CartDAO getCartDAO() {
@@ -248,7 +254,15 @@ public class ServiceRegistry {
         return productSizeDAO;
     }
 
-    public RecentlyViewedDAO getRecentlyViewedDAO() {
-        return recentlyViewedDAO;
+    public PaymentDAO getPaymentDAO() {
+        return paymentDAO;
+    }
+
+    public PaymentService getPaymentService() {
+        return paymentService;
+    }
+
+    public StripePaymentService getStripePaymentService() {
+        return stripePaymentService;
     }
 }

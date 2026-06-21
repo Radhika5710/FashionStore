@@ -57,6 +57,12 @@ public interface InventoryService {
     boolean processInventoryAfterOrder(List<ProductSize> items);
     
     /**
+     * Process inventory after order with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    boolean processInventoryAfterOrder(List<ProductSize> items, java.sql.Connection conn);
+    
+    /**
      * Get inventory report
      */
     List<Product> getInventoryReport();

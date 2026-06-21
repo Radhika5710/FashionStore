@@ -44,8 +44,7 @@ public class CouponServiceImpl implements CouponService {
             return null;
         }
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return null;
+            throw new IllegalStateException("CouponDAO not initialized - cannot validate coupon");
         }
         return couponDAO.getCouponByCode(couponCode.trim());
     }
@@ -157,8 +156,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public boolean incrementCouponUsage(int couponId) {
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return false;
+            throw new IllegalStateException("CouponDAO not initialized - cannot increment coupon usage");
         }
         return couponDAO.incrementCouponUsage(couponId);
     }
@@ -166,8 +164,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public List<Coupon> getAvailableCoupons(int userId) {
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return List.of();
+            throw new IllegalStateException("CouponDAO not initialized - cannot get available coupons");
         }
         return couponDAO.getActiveCoupons();
     }
@@ -175,8 +172,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public List<Coupon> getAllActiveCoupons() {
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return List.of();
+            throw new IllegalStateException("CouponDAO not initialized - cannot get all active coupons");
         }
         return couponDAO.getActiveCoupons();
     }
@@ -184,8 +180,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public List<Coupon> getAllCoupons() {
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return List.of();
+            throw new IllegalStateException("CouponDAO not initialized - cannot get all coupons");
         }
         return couponDAO.getAllCoupons();
     }
@@ -193,8 +188,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Coupon getCouponById(int couponId) {
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return null;
+            throw new IllegalStateException("CouponDAO not initialized - cannot get coupon by ID");
         }
         return couponDAO.getCouponById(couponId);
     }
@@ -206,8 +200,7 @@ public class CouponServiceImpl implements CouponService {
             return false;
         }
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return false;
+            throw new IllegalStateException("CouponDAO not initialized - cannot create coupon");
         }
         
         // Check if coupon code already exists
@@ -226,8 +219,7 @@ public class CouponServiceImpl implements CouponService {
             return false;
         }
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return false;
+            throw new IllegalStateException("CouponDAO not initialized - cannot update coupon");
         }
         
         return couponDAO.updateCoupon(coupon);
@@ -240,8 +232,7 @@ public class CouponServiceImpl implements CouponService {
             return false;
         }
         if (couponDAO == null) {
-            logger.warn("CouponDAO not initialized");
-            return false;
+            throw new IllegalStateException("CouponDAO not initialized - cannot delete coupon");
         }
         
         return couponDAO.deleteCoupon(couponId);

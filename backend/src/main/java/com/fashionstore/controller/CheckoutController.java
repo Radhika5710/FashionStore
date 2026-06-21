@@ -331,8 +331,10 @@ public class CheckoutController extends HttpServlet {
                 return;
             }
             
+            // CRITICAL FIX: Cart clearing is now inside the transaction in CheckoutServiceImpl.processCheckoutOrder()
+            // This ensures atomicity: order creation, inventory update, payment, and cart clearing all happen together or not at all
+            // If any step fails, the entire transaction rolls back and cart is preserved
             com.fashionstore.model.Order order = checkoutService.processCheckoutOrder(userId, checkoutData);
-            cartService.clearCart(userId);
 
             Map<String, Object> data = new HashMap<>();
             data.put("success", true);

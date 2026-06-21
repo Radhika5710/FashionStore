@@ -39,8 +39,38 @@ public class LoginController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String email = request.getParameter("email");
-        String password = request.getParameter("password");
+        String email = null;
+        String password = null;
+
+        // Try to get parameters from JSON body (AJAX request)
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.contains("application/json")) {
+            try {
+                StringBuilder buffer = new StringBuilder();
+                String line;
+                while ((line = request.getReader().readLine()) != null) {
+                    buffer.append(line);
+                }
+                String payload = buffer.toString();
+                
+                if (!payload.isEmpty()) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map<String, String> data = mapper.readValue(payload, Map.class);
+                    email = data.get("email");
+                    password = data.get("password");
+                }
+            } catch (Exception e) {
+                // If JSON parsing fails, fall back to form parameters
+            }
+        }
+
+        // Fall back to form parameters if JSON parsing failed or not JSON request
+        if (email == null) {
+            email = request.getParameter("email");
+        }
+        if (password == null) {
+            password = request.getParameter("password");
+        }
 
         try {
             User user = userService.validateAndLoginUser(email, password);
@@ -48,6 +78,15 @@ public class LoginController extends HttpServlet {
             if (user != null) {
                 HttpSession session = request.getSession(true);
                 session.setAttribute("customerAuth", user);
+
+                // Load cart items into session so navbar badge shows correctly immediately
+                try {
+                    com.fashionstore.service.CartService cartService = ServiceRegistry.getInstance().getCartService();
+                    java.util.List<com.fashionstore.model.CartItem> cartItems = cartService.getCartItems(user.getUserId());
+                    session.setAttribute("cartItems", cartItems);
+                } catch (Exception ex) {
+                    // Ignore cart load error during login
+                }
 
                 Map<String, Object> responseData = new HashMap<>();
                 responseData.put("success", true);

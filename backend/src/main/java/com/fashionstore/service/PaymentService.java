@@ -1,14 +1,14 @@
 package com.fashionstore.service;
 
 import com.fashionstore.dao.PaymentDAO;
-import com.fashionstore.daoimpl.PaymentDAOImpl;
 import com.fashionstore.model.Payment;
 import com.fashionstore.util.AuditLogger;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import jakarta.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -31,9 +31,13 @@ public class PaymentService {
     
     // Stripe configuration (should be loaded from environment or config)
     private String stripePublicKey;
+    
     public PaymentService() {
-        this.paymentDAO = new PaymentDAOImpl();
         loadConfiguration();
+    }
+    
+    public void setPaymentDAO(PaymentDAO paymentDAO) {
+        this.paymentDAO = paymentDAO;
     }
     
     private void loadConfiguration() {
@@ -46,12 +50,27 @@ public class PaymentService {
     }
     
     /**
+     * Create a payment record
+     */
+    public int createPayment(Payment payment) {
+        return paymentDAO.createPayment(payment);
+    }
+    
+    /**
+     * Create a payment record with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    public int createPaymentInTransaction(Connection conn, Payment payment) {
+        return paymentDAO.createPaymentInTransaction(conn, payment);
+    }
+    
+    /**
      * Create a new payment record
      */
     public Payment createPayment(int orderId, String paymentMethod, String transactionId, 
                                  BigDecimal amount, String currency, HttpServletRequest request) {
         Payment payment = new Payment(orderId, paymentMethod, transactionId, amount, currency);
-        int paymentId = paymentDAO.createPayment(payment);
+        int paymentId = createPayment(payment);
         
         if (paymentId > 0) {
             payment.setPaymentId(paymentId);
@@ -106,9 +125,44 @@ public class PaymentService {
         if (updated) {
             AuditLogger.log("PAYMENT_STATUS_UPDATED", "Payment status updated to: " + status + " for payment: " + paymentId, 
                            String.valueOf(paymentId), request);
+            
+            // Update orders table payment status for consistency
+            Payment payment = paymentDAO.getPaymentById(paymentId);
+            if (payment != null) {
+                String orderPaymentStatus = mapPaymentStatusToOrderStatus(status);
+                paymentDAO.updateOrderPaymentStatus(payment.getOrderId(), orderPaymentStatus, payment.getTransactionId());
+            }
         }
         
         return updated;
+    }
+    
+    /**
+     * Map payment status to order payment status
+     */
+    private String mapPaymentStatusToOrderStatus(String paymentStatus) {
+        if (paymentStatus == null) {
+            return "pending";
+        }
+        
+        switch (paymentStatus.toLowerCase()) {
+            case "succeeded":
+                return "completed";
+            case "failed":
+                return "failed";
+            case "refunded":
+                return "refunded";
+            case "processing":
+            case "requires_payment_method":
+            case "requires_confirmation":
+            case "requires_action":
+                return "processing";
+            case "canceled":
+                return "failed";
+            case "pending":
+            default:
+                return "pending";
+        }
     }
     
     /**
@@ -167,11 +221,14 @@ public class PaymentService {
         Payment payment = createPayment(orderId, "COD", transactionId, amount, "INR", request);
         
         if (payment != null) {
-            // COD is confirmed immediately
-            payment.setStatus("SUCCESS");
+            // COD is confirmed immediately - use correct ENUM value "succeeded"
+            payment.setStatus("succeeded");
             payment.setVerified(true);
-            paymentDAO.updatePaymentStatus(payment.getPaymentId(), "SUCCESS");
+            paymentDAO.updatePaymentStatus(payment.getPaymentId(), "succeeded");
             paymentDAO.updatePaymentVerification(payment.getPaymentId(), true, null);
+            
+            // Update orders table payment status for consistency
+            paymentDAO.updateOrderPaymentStatus(orderId, "completed", transactionId);
         }
         
         return payment;
@@ -203,15 +260,19 @@ public class PaymentService {
         Payment payment = paymentDAO.getPaymentById(paymentId);
         
         if (payment != null) {
-            payment.setStatus("FAILED");
+            // Use correct ENUM value "failed"
+            payment.setStatus("failed");
             payment.setGatewayResponse(failureReason);
-            paymentDAO.updatePaymentStatus(paymentId, "FAILED");
+            paymentDAO.updatePaymentStatus(paymentId, "failed");
             AuditLogger.log("PAYMENT_FAILED", "Payment failed: " + paymentId + ", reason: " + failureReason, 
                            String.valueOf(paymentId), request);
             
-            // Rollback inventory for failed payment by cancelling the order
+            // Update orders table payment status for consistency
             int orderId = payment.getOrderId();
             if (orderId > 0) {
+                paymentDAO.updateOrderPaymentStatus(orderId, "failed", payment.getTransactionId());
+                
+                // Rollback inventory for failed payment by cancelling the order
                 try {
                     com.fashionstore.service.OrderService orderService = new com.fashionstore.serviceimpl.OrderServiceImpl();
                     // Cancel order to restore inventory (uses internal restoreInventoryForOrder)
@@ -235,9 +296,14 @@ public class PaymentService {
         Payment payment = paymentDAO.getPaymentById(paymentId);
         
         if (payment != null) {
-            payment.setStatus("SUCCESS");
+            // Use correct ENUM value "succeeded"
+            payment.setStatus("succeeded");
             payment.setGatewayResponse(gatewayResponse);
-            paymentDAO.updatePaymentStatus(paymentId, "SUCCESS");
+            paymentDAO.updatePaymentStatus(paymentId, "succeeded");
+            
+            // Update orders table payment status for consistency
+            paymentDAO.updateOrderPaymentStatus(payment.getOrderId(), "completed", payment.getTransactionId());
+            
             AuditLogger.log("PAYMENT_SUCCESS", "Payment succeeded: " + paymentId, 
                            String.valueOf(paymentId), request);
             return true;

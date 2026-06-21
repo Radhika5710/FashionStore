@@ -1,6 +1,7 @@
 package com.fashionstore.dao;
 
 import com.fashionstore.model.ProductSize;
+import java.sql.Connection;
 import java.util.List;
 
 public interface ProductSizeDAO {
@@ -22,6 +23,12 @@ public interface ProductSizeDAO {
     boolean reduceStock(int productSizeId, int quantity);
 
     boolean reduceStock(int productId, String sizeLabel, int quantity);
+    
+    /**
+     * Reduce stock with connection for transaction support
+     * This version is used within a transaction to ensure atomicity
+     */
+    boolean reduceStock(Connection conn, int productId, String sizeLabel, int quantity);
 
     boolean increaseStock(int productId, String sizeLabel, int quantity);
 

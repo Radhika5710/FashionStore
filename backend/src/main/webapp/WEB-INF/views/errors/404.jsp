@@ -1,13 +1,17 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" isErrorPage="true" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Not Found - FashionStore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>404 - Page Not Found | FashionStore</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/design-tokens.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/reset.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/base.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/layout.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/components/buttons.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/main.css">
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
     <main class="site-main error-page premium-fade">
@@ -54,19 +58,5 @@
             </div>
         </div>
     </main>
-
-    <script>
-        // Format timestamp
-        document.addEventListener('DOMContentLoaded', function() {
-            const timestampElements = document.querySelectorAll('.timestamp');
-            timestampElements.forEach(function(element) {
-                const timestamp = parseInt(element.textContent);
-                if (!isNaN(timestamp)) {
-                    const date = new Date(timestamp);
-                    element.textContent = date.toLocaleString();
-                }
-            });
-        });
-    </script>
 </body>
 </html>

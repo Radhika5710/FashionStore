@@ -21,7 +21,7 @@ const FashionStoreProductInteractions = (function() {
     
     function setupWishlistButtons() {
         // Initialize wishlist buttons on page load
-        document.querySelectorAll('.fs-product-card__wishlist, .wishlist-btn').forEach(btn => {
+        document.querySelectorAll('.fs-product-card__wishlist, .wishlist-btn, [data-product-id]').forEach(btn => {
             const productId = btn.dataset.productId;
             if (productId) {
                 checkWishlistStatus(productId, btn);
@@ -30,20 +30,27 @@ const FashionStoreProductInteractions = (function() {
     }
     
     function checkWishlistStatus(productId, button) {
-        fetch(`${contextPath}/wishlist/api/check?productId=${productId}`, {
+        // Use the correct API endpoint: /api/wishlist with action parameter
+        fetch(`${contextPath}/api/wishlist?action=check&productId=${productId}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
         .then(data => {
-            if (data.inWishlist) {
+            if (data.data && data.data.isFavorite) {
                 button.classList.add('active');
                 button.setAttribute('aria-pressed', 'true');
             }
         })
         .catch(err => {
-            console.error('Error checking wishlist status:', err);
+            // Silent fail - wishlist check is optional for UX
+            // Don't spam console with errors
         });
     }
     
@@ -60,11 +67,12 @@ const FashionStoreProductInteractions = (function() {
             }
         }
         
-        fetch(`${contextPath}/wishlist/api/toggle`, {
+        fetch(`${contextPath}/api/wishlist?action=toggle`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': window.csrfToken || ''
             },
             body: JSON.stringify({ productId })
         })
@@ -130,13 +138,14 @@ const FashionStoreProductInteractions = (function() {
     function submitReview(productId, rating, comment, form) {
         FashionStore.showLoading(form, 'Submitting review...');
         
-        fetch(`${contextPath}/reviews/api/submit`, {
+        fetch(`${contextPath}/review`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': window.csrfToken || ''
             },
-            body: JSON.stringify({
+            body: new URLSearchParams({
                 productId,
                 rating: parseInt(rating),
                 comment
@@ -188,85 +197,21 @@ const FashionStoreProductInteractions = (function() {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const productId = btn.dataset.productId;
-                if (productId) {
-                    openQuickView(productId);
-                }
+                openQuickView(productId);
             });
         });
+
+        // Setup quickview close button
+        const quickviewCloseBtn = document.getElementById('quickview-close-btn');
+        if (quickviewCloseBtn) {
+            quickviewCloseBtn.addEventListener('click', closeQuickView);
+        }
     }
     
     function openQuickView(productId) {
-        // Show loading overlay
-        if (typeof StateManager !== 'undefined') {
-            StateManager.showOverlay(true, 'Loading product details...');
-        } else {
-            FashionStore.showLoading(document.body, 'Loading product details...');
-        }
-        
-        fetch(`${contextPath}/product/api/quick-view?productId=${productId}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (typeof StateManager !== 'undefined') {
-                StateManager.showOverlay(false);
-            } else {
-                FashionStore.hideLoading(document.body);
-            }
-            
-            if (data.success) {
-                const modal = createQuickViewModal(data.product);
-                document.body.appendChild(modal);
-                
-                // Show modal
-                requestAnimationFrame(() => {
-                    modal.classList.add('active');
-                });
-                
-                // Close button
-                modal.querySelector('.quick-view-modal__close').addEventListener('click', () => {
-                    closeQuickView();
-                });
-                
-                // Close on backdrop click
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        closeQuickView();
-                    }
-                });
-                
-                // Close on escape
-                document.addEventListener('keydown', handleEscape);
-            } else {
-                FashionStore.showToast('Failed to load product details', 'error');
-                // Show error state
-                if (typeof StateManager !== 'undefined') {
-                    StateManager.showError('quick-view-error', {
-                        errorMessage: 'Unable to load product details',
-                        onRetry: () => openQuickView(productId)
-                    });
-                }
-            }
-        })
-        .catch(err => {
-            if (typeof StateManager !== 'undefined') {
-                StateManager.showOverlay(false);
-            } else {
-                FashionStore.hideLoading(document.body);
-            }
-            console.error('Error loading quick view:', err);
-            FashionStore.showToast('Failed to load product details', 'error');
-            
-            // Show error state
-            if (typeof StateManager !== 'undefined') {
-                StateManager.showError('quick-view-error', {
-                    errorMessage: 'Unable to load product details',
-                    onRetry: () => openQuickView(productId)
-                });
-            }
-        });
+        // Quick view endpoint doesn't exist in backend - redirect to product page instead
+        window.location.href = `${contextPath}/product?id=${productId}`;
+        return;
     }
     
     function createQuickViewModal(product) {
@@ -315,6 +260,7 @@ const FashionStoreProductInteractions = (function() {
                 modal.remove();
             }, 300);
         }
+        // Remove escape key listener
         document.removeEventListener('keydown', handleEscape);
     }
     
@@ -331,8 +277,8 @@ const FashionStoreProductInteractions = (function() {
         return div.innerHTML;
     }
     
+    // Cleanup any open modals on page unload
     function cleanup() {
-        // Remove event listeners if needed
         closeQuickView();
     }
     
@@ -384,12 +330,19 @@ window.FashionStore.submitReview = FashionStoreProductInteractions.submitReview;
 window.FashionStore.openQuickView = FashionStoreProductInteractions.openQuickView;
 window.FashionStore.closeQuickView = FashionStoreProductInteractions.closeQuickView;
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', FashionStoreProductInteractions.init);
-} else {
-    FashionStoreProductInteractions.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('productInteractions', FashionStoreProductInteractions.init, 15);
 }
+
+// Cleanup on page navigation to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    FashionStoreProductInteractions.cleanup();
+});
+
+window.addEventListener('pagehide', () => {
+    FashionStoreProductInteractions.cleanup();
+});
 
 // Export for ES6 modules
 if (typeof module !== 'undefined' && module.exports) {

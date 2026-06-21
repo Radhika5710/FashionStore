@@ -58,7 +58,7 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.3 5.7a5.1 5.1 0 0 0-7.2 0L12 6.8l-1.1-1.1a5.1 5.1 0 0 0-7.2 7.2L12 21l8.3-8.1a5.1 5.1 0 0 0 0-7.2z"></path></svg>
                 </a>
 
-                <button type="button" class="navbar-action-btn cart-toggle" onclick="toggleMiniCart(event)" aria-label="Shopping Cart">
+                <button type="button" class="navbar-action-btn cart-toggle" id="cart-toggle" aria-label="Shopping Cart">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                     <span class="nav-badge" id="nav-cart-badge"><%= initialCartCount %></span>
                 </button>
@@ -98,33 +98,3 @@
 
 <input type="hidden" id="user-logged-in" value="<%= user != null ? "true" : "false" %>">
 <div id="toast-container" class="toast-container"></div>
-
-<div id="mini-cart-overlay" class="mini-cart-overlay" onclick="toggleMiniCart(event)"></div>
-<div id="mini-cart-drawer" class="mini-cart-drawer">
-    <div class="mini-cart-header">
-        <h3>Your Cart</h3>
-        <button class="close-cart-btn" onclick="toggleMiniCart(event)" aria-label="Close cart">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </button>
-    </div>
-    <div class="mini-cart-items" id="mini-cart-items"></div>
-    <div class="mini-cart-footer">
-        <div class="mini-cart-subtotal">
-            <span class="mini-cart-subtotal-label">Subtotal</span>
-            <span class="mini-cart-subtotal-value" id="mini-cart-total-price">₹0.00</span>
-        </div>
-        <div class="mini-cart-actions">
-            <a href="<%= request.getContextPath() %>/checkout" class="fs-btn fs-btn--primary">
-                Checkout
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </a>
-            <a href="<%= request.getContextPath() %>/cart" class="fs-btn fs-btn--outline">View Cart</a>
-        </div>
-    </div>
-</div>

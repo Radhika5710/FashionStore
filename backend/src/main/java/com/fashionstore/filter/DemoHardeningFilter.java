@@ -13,37 +13,38 @@ import java.util.Set;
 
 /**
  * Demo Hardening Filter - Emergency Demo Stabilization Mode
- * 
- * DISABLED ROUTES (Non-Essential for Demo):
- * - /metrics* - Metrics collection (TODO not implemented)
- * - /search-analytics* - Search analytics (TODO not implemented)
- * - /wishlist* - Wishlist features
+ *
+ * Only active when the environment variable DEMO_HARDENING_MODE=true is set.
+ * When inactive, all requests pass through immediately.
+ *
+ * DISABLED ROUTES (no backing implementation):
+ * - /metrics* - Metrics collection
+ * - /search-analytics* - Search analytics
  * - /recently-viewed* - Recently viewed products
  * - /recommendations* - Product recommendations
  * - /notification* - Notifications
  * - /newsletter* - Newsletter subscription
- * - /password-reset* - Password reset
- * - /csp-violation* - CSP violation reporting
+ * - /password-reset* - Password reset flow
+ * - /csp-violation* - CSP violation reporting endpoint
  * - /invoice* - Invoice generation
- * - /order-tracking* - Order tracking
  * - /location* - Location services
- * - /address* - Address management
  * - /saved-items* - Saved items
- * - /review* - Product reviews
  * - /product-filter* - Advanced filtering
- * 
- * ALLOWED ROUTES (Demo Critical):
+ *
+ * ALWAYS ALLOWED (storefront critical — must NEVER be disabled):
  * - /home, / - Home page
- * - /products - Product list
+ * - /products - Product catalogue
  * - /product/* - Product details
  * - /login, /register - Authentication
- * - /cart - Cart
+ * - /logout - Logout
+ * - /cart - Shopping cart
  * - /checkout - Checkout
- * - /api/admin/login - Admin login
- * - /api/admin/dashboard - Admin dashboard
- * - /api/admin/products - Admin products
- * - /api/admin/orders - Admin orders
- * - /api/admin/logout - Admin logout
+ * - /wishlist - Wishlist page
+ * - /orders - Order history
+ * - /review - Product reviews
+ * - /address, /account/addresses - Address management
+ * - /order-tracking - Order tracking
+ * - /api/admin/* - Admin APIs
  * - /healthz, /health - Health checks
  */
 public class DemoHardeningFilter implements Filter {
@@ -52,11 +53,13 @@ public class DemoHardeningFilter implements Filter {
     
     private static volatile boolean demoHardeningMode = false;
     
-    // Non-essential routes to disable in demo mode
+    // Non-essential routes to disable in demo mode.
+    // NOTE: Only routes that have NO backing servlet/controller should be here.
+    // Critical storefront routes (/wishlist, /orders, /cart, /review, /address,
+    // /order-tracking) are INTENTIONALLY omitted — they must work in all modes.
     private static final Set<String> DISABLED_ROUTES = new HashSet<>(Arrays.asList(
         "/metrics",
         "/search-analytics",
-        "/wishlist",
         "/recently-viewed",
         "/recommendations",
         "/notification",
@@ -64,11 +67,8 @@ public class DemoHardeningFilter implements Filter {
         "/password-reset",
         "/csp-violation",
         "/invoice",
-        "/order-tracking",
         "/location",
-        "/address",
         "/saved-items",
-        "/review",
         "/product-filter"
     ));
 
@@ -88,7 +88,7 @@ public class DemoHardeningFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
+
         if (!demoHardeningMode) {
             chain.doFilter(request, response);
             return;
@@ -96,23 +96,32 @@ public class DemoHardeningFilter implements Filter {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        
+
+        // Skip internal dispatcher forwards/includes/errors — never block JSP forwards
+        DispatcherType dt = httpRequest.getDispatcherType();
+        if (dt == DispatcherType.FORWARD || dt == DispatcherType.INCLUDE || dt == DispatcherType.ERROR) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String path = httpRequest.getRequestURI();
         String contextPath = httpRequest.getContextPath();
-        
+
         // Get path without context
-        String relativePath = path.substring(contextPath.length());
-        
+        String relativePath = path.length() > contextPath.length()
+                ? path.substring(contextPath.length())
+                : "/";
+
         // Check if route is disabled
         for (String disabledRoute : DISABLED_ROUTES) {
             if (relativePath.startsWith(disabledRoute)) {
                 logger.warn("Demo Hardening: Disabled route accessed - {}", relativePath);
-                httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, 
+                httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                     "Feature disabled in demo mode");
                 return;
             }
         }
-        
+
         // Continue with request
         chain.doFilter(request, response);
     }

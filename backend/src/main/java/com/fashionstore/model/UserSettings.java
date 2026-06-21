@@ -9,7 +9,6 @@ public class UserSettings {
     private boolean smsNotifications;
     private boolean orderUpdates;
     private boolean promotionalEmails;
-    private boolean newsletterSubscription;
     private String language;
     private String currency;
     private String themePreference;
@@ -25,7 +24,6 @@ public class UserSettings {
         this.smsNotifications = false;
         this.orderUpdates = true;
         this.promotionalEmails = false;
-        this.newsletterSubscription = false;
         this.language = "en";
         this.currency = "INR";
         this.themePreference = "auto";
@@ -49,9 +47,6 @@ public class UserSettings {
 
     public boolean isPromotionalEmails() { return promotionalEmails; }
     public void setPromotionalEmails(boolean promotionalEmails) { this.promotionalEmails = promotionalEmails; }
-
-    public boolean isNewsletterSubscription() { return newsletterSubscription; }
-    public void setNewsletterSubscription(boolean newsletterSubscription) { this.newsletterSubscription = newsletterSubscription; }
 
     public String getLanguage() { return language; }
     public void setLanguage(String language) { this.language = language; }
@@ -77,7 +72,6 @@ public class UserSettings {
                 ", smsNotifications=" + smsNotifications +
                 ", orderUpdates=" + orderUpdates +
                 ", promotionalEmails=" + promotionalEmails +
-                ", newsletterSubscription=" + newsletterSubscription +
                 ", language='" + language + '\'' +
                 ", currency='" + currency + '\'' +
                 ", themePreference='" + themePreference + '\'' +

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -170,7 +170,7 @@
                     <label for="couponCode">Coupon Code</label>
                     <div class="fs-cart-summary__coupon-inputs">
                         <input type="text" id="couponCode" placeholder="Enter code" class="fs-form-input">
-                        <button type="button" class="fs-btn fs-btn--primary" onclick="FashionStore.applyCoupon()">Apply</button>
+                        <button type="button" class="fs-btn fs-btn--primary" id="apply-coupon-btn">Apply</button>
                     </div>
                     <div id="couponMessage" class="text-sm"></div>
                 </div>

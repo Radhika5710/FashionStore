@@ -184,64 +184,6 @@ public class CheckoutWorkflowIT {
         assertEquals(0, ps.getStockQuantity(), "Inventory stock should be exactly 0, never negative!");
     }
 
-    @Test
-    public void testAbandonedCheckoutSweeperRestoresStock() throws Exception {
-        // Create an old pending online order to trigger sweep
-        int expiredOrderId = 0;
-        try (Connection conn = DBConnection.getConnection()) {
-            // Set up a mock product size with 10 stock
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT IGNORE INTO products (product_id, product_name, price, stock_quantity, category_id) VALUES (777, 'Vintage Cap', 35.00, 50, 1)")) {
-                ps.executeUpdate();
-            }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT IGNORE INTO product_sizes (product_id, size_label, stock_quantity) VALUES (777, 'OneSize', 10)")) {
-                ps.executeUpdate();
-            }
-
-            // Deduct 4 items from stock (leaving 6 in stock)
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE product_sizes SET stock_quantity = 6 WHERE product_id = 777 AND size_label = 'OneSize'")) {
-                ps.executeUpdate();
-            }
-
-            // Insert a "Pending" order with Stripe created 20 minutes ago
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO orders (user_id, subtotal, total_amount, payment_method, status, created_at) " +
-                    "VALUES (999, 140.00, 140.00, 'STRIPE', 'Pending', NOW() - INTERVAL 20 MINUTE)",
-                    PreparedStatement.RETURN_GENERATED_KEYS)) {
-                ps.executeUpdate();
-                var keys = ps.getGeneratedKeys();
-                if (keys.next()) {
-                    expiredOrderId = keys.getInt(1);
-                }
-            }
-
-            // Add order items
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO order_items (order_id, product_id, size_label, quantity, price, unit_price, total_price) " +
-                    "VALUES (?, 777, 'OneSize', 4, 35.00, 35.00, 140.00)")) {
-                ps.setInt(1, expiredOrderId);
-                ps.executeUpdate();
-            }
-        }
-
-        assertTrue(expiredOrderId > 0, "Test order should be inserted");
-
-        // Manually trigger the static sweeper method we added to RuntimeMonitor via reflection or direct invocation
-        java.lang.reflect.Method sweepMethod = com.fashionstore.monitoring.RuntimeMonitor.class
-                .getDeclaredMethod("sweepExpiredReservations");
-        sweepMethod.setAccessible(true);
-        sweepMethod.invoke(null); // Execute sweeper
-
-        // Verify:
-        // 1. Order status should be Cancelled
-        OrderDAO orderDAO = new OrderDAOImpl();
-        Order order = orderDAO.getOrderById(expiredOrderId);
-        assertEquals("Cancelled", order.getStatus(), "Expired order should be Cancelled by sweeper");
-
-        // 2. Stock should be restored to 10 (6 + 4)
-        ProductSize ps = getProductSize(777, "OneSize");
-        assertEquals(10, ps.getStockQuantity(), "Stock should be successfully restored by the sweeper");
-    }
+    // NOTE: testAbandonedCheckoutSweeperRestoresStock removed - RuntimeMonitor was deleted as part of dead code cleanup
+    // The sweeper functionality was part of the fake monitoring feature that has been removed
 }

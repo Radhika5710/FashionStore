@@ -123,7 +123,7 @@
                             <label for="currentPassword">Current Password *</label>
                             <div class="fs-password-field">
                                 <input type="password" id="currentPassword" name="currentPassword" required class="fs-form-input">
-                                <button type="button" class="fs-password-field__toggle" aria-label="Show current password" aria-pressed="false" onclick="togglePassword(this)">
+                                <button type="button" class="fs-password-field__toggle" aria-label="Show current password" aria-pressed="false">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
@@ -139,7 +139,7 @@
                                        minlength="8"
                                        maxlength="50"
                                        class="fs-form-input">
-                                <button type="button" class="fs-password-field__toggle" aria-label="Show new password" aria-pressed="false" onclick="togglePassword(this)">
+                                <button type="button" class="fs-password-field__toggle" aria-label="Show new password" aria-pressed="false">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
@@ -156,7 +156,7 @@
                                        minlength="8"
                                        maxlength="50"
                                        class="fs-form-input">
-                                <button type="button" class="fs-password-field__toggle" aria-label="Show confirm password" aria-pressed="false" onclick="togglePassword(this)">
+                                <button type="button" class="fs-password-field__toggle" aria-label="Show confirm password" aria-pressed="false">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
@@ -273,7 +273,7 @@
                                 <h3>Deactivate Account</h3>
                                 <p>Temporarily deactivate your account. You can reactivate it later.</p>
                             </div>
-                            <button class="fs-btn fs-btn--outline" type="button" onclick="FashionStore.showToast('Contact support to deactivate your account', 'info')">Deactivate</button>
+                            <button class="fs-btn fs-btn--outline" type="button" id="deactivate-account-btn">Deactivate</button>
                         </div>
 
                         <div class="danger-action">
@@ -281,7 +281,7 @@
                                 <h3>Delete Account</h3>
                                 <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
                             </div>
-                            <button class="fs-btn fs-btn--danger" type="button" onclick="if(confirm('Are you sure? This cannot be undone.')) FashionStore.showToast('Contact support to permanently delete your account', 'info')">Delete Account</button>
+                            <button class="fs-btn fs-btn--danger" type="button" id="delete-account-btn">Delete Account</button>
                         </div>
                     </div>
                 </section>

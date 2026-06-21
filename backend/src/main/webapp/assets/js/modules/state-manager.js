@@ -13,6 +13,9 @@ const StateManager = (function() {
         IDLE: 'idle'
     };
     
+    // Store callbacks for event delegation
+    const callbacks = new Map();
+    
     // Default configurations
     const DEFAULT_CONFIG = {
         loadingText: 'Loading...',
@@ -82,8 +85,10 @@ const StateManager = (function() {
         
         let retryButton = '';
         if (settings.showRetry && settings.onRetry) {
+            const callbackId = 'retry-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            callbacks.set(callbackId, settings.onRetry);
             retryButton = `
-                <button class="fs-btn fs-btn--primary error-state__retry" onclick="(${settings.onRetry.toString()})()">
+                <button class="fs-btn fs-btn--primary error-state__retry" data-callback-id="${callbackId}">
                     ${settings.retryText}
                 </button>
             `;
@@ -116,8 +121,10 @@ const StateManager = (function() {
         
         let actionButton = '';
         if (settings.actionText && settings.onAction) {
+            const callbackId = 'action-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            callbacks.set(callbackId, settings.onAction);
             actionButton = `
-                <button class="fs-btn fs-btn--primary empty-state__action" onclick="(${settings.onAction.toString()})()">
+                <button class="fs-btn fs-btn--primary empty-state__action" data-callback-id="${callbackId}">
                     ${settings.actionText}
                 </button>
             `;
@@ -210,14 +217,21 @@ const StateManager = (function() {
                 document.body.appendChild(overlay);
             }
             
+            // Check if already showing to avoid duplication
+            if (overlay.style.display === 'flex') {
+                return;
+            }
+            
             overlay.innerHTML = `
                 <div class="loading-overlay__spinner"></div>
                 <p>${text}</p>
             `;
             overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         } else {
             if (overlay) {
                 overlay.style.display = 'none';
+                document.body.style.overflow = '';
             }
         }
     }
@@ -286,6 +300,33 @@ const StateManager = (function() {
         }
     }
     
+    /**
+     * Initialize event delegation for state manager buttons
+     */
+    function init() {
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('click', '.error-state__retry', function(event, target) {
+                const callbackId = target.dataset.callbackId;
+                if (callbackId && callbacks.has(callbackId)) {
+                    event.preventDefault();
+                    const callback = callbacks.get(callbackId);
+                    callback();
+                    callbacks.delete(callbackId); // Clean up after execution
+                }
+            });
+
+            EventDelegation.on('click', '.empty-state__action', function(event, target) {
+                const callbackId = target.dataset.callbackId;
+                if (callbackId && callbacks.has(callbackId)) {
+                    event.preventDefault();
+                    const callback = callbacks.get(callbackId);
+                    callback();
+                    callbacks.delete(callbackId); // Clean up after execution
+                }
+            });
+        }
+    }
+    
     return {
         STATE,
         showLoading,
@@ -296,6 +337,12 @@ const StateManager = (function() {
         setButtonLoading,
         showInlineLoading,
         showOverlay,
-        withState
+        withState,
+        init
     };
 })();
+
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('stateManager', StateManager.init, 20);
+}

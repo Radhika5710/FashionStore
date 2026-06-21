@@ -70,16 +70,16 @@ Stock Handling:
                 <div class="product-gallery__swipe-hint">← Swipe to see more →</div>
             </div>
             <div class="product-gallery__thumbnails" aria-label="Product gallery">
-                <button type="button" class="product-gallery__thumb active" data-image="<%= product.getImageUrl() %>" onclick="ProductGallery.changeImage(this)">
+                <button type="button" class="product-gallery__thumb active" data-image="<%= product.getImageUrl() %>">
                     <img src="<%= product.getImageUrl() %>" alt="Thumbnail 1" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                 </button>
-                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>" onclick="ProductGallery.changeImage(this)">
+                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>">
                     <img src="<%= product.getImageUrl() %>" alt="Thumbnail 2" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                 </button>
-                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>" onclick="ProductGallery.changeImage(this)">
+                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>">
                     <img src="<%= product.getImageUrl() %>" alt="Thumbnail 3" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                 </button>
-                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>" onclick="ProductGallery.changeImage(this)">
+                <button type="button" class="product-gallery__thumb" data-image="<%= product.getImageUrl() %>">
                     <img src="<%= product.getImageUrl() %>" alt="Thumbnail 4" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                 </button>
             </div>
@@ -102,7 +102,7 @@ Stock Handling:
             %>
                 <div class="product-info__rating">
                     <span>★ <%= String.format("%.1f", avgRatingTop) %></span>
-                    <a href="#reviews-section" onclick="document.querySelector('.reviews-section').scrollIntoView({behavior:'smooth'}); return false;">
+                    <a href="#reviews-section" id="reviews-link">
                         (<%= reviewCountTop %> reviews)
                     </a>
                 </div>
@@ -133,7 +133,7 @@ Stock Handling:
                             for (com.fashionstore.model.ProductSize size : product.getSizes()) { 
                                 if (size.getStockQuantity() > 0) {
                     %>
-                        <label class="size-selector__option" onclick="this.querySelector('input').checked = true; ProductGallery.updateSizeSelection()">
+                        <label class="size-selector__option">
                             <input type="radio" name="size" value="<%= size.getSizeLabel() %>" required> 
                             <span><%= size.getSizeLabel() %></span>
                             <span class="text-xs text-tertiary">(<%= size.getStockQuantity() %> left)</span>
@@ -159,9 +159,9 @@ Stock Handling:
                 <div class="size-selector">
                     <div class="size-selector__label">Quantity</div>
                     <div class="quantity-stepper" aria-label="Quantity selector">
-                        <button type="button" onclick="ProductGallery.adjustQuantity(-1)" aria-label="Decrease quantity">−</button>
+                        <button type="button" id="decrease-qty-btn" aria-label="Decrease quantity">−</button>
                         <input type="number" id="detailsQuantity" value="1" min="1" max="10" aria-label="Quantity">
-                        <button type="button" onclick="ProductGallery.adjustQuantity(1)" aria-label="Increase quantity">+</button>
+                        <button type="button" id="increase-qty-btn" aria-label="Increase quantity">+</button>
                     </div>
                 </div>
 
@@ -187,8 +187,8 @@ Stock Handling:
                 </div>
 
                 <div class="product-actions">
-                    <button class="fs-btn fs-btn--primary product-actions__primary" onclick="ProductGallery.addToCart()">Add to Cart</button>
-                    <button class="fs-btn fs-btn--outline product-actions__secondary" onclick="FashionStore.toggleWishlist('<%= org.apache.commons.text.StringEscapeUtils.escapeEcmaScript(String.valueOf(product.getProductId())) %>', this)" aria-label="Add to wishlist">
+                    <button class="fs-btn fs-btn--primary product-actions__primary" id="add-to-cart-btn">Add to Cart</button>
+                    <button class="fs-btn fs-btn--outline product-actions__secondary" data-product-id="<%= org.apache.commons.text.StringEscapeUtils.escapeEcmaScript(String.valueOf(product.getProductId())) %>" aria-label="Add to wishlist">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
@@ -212,7 +212,7 @@ Stock Handling:
             <div class="mobile-cta-bar__price">
                 <span class="mobile-cta-bar__price-current">₹<%= String.format("%.2f", product.getPrice()) %></span>
             </div>
-            <button class="fs-btn fs-btn--primary mobile-cta-bar__btn" onclick="ProductGallery.addToCart()">Add to Cart</button>
+            <button class="fs-btn fs-btn--primary mobile-cta-bar__btn" id="mobile-add-to-cart-btn">Add to Cart</button>
         </div>
     </div>
     <% } %>
@@ -269,7 +269,7 @@ Stock Handling:
                     <a href="<%= request.getContextPath() %>/product?id=<%= org.apache.commons.text.StringEscapeUtils.escapeHtml4(String.valueOf(related.getProductId())) %>">
                         <img data-src="<%= related.getImageUrl() %>" alt="<%= org.apache.commons.text.StringEscapeUtils.escapeHtml4(related.getProductName()) %>" loading="lazy" class="lazy-load" onerror="this.src='<%= request.getContextPath() %>/assets/images/placeholder-product.jpg'; this.onerror=null;">
                     </a>
-                    <button class="product-card__wishlist" data-product-id="<%= related.getProductId() %>" onclick="FashionStore.productInteractions.toggleWishlist('<%= org.apache.commons.text.StringEscapeUtils.escapeEcmaScript(String.valueOf(related.getProductId())) %>', this)" aria-label="Add to wishlist">
+                    <button class="product-card__wishlist" data-product-id="<%= related.getProductId() %>" aria-label="Add to wishlist">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                         </svg>
@@ -328,7 +328,7 @@ Stock Handling:
         <div class="fs-review-form">
             <h3>Write a Review</h3>
             <% if (session.getAttribute("customerAuth") != null) { %>
-                <form id="reviewForm" onsubmit="return submitReview(event, '<%= org.apache.commons.text.StringEscapeUtils.escapeEcmaScript(String.valueOf(product.getProductId())) %>')">
+                <form id="reviewForm" data-product-id="<%= org.apache.commons.text.StringEscapeUtils.escapeHtml4(String.valueOf(product.getProductId())) %>">
                     <div class="fs-form-group">
                         <label for="reviewRating">Rating</label>
                         <select name="rating" id="reviewRating" required class="fs-form-select">

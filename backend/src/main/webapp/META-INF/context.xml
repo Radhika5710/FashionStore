@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <!-- JSP Compilation Configuration for Tomcat 10.x -->
+    <Resources cachingAllowed="true" cacheMaxSize="50000" />
+</Context>

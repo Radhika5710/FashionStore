@@ -15,7 +15,7 @@ const WishlistAPI = {
      */
     async checkWishlistStatus(productId) {
         try {
-            const response = await api.get(`/wishlist/api/check?productId=${productId}`);
+            const response = await api.get(`/api/wishlist?action=check&productId=${productId}`);
             return response.data;
         } catch (error) {
             throw handleApiError(error);
@@ -27,7 +27,7 @@ const WishlistAPI = {
      */
     async toggleWishlist(productId) {
         try {
-            const response = await api.post('/wishlist/api/toggle', {
+            const response = await api.post('/api/wishlist?action=toggle', {
                 productId
             });
             return response.data;
@@ -53,7 +53,7 @@ const WishlistAPI = {
      */
     async removeFromWishlist(productId) {
         try {
-            const response = await api.post('/wishlist/api/toggle', {
+            const response = await api.post('/api/wishlist?action=remove', {
                 productId
             });
             return response.data;
@@ -67,8 +67,9 @@ const WishlistAPI = {
      */
     async getWishlistCount() {
         try {
-            const response = await api.get('/wishlist/api/count');
-            return response.data.count || 0;
+            const response = await api.get('/api/wishlist');
+            const items = response.data.items || [];
+            return items.length;
         } catch (error) {
             throw handleApiError(error);
         }

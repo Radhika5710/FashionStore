@@ -135,6 +135,13 @@ class FashionStorePerformance {
     }
 
     setupLegacyImageLoading() {
+        // Debounce scroll and resize handlers to prevent excessive calls
+        let scrollTimeout;
+        const debouncedScrollHandler = () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(scrollHandler, 100);
+        };
+        
         const scrollHandler = () => {
             const images = document.querySelectorAll('img[data-src]:not(.loaded)');
             images.forEach(img => {
@@ -145,8 +152,12 @@ class FashionStorePerformance {
             });
         };
 
-        window.addEventListener('scroll', scrollHandler, { passive: true });
-        window.addEventListener('resize', scrollHandler, { passive: true });
+        window.addEventListener('scroll', debouncedScrollHandler, { passive: true });
+        window.addEventListener('resize', debouncedScrollHandler, { passive: true });
+        
+        // Store reference for cleanup
+        this.scrollHandler = debouncedScrollHandler;
+        
         scrollHandler(); // Initial check
     }
 
@@ -387,109 +398,10 @@ class FashionStorePerformance {
         }
     }
 
-    // Performance Monitoring
+    // Performance Monitoring - metrics collection removed (endpoint not implemented)
     setupPerformanceMonitoring() {
-        // Monitor Core Web Vitals
-        this.monitorLCP();
-        this.monitorFID();
-        this.monitorCLS();
-        
-        // Monitor custom metrics
-        this.monitorImageLoadTimes();
-        this.monitorContentLoadTimes();
-    }
-
-    monitorLCP() {
-        if ('PerformanceObserver' in window) {
-            const observer = new PerformanceObserver((list) => {
-                const entries = list.getEntries();
-                const lastEntry = entries[entries.length - 1];
-                
-                // Send to analytics
-                this.sendMetric('LCP', lastEntry.startTime);
-            });
-            
-            observer.observe({ entryTypes: ['largest-contentful-paint'] });
-        }
-    }
-
-    monitorFID() {
-        if ('PerformanceObserver' in window) {
-            const observer = new PerformanceObserver((list) => {
-                const entries = list.getEntries();
-                entries.forEach(entry => {
-                    if (entry.name === 'first-input') {
-                        this.sendMetric('FID', entry.processingStart - entry.startTime);
-                    }
-                });
-            });
-            
-            observer.observe({ entryTypes: ['first-input'] });
-        }
-    }
-
-    monitorCLS() {
-        if ('PerformanceObserver' in window) {
-            let clsValue = 0;
-            
-            const observer = new PerformanceObserver((list) => {
-                const entries = list.getEntries();
-                entries.forEach(entry => {
-                    if (!entry.hadRecentInput) {
-                        clsValue += entry.value;
-                    }
-                });
-                
-                this.sendMetric('CLS', clsValue);
-            });
-            
-            observer.observe({ entryTypes: ['layout-shift'] });
-        }
-    }
-
-    monitorImageLoadTimes() {
-        document.addEventListener('imageloaded', (event) => {
-            const { img, src } = event.detail;
-            const loadTime = performance.now();
-            this.sendMetric('image_load_time', loadTime, { src });
-        });
-    }
-
-    monitorContentLoadTimes() {
-        document.addEventListener('contentloaded', (event) => {
-            const { element, url } = event.detail;
-            const loadTime = performance.now();
-            this.sendMetric('content_load_time', loadTime, { url });
-        });
-    }
-
-    sendMetric(name, value, metadata = {}) {
-        // Send metrics to analytics endpoint (placeholder)
-        const headers = { 'Content-Type': 'application/json' };
-        
-        // Add CSRF token if available
-        if (window.csrfToken) {
-            headers['X-CSRF-Token'] = window.csrfToken;
-        }
-        
-        if (window.navigator.sendBeacon) {
-            const data = new Blob([JSON.stringify({
-                name, value, metadata,
-                timestamp: Date.now(),
-                url: window.location.href
-            })], { type: 'application/json' });
-            navigator.sendBeacon('/api/metrics', data);
-        } else {
-            fetch('/api/metrics', {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    name, value, metadata,
-                    timestamp: Date.now(),
-                    url: window.location.href
-                })
-            }).catch(() => { /* silently fail */ });
-        }
+        // Core Web Vitals monitoring available via browser dev tools
+        // Custom metrics collection disabled - no backend endpoint
     }
 
     // Utility methods
@@ -562,17 +474,31 @@ class FashionStorePerformance {
     }
 }
 
-// Initialize performance optimization with cleanup
-document.addEventListener('DOMContentLoaded', () => {
-    window.fashionStorePerformance = new FashionStorePerformance();
-    
-    // Cleanup observers on page unload to prevent memory leaks
-    window.addEventListener('beforeunload', () => {
-        if (window.fashionStorePerformance) {
-            window.fashionStorePerformance.cleanup();
-        }
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('lazyLoading', () => {
+        window.fashionStorePerformance = new FashionStorePerformance();
+        
+        // Cleanup observers on page unload to prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (window.fashionStorePerformance) {
+                window.fashionStorePerformance.cleanup();
+            }
+        });
+    }, 2);
+} else {
+    // Fallback: Initialize on DOM ready if FashionStoreApp not available
+    document.addEventListener('DOMContentLoaded', () => {
+        window.fashionStorePerformance = new FashionStorePerformance();
+        
+        // Cleanup observers on page unload to prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (window.fashionStorePerformance) {
+                window.fashionStorePerformance.cleanup();
+            }
+        });
     });
-});
+}
 
 // Global functions for manual control
 window.preloadImage = (src) => {

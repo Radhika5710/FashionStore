@@ -3,6 +3,7 @@ package com.fashionstore.controller.api;
 import com.fashionstore.controller.ApiResponse;
 import com.fashionstore.model.User;
 import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.security.AuthContext;
 import com.fashionstore.security.JWTUtil;
 import com.fashionstore.service.UserService;
 import jakarta.servlet.annotation.WebServlet;
@@ -162,31 +163,22 @@ public class AdminAuthApiController extends AdminApiBaseController {
     }
 
     private void meEndpoint(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // Extract token from Authorization header
-        String authHeader = request.getHeader("Authorization");
-        String token = JWTUtil.extractTokenFromHeader(authHeader);
+        // Use AuthContext to extract token from Authorization header or cookies
+        AuthContext authContext = AuthContext.fromRequest(request);
         
-        if (token == null) {
-            writeApiResponse(response, 401, ApiResponse.error("Not authenticated"));
-            return;
-        }
-        
-        // Validate token
-        JWTUtil.TokenValidationResult validationResult = JWTUtil.validateToken(token);
-        
-        if (!validationResult.isValid()) {
-            writeApiResponse(response, 401, ApiResponse.error("Invalid token: " + validationResult.getError()));
+        if (!authContext.isAuthenticated()) {
+            writeApiResponse(response, 401, ApiResponse.error(authContext.getError()));
             return;
         }
         
         // Check if admin
-        if (!"admin".equals(validationResult.getRole())) {
+        if (!authContext.isAdmin()) {
             writeApiResponse(response, 403, ApiResponse.error("Admin access required"));
             return;
         }
         
         // Get user details
-        User user = userService.getUserById(Integer.parseInt(validationResult.getUserId()));
+        User user = userService.getUserById(Integer.parseInt(authContext.getUserId()));
         if (user == null) {
             writeApiResponse(response, 404, ApiResponse.error("User not found"));
             return;
@@ -256,7 +248,11 @@ public class AdminAuthApiController extends AdminApiBaseController {
         );
         
         // Generate JWT refresh token (7 days)
-        String refreshToken = JWTUtil.generateRefreshToken(String.valueOf(user.getUserId()));
+        String refreshToken = JWTUtil.generateRefreshToken(
+            String.valueOf(user.getUserId()),
+            user.getEmail(),
+            user.getRole()
+        );
 
         // Set access token in HTTP-only cookie
         // HTTP-only prevents JavaScript from accessing token (XSS protection)
@@ -356,9 +352,12 @@ public class AdminAuthApiController extends AdminApiBaseController {
 
     private void registerEndpoint(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> body = readJsonBody(request);
-        if (!validateParams(response, body, "fullName", "email", "phone", "password", "confirmPassword", "adminKey")) return;
+        if (!validateParams(response, body, "email", "phone", "password", "confirmPassword", "adminKey")) return;
 
         String fullName = strParam(body, "fullName");
+        if (fullName == null || fullName.isBlank()) {
+            fullName = "Admin";
+        }
         String email = strParam(body, "email");
         String phone = strParam(body, "phone");
         String password = strParam(body, "password");

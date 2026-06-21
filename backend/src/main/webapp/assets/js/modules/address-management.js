@@ -107,28 +107,24 @@ const AddressManagement = (function() {
     }
     
     function init() {
-        // Make functions available globally for onclick handlers
-        window.setDefaultAddress = setDefaultAddress;
-        window.deleteAddress = deleteAddress;
-        
-        // Add event listeners
-        document.querySelectorAll('.set-default-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const addressId = this.dataset.addressId;
+        // Register event handlers with centralized event delegation
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('click', '.set-default-btn', function(event, target) {
+                const addressId = target.dataset.addressId;
                 if (addressId) {
+                    event.preventDefault();
                     setDefaultAddress(addressId);
                 }
             });
-        });
-        
-        document.querySelectorAll('.delete-address-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const addressId = this.dataset.addressId;
+
+            EventDelegation.on('click', '.delete-address-btn', function(event, target) {
+                const addressId = target.dataset.addressId;
                 if (addressId) {
+                    event.preventDefault();
                     deleteAddress(addressId);
                 }
             });
-        });
+        }
         
         // Check if address list is empty and show empty state
         const addressList = document.querySelector('.address-list');
@@ -151,7 +147,7 @@ const AddressManagement = (function() {
     };
 })();
 
-// Auto-initialize if on address management page
-if (document.querySelector('.address-management-page')) {
-    AddressManagement.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('addressManagement', AddressManagement.init, 30);
 }

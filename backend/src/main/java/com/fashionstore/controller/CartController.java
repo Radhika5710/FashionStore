@@ -77,6 +77,13 @@ public class CartController extends HttpServlet {
             return;
         }
 
+        String action = request.getParameter("action");
+        if (action != null && !action.equals("view") && !action.equals("get")) {
+            // Support legacy GET routes by delegating to doPost
+            doPost(request, response);
+            return;
+        }
+
         int userId = user.getUserId();
         List<CartItem> cartItems = cartService.getCartItems(userId);
         
@@ -121,15 +128,36 @@ public class CartController extends HttpServlet {
             }
 
             int userId = user.getUserId();
-            String action = request.getParameter("action");
             boolean isAjax = isAjaxRequest(request);
 
-            // CSRF is enforced globally by com.fashionstore.filter.CSRFFilter for all
-            // state-changing methods, so the request reaching this point is already trusted.
+            // Read action and parameters, supporting both JSON and Form-Encoded
+            String action = request.getParameter("action");
+            Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
+            Integer currentQty = parseIntOrNull(request.getParameter("currentQty"));
+            Integer productIdBoxed = parseIntOrNull(request.getParameter("productId"));
+            Integer parsedQty = parseIntOrNull(request.getParameter("quantity"));
+            String size = request.getParameter("size");
+            String couponCode = request.getParameter("couponCode");
+
+            if (request.getContentType() != null && request.getContentType().contains("application/json")) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.Map<String, Object> payload = mapper.readValue(request.getReader(), java.util.Map.class);
+                    if (payload != null) {
+                        if (payload.containsKey("action")) action = String.valueOf(payload.get("action"));
+                        if (payload.containsKey("cartItemId")) cartItemId = parseIntOrNull(String.valueOf(payload.get("cartItemId")));
+                        if (payload.containsKey("currentQty")) currentQty = parseIntOrNull(String.valueOf(payload.get("currentQty")));
+                        if (payload.containsKey("productId")) productIdBoxed = parseIntOrNull(String.valueOf(payload.get("productId")));
+                        if (payload.containsKey("quantity")) parsedQty = parseIntOrNull(String.valueOf(payload.get("quantity")));
+                        if (payload.containsKey("size")) size = String.valueOf(payload.get("size"));
+                        if (payload.containsKey("couponCode")) couponCode = String.valueOf(payload.get("couponCode"));
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to parse JSON cart request", e);
+                }
+            }
 
             if ("increase".equals(action)) {
-                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
-                Integer currentQty = parseIntOrNull(request.getParameter("currentQty"));
                 if (cartItemId == null || currentQty == null) {
                     if (isAjax) { sendErrorResponse(response, "Invalid cart parameters", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
@@ -143,8 +171,6 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("decrease".equals(action)) {
-                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
-                Integer currentQty = parseIntOrNull(request.getParameter("currentQty"));
                 if (cartItemId == null || currentQty == null) {
                     if (isAjax) { sendErrorResponse(response, "Invalid cart parameters", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
@@ -166,13 +192,11 @@ public class CartController extends HttpServlet {
                     }
                 }
             } else if ("update".equals(action)) {
-                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
-                Integer requestedQty = parseIntOrNull(request.getParameter("currentQty"));
-                if (cartItemId == null || requestedQty == null) {
+                if (cartItemId == null || currentQty == null) {
                     if (isAjax) { sendErrorResponse(response, "Invalid cart parameters", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
                 }
-                int newQty = ValidationUtil.clampInt(requestedQty, 1, ValidationUtil.MAX_PRODUCT_QUANTITY_PER_LINE);
+                int newQty = ValidationUtil.clampInt(currentQty, 1, ValidationUtil.MAX_PRODUCT_QUANTITY_PER_LINE);
                 cartService.updateCartItemQuantity(cartItemId, userId, newQty);
                 syncSessionCart(session, userId);
                 if (isAjax) {
@@ -180,7 +204,6 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("remove".equals(action)) {
-                Integer cartItemId = parseIntOrNull(request.getParameter("cartItemId"));
                 if (cartItemId == null || cartItemId <= 0) {
                     if (isAjax) { sendErrorResponse(response, "Invalid cart item id", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
@@ -188,7 +211,6 @@ public class CartController extends HttpServlet {
 
                 boolean deleted = cartService.removeCartItem(cartItemId, userId);
                 if (!deleted) {
-                    // Either already removed, or belongs to another user. Treat as 404.
                     logger.info("Cart remove no-op: item #{} not found for user #{}", cartItemId, userId);
                     if (isAjax) {
                         sendErrorResponse(response, "Item not found in your cart", 404);
@@ -206,15 +228,12 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("add".equals(action)) {
-                Integer productIdBoxed = parseIntOrNull(request.getParameter("productId"));
                 if (productIdBoxed == null) {
                     if (isAjax) { sendErrorResponse(response, "Invalid product id", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
                 }
                 int productId = productIdBoxed;
-                String size = request.getParameter("size");
                 int qty = 1;
-                Integer parsedQty = parseIntOrNull(request.getParameter("quantity"));
                 if (parsedQty != null) {
                     qty = ValidationUtil.clampInt(parsedQty, 1, ValidationUtil.MAX_PRODUCT_QUANTITY_PER_LINE);
                 }
@@ -232,15 +251,14 @@ public class CartController extends HttpServlet {
                     sendFullCartResponse(response, userId);
                     return;
                 }
-            } else if ("get".equals(action)) {
+            } else if ("get".equals(action) || "view".equals(action)) {
                 syncSessionCart(session, userId);
                 if (isAjax) {
                     sendFullCartResponse(response, userId);
                     return;
                 }
             } else if ("applyCoupon".equals(action)) {
-                String couponCode = ValidationUtil.normalizeCouponCode(request.getParameter("couponCode"));
-                // Server-side recalculation: never trust client-supplied total.
+                couponCode = ValidationUtil.normalizeCouponCode(couponCode);
                 List<CartItem> liveCart = cartService.getCartItems(userId);
                 double cartTotal = 0;
                 for (CartItem ci : liveCart) {
@@ -252,15 +270,14 @@ public class CartController extends HttpServlet {
                     return;
                 }
             } else if ("saveForLater".equals(action)) {
-                Integer cartItemBoxed = parseIntOrNull(request.getParameter("cartItemId"));
-                if (cartItemBoxed == null) {
+                if (cartItemId == null) {
                     if (isAjax) { sendErrorResponse(response, "Invalid cart item id", 400); return; }
                     response.sendRedirect(request.getContextPath() + "/cart"); return;
                 }
-                int cartItemId = cartItemBoxed;
                 List<CartItem> currentCartItems = cartService.getCartItems(userId);
+                final int finalCartItemId = cartItemId;
                 CartItem cartItem = currentCartItems.stream()
-                    .filter(i -> i.getCartItemId() == cartItemId)
+                    .filter(i -> i.getCartItemId() == finalCartItemId)
                     .findFirst().orElse(null);
                 
                 if (cartItem != null) {

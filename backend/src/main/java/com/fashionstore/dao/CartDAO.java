@@ -14,4 +14,6 @@ public interface CartDAO {
     boolean updateQuantity(int cartItemId, int userId, int quantity);
 
     boolean clearCartByUserId(int userId);
+
+    boolean clearCartByUserIdInTransaction(java.sql.Connection conn, int userId) throws Exception;
 }

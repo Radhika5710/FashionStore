@@ -26,6 +26,9 @@ const CartManager = (function() {
     const cartAddInProgress = new Set();
     const miniCartUpdateInProgress = new Set();
     
+    // Track event listeners for cleanup
+    const eventListeners = [];
+    
     // ========================================================================
     // PUBLIC API
     // ========================================================================
@@ -303,15 +306,68 @@ const CartManager = (function() {
                 return;
             }
             
-            if (overlay.classList.contains('active')) {
-                overlay.classList.remove('active');
-                drawer.classList.remove('active');
-                document.body.classList.remove('cart-drawer-open');
+            // Use OverlayManager for centralized overlay management
+            if (typeof OverlayManager !== 'undefined') {
+                if (OverlayManager.isOverlayActive('mini-cart')) {
+                    OverlayManager.closeOverlay('mini-cart');
+                } else {
+                    // Register overlay if not already registered
+                    if (!overlay.dataset.overlayId) {
+                        overlay.dataset.overlayId = 'mini-cart';
+                    }
+                    if (!drawer.dataset.overlayContent) {
+                        drawer.dataset.overlayContent = 'mini-cart';
+                    }
+                    OverlayManager.openOverlay('mini-cart', overlay, drawer);
+                    this.fetchCart();
+                }
             } else {
-                overlay.classList.add('active');
-                drawer.classList.add('active');
-                document.body.classList.add('cart-drawer-open');
-                this.fetchCart();
+                // Fallback to direct manipulation
+                if (overlay.classList.contains('active')) {
+                    overlay.classList.remove('active');
+                    drawer.classList.remove('active');
+                    document.body.classList.remove('cart-drawer-open');
+                    this.unlockScroll();
+                } else {
+                    overlay.classList.add('active');
+                    drawer.classList.add('active');
+                    document.body.classList.add('cart-drawer-open');
+                    this.lockScroll();
+                    this.fetchCart();
+                }
+            }
+        },
+
+        /**
+         * Lock body scroll when cart is open
+         */
+        lockScroll: function() {
+            if (typeof ScrollLock !== 'undefined') {
+                ScrollLock.lock();
+            } else {
+                // Fallback to local implementation
+                const scrollY = window.scrollY;
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollY}px`;
+                document.body.style.width = '100%';
+                document.body.style.overflow = 'hidden';
+            }
+        },
+
+        /**
+         * Unlock body scroll when cart is closed
+         */
+        unlockScroll: function() {
+            if (typeof ScrollLock !== 'undefined') {
+                ScrollLock.unlock();
+            } else {
+                // Fallback to local implementation
+                const scrollY = document.body.style.top;
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                document.body.style.overflow = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
             }
         },
         
@@ -319,44 +375,53 @@ const CartManager = (function() {
          * Initialize cart manager
          */
         init: function() {
-            // Setup cart drawer toggle
-            const cartToggle = document.getElementById('cart-toggle');
-            if (cartToggle) {
-                cartToggle.addEventListener('click', (e) => this.toggleMiniCart(e));
-            }
-            
-            // Setup overlay click to close
-            const overlay = document.getElementById('mini-cart-overlay');
-            if (overlay) {
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) {
-                        this.toggleMiniCart(e);
-                    }
+            // Register event handlers with centralized event delegation
+            if (typeof EventDelegation !== 'undefined') {
+                EventDelegation.on('click', '#cart-toggle', (event) => {
+                    this.toggleMiniCart(event);
+                });
+
+                EventDelegation.on('click', '#mini-cart-overlay', (event) => {
+                    this.toggleMiniCart(event);
+                });
+
+                EventDelegation.on('click', '.mini-cart-close', (event) => {
+                    event.preventDefault();
+                    this.toggleMiniCart(event);
                 });
             }
             
-            // Setup escape key to close
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    const overlay = document.getElementById('mini-cart-overlay');
-                    if (overlay && overlay.classList.contains('active')) {
-                        this.toggleMiniCart();
-                    }
+            // Initial cart fetch
+            this.fetchCart();
+        },
+        
+        /**
+         * Cleanup event listeners to prevent memory leaks
+         */
+        cleanup: function() {
+            eventListeners.forEach(({ target, event, handler }) => {
+                if (target && handler) {
+                    target.removeEventListener(event, handler);
                 }
             });
-            
-            // Attach mini cart listeners
-            this.attachMiniCartListeners();
+            eventListeners.length = 0;
         }
     };
 })();
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => CartManager.init());
-} else {
-    CartManager.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('CartManager', () => CartManager.init(), 10);
 }
+
+// Cleanup on page navigation to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    CartManager.cleanup();
+});
+
+window.addEventListener('pagehide', () => {
+    CartManager.cleanup();
+});
 
 // Export for use
 if (typeof module !== 'undefined' && module.exports) {
@@ -365,3 +430,8 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Make available globally
 window.CartManager = CartManager;
+
+// Expose global toggleMiniCart for backward compatibility
+window.toggleMiniCart = function(event) {
+    CartManager.toggleMiniCart(event);
+};

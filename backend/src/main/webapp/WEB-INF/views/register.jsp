@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,7 +114,7 @@
                     <div class="auth-password-requirements">
                         <p class="auth-password-requirements__title">Password must contain:</p>
                         <ul class="auth-password-requirements__list">
-                            <li class="auth-password-requirements__item" data-requirement="length">At least 8 characters</li>
+                            <li class="auth-password-requirements__item" data-requirement="length">At least 6 characters</li>
                             <li class="auth-password-requirements__item" data-requirement="uppercase">One uppercase letter</li>
                             <li class="auth-password-requirements__item" data-requirement="lowercase">One lowercase letter</li>
                             <li class="auth-password-requirements__item" data-requirement="number">One number</li>
@@ -152,8 +152,8 @@
                 </div>
 
                 <div class="auth-field">
-                    <label for="gender" class="auth-field__label">Gender</label>
-                    <select id="gender" name="gender" required class="auth-field__select">
+                    <label for="gender" class="auth-field__label">Gender (Optional)</label>
+                    <select id="gender" name="gender" class="auth-field__select">
                         <option value="">Select gender</option>
                         <option value="Male" <%= "Male".equals(request.getAttribute("gender")) ? "selected" : "" %>>Male</option>
                         <option value="Female" <%= "Female".equals(request.getAttribute("gender")) ? "selected" : "" %>>Female</option>

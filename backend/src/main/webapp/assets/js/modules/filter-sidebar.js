@@ -22,15 +22,34 @@ const FilterSidebar = (function() {
             return;
         }
         
-        sidebar.classList.add('active');
-        overlay.classList.add('active');
-        if (btn) btn.setAttribute('aria-expanded', 'true');
-        
-        // Lock scroll position
-        filterScrollY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${filterScrollY}px`;
-        document.body.style.width = '100%';
+        // Use OverlayManager for centralized overlay management
+        if (typeof OverlayManager !== 'undefined') {
+            // Register overlay if not already registered
+            if (!overlay.dataset.overlayId) {
+                overlay.dataset.overlayId = 'filter-sidebar';
+            }
+            if (!sidebar.dataset.overlayContent) {
+                sidebar.dataset.overlayContent = 'filter-sidebar';
+            }
+            OverlayManager.openOverlay('filter-sidebar', overlay, sidebar);
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+        } else {
+            // Fallback to direct manipulation
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+            
+            // Use centralized scroll lock
+            if (typeof ScrollLock !== 'undefined') {
+                ScrollLock.lock();
+            } else {
+                // Fallback to local implementation
+                filterScrollY = window.scrollY;
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${filterScrollY}px`;
+                document.body.style.width = '100%';
+            }
+        }
     }
     
     function closeFilterSidebar() {
@@ -43,45 +62,67 @@ const FilterSidebar = (function() {
             return;
         }
         
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-        
-        // Restore scroll position
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, filterScrollY);
+        // Use OverlayManager for centralized overlay management
+        if (typeof OverlayManager !== 'undefined') {
+            OverlayManager.closeOverlay('filter-sidebar');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        } else {
+            // Fallback to direct manipulation
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+            
+            // Use centralized scroll unlock
+            if (typeof ScrollLock !== 'undefined') {
+                ScrollLock.unlock();
+            } else {
+                // Fallback to local implementation
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                window.scrollTo(0, filterScrollY);
+            }
+        }
     }
     
     function init() {
-        // Make functions available globally for onclick handlers
-        window.openFilterSidebar = openFilterSidebar;
-        window.closeFilterSidebar = closeFilterSidebar;
-        
-        // Add event listeners
-        const toggleBtn = document.getElementById('filter-toggle-btn');
-        const closeBtn = document.getElementById('filter-close-btn');
-        const overlay = document.getElementById('filter-overlay');
-        
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', openFilterSidebar);
-        }
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeFilterSidebar);
-        }
-        
-        if (overlay) {
-            overlay.addEventListener('click', closeFilterSidebar);
-        }
-        
-        // Close on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
+        // Register event handlers with centralized event delegation
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('click', '#filter-toggle-btn', function(event) {
+                event.preventDefault();
+                openFilterSidebar();
+            });
+
+            EventDelegation.on('click', '#filter-close-btn', function(event) {
+                event.preventDefault();
                 closeFilterSidebar();
-            }
-        });
+            });
+
+            EventDelegation.on('click', '#filter-overlay', function(event) {
+                event.preventDefault();
+                closeFilterSidebar();
+            });
+
+            // Close on escape key
+            EventDelegation.on('keydown', document, function(event) {
+                if (event.key === 'Escape') {
+                    closeFilterSidebar();
+                }
+            });
+        }
+    }
+    
+    function cleanup() {
+        // Event delegation handles cleanup automatically
+        // Reset scroll position if locked
+        if (typeof ScrollLock !== 'undefined') {
+            ScrollLock.forceUnlock();
+        } else {
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, filterScrollY);
+        }
     }
     
     return {
@@ -91,7 +132,11 @@ const FilterSidebar = (function() {
     };
 })();
 
-// Auto-initialize if on products page
-if (document.querySelector('.products-page')) {
-    FilterSidebar.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('filterSidebar', () => {
+        if (document.querySelector('.products-page')) {
+            FilterSidebar.init();
+        }
+    }, 15);
 }

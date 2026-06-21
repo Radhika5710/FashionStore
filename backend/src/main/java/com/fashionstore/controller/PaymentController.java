@@ -199,9 +199,12 @@ public class PaymentController extends HttpServlet {
     }
     
     /**
-     * Create order - delegates to service layer
+     * Create order - delegates to CheckoutService for proper order creation with cart items and addresses
+     * PaymentController should NOT be used for order creation - use CheckoutController.submitOrder instead
      */
     private int createOrder(int userId, String paymentMethod, HttpServletRequest req) {
+        logger.warn("PaymentController.createOrder called - this method is deprecated. Use CheckoutController.submitOrder for proper order creation with cart items and addresses.");
+        
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("paymentMethod", paymentMethod);
 

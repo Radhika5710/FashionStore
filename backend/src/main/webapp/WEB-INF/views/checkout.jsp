@@ -307,28 +307,6 @@ Security:
                         <button type="button" class="fs-btn fs-btn--primary" id="continueToPaymentBtn">
                             Continue to Payment
                         </button>
-                        <script>
-                            // Defensive checkout button binding
-                            (function() {
-                                try {
-                                    const continueBtn = document.getElementById('continueToPaymentBtn');
-                                    if (continueBtn) {
-                                        continueBtn.addEventListener('click', function() {
-                                            if (typeof Checkout !== 'undefined' && Checkout.validateAndProceedToPayment) {
-                                                Checkout.validateAndProceedToPayment();
-                                            } else {
-                                                safeError('Checkout: Checkout object not available');
-                                                alert('Payment system is not ready. Please refresh the page and try again.');
-                                            }
-                                        });
-                                    } else {
-                                        safeError('Checkout: Continue to Payment button not found');
-                                    }
-                                } catch (e) {
-                                    safeError('Checkout: Button binding failed', e);
-                                }
-                            })();
-                        </script>
                     </div>
 
                     <div class="fs-checkout-step" id="step2">
@@ -352,27 +330,31 @@ Security:
                         </div>
                         
                         <div id="stripe-payment-element-container" class="stripe-payment-element-container--hidden">
-                            <div id="stripe-card-element"></div>
-                            <div id="stripe-payment-errors" class="text-sm text-danger"></div>
-                        </div>
-                        
-                        <div class="fs-checkout-actions">
-                            <button type="button" class="fs-btn fs-btn--outline" onclick="Checkout.goToCheckoutStep(1)">
-                                Back to Shipping
-                            </button>
-                            <button type="button" class="fs-btn fs-btn--primary" onclick="Checkout.reviewOrder()">
-                                Review Selection
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="fs-checkout-step" id="step3">
+                        <div class="fs-checkout-step" id="step2">
+                            <h2 class="editorial-heading">Payment Method</h2>
+                            <p class="text-secondary">All transactions are secure and encrypted.</p>
+                            <div class="fs-payment-methods">
+                                <label class="fs-payment-method">
+                                    <input type="radio" name="paymentMethod" value="COD" checked>
+                                    <div class="fs-payment-method__info">
+                                        <span class="fs-payment-method__name">Cash on Delivery</span>
+                                        <span class="text-sm text-secondary">Pay upon successful heritage collection delivery</span>
+                                    </div>
+                                </label>
+                                <label class="fs-payment-method">
+                                    <input type="radio" name="paymentMethod" value="STRIPE">
+                                    <div class="fs-payment-method__info">
+                                        <span class="fs-payment-method__name">Digital Transaction</span>
+                                        <span class="text-sm text-secondary">Secure credit / debit card processing via Stripe</span>
+                                    </div>
+                                </label>
                         <h2 class="editorial-heading">Final Review</h2>
                         <div class="fs-order-review">
                             <p class="text-secondary">Verify your curated selection and shipping details before we begin processing your order.</p>
                         </div>
                         <div class="fs-checkout-actions">
-                            <button type="button" class="fs-btn fs-btn--outline" onclick="Checkout.goToCheckoutStep(2)">
+                            <button type="button" class="fs-btn fs-btn--outline" id="modify-payment-btn">
                                 Modify Payment
                             </button>
                             <button type="submit" class="fs-btn fs-btn--primary" name="placeOrder" value="true">

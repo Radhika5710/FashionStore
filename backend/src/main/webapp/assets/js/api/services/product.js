@@ -24,10 +24,11 @@ const ProductAPI = {
 
     /**
      * Get product quick view
+     * Note: Quick view uses the same endpoint as product details
      */
     async getQuickView(productId) {
         try {
-            const response = await api.get(`/product/api/quick-view?productId=${productId}`);
+            const response = await api.get(`/product?id=${productId}`);
             return response.data;
         } catch (error) {
             throw handleApiError(error);
@@ -48,23 +49,11 @@ const ProductAPI = {
     },
 
     /**
-     * Get product reviews
-     */
-    async getProductReviews(productId) {
-        try {
-            const response = await api.get(`/reviews?productId=${productId}`);
-            return response.data;
-        } catch (error) {
-            throw handleApiError(error);
-        }
-    },
-
-    /**
      * Submit product review
      */
     async submitReview(productId, rating, comment) {
         try {
-            const response = await api.post('/reviews/api/submit', {
+            const response = await api.post('/review', {
                 productId,
                 rating: parseInt(rating),
                 comment

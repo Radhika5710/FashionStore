@@ -61,16 +61,12 @@ const ProductReviews = (function() {
     }
     
     function init() {
-        // Make submitReview available globally for onclick handlers
-        window.submitReview = submitReview;
-        
-        // Add event listener to review form
-        const reviewForm = document.getElementById('reviewForm');
-        if (reviewForm) {
-            reviewForm.addEventListener('submit', function(e) {
-                const productId = this.dataset.productId;
+        // Register event handlers with centralized event delegation
+        if (typeof EventDelegation !== 'undefined') {
+            EventDelegation.on('submit', '#reviewForm', function(event, target) {
+                const productId = target.dataset.productId;
                 if (productId) {
-                    submitReview(e, productId);
+                    submitReview(event, productId);
                 }
             });
         }
@@ -101,7 +97,7 @@ const ProductReviews = (function() {
     };
 })();
 
-// Auto-initialize if on product details page
-if (document.querySelector('.product-detail')) {
-    ProductReviews.init();
+// Register with FashionStoreApp for centralized initialization
+if (typeof window.FashionStoreApp !== 'undefined') {
+    window.FashionStoreApp.registerModule('productReviews', ProductReviews.init, 30);
 }

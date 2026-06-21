@@ -65,7 +65,8 @@
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
-  <!-- 3. Security Hardening (rate limiting, IP blocking, CSP headers) -->
+  <!-- 3. Security Hardening (rate limiting, CSP headers) -->
+  <!-- Mapped to /* but skips FORWARD/INCLUDE/ERROR dispatches internally -->
   <filter>
     <filter-name>SecurityHardeningFilter</filter-name>
     <filter-class>com.fashionstore.filter.SecurityHardeningFilter</filter-class>
@@ -73,6 +74,7 @@
   <filter-mapping>
     <filter-name>SecurityHardeningFilter</filter-name>
     <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
   <!-- 3.5. Demo Hardening (disables non-essential routes in demo mode) -->
@@ -83,16 +85,19 @@
   <filter-mapping>
     <filter-name>DemoHardeningFilter</filter-name>
     <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
-  <!-- 4. JWT Authentication Filter (validates JWT for /api/admin/*) -->
+  <!-- 4. JWT Authentication Filter — ONLY protects /api/admin/* -->
+  <!-- Mapped narrowly so it never runs on storefront or static asset requests -->
   <filter>
     <filter-name>JWTAuthenticationFilter</filter-name>
     <filter-class>com.fashionstore.filter.JWTAuthenticationFilter</filter-class>
   </filter>
   <filter-mapping>
     <filter-name>JWTAuthenticationFilter</filter-name>
-    <url-pattern>/*</url-pattern>
+    <url-pattern>/api/admin/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
   <!-- 4. File Upload Security (apply to upload endpoints only) -->
@@ -143,5 +148,32 @@
     </cookie-config>
     <tracking-mode>COOKIE</tracking-mode>
   </session-config>
-  
+
+  <!-- JSP Servlet Configuration for Tomcat 10.x Jasper Compiler -->
+  <servlet>
+    <servlet-name>jsp</servlet-name>
+    <servlet-class>org.apache.jasper.servlet.JspServlet</servlet-class>
+    <init-param>
+      <param-name>fork</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <init-param>
+      <param-name>xpoweredBy</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <init-param>
+      <param-name>development</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>enablePooling</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <load-on-startup>3</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>jsp</servlet-name>
+    <url-pattern>*.jsp</url-pattern>
+  </servlet-mapping>
+
 </web-app>

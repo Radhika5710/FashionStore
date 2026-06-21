@@ -131,9 +131,8 @@
                 <div class="fs-order-card__actions">
                     <a class="fs-btn fs-btn--outline" href="<%= request.getContextPath() %>/products">Shop Again</a>
                     <% if ("Delivered".equalsIgnoreCase(status) || "Shipped".equalsIgnoreCase(status)) { %>
-                        <button class="fs-btn fs-btn--outline" type="button" onclick="FashionStore.showToast('Invoice downloaded', 'success')">Download Invoice</button>
-                    <% } else { %>
-                        <button class="fs-btn fs-btn--outline" type="button" onclick="FashionStore.showToast('Invoice will be available after shipment', 'info')">Invoice</button>
+                        <button class="fs-btn fs-btn--outline" type="button" id="download-invoice-btn">Download Invoice</button>
+                        <button class="fs-btn fs-btn--outline" type="button" id="invoice-btn">Invoice</button>
                     <% } %>
                 </div>
 

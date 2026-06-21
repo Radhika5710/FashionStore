@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -56,12 +57,12 @@
     </div>
 </section>
 
-<div class="fs-filter-overlay" id="filter-overlay" onclick="closeFilterSidebar()" aria-hidden="true"></div>
+<div class="fs-filter-overlay" id="filter-overlay" aria-hidden="true"></div>
 
 <div class="shell fs-catalog-layout">
 
     <aside class="fs-filter-sidebar" id="filter-sidebar" aria-label="Product filters">
-        <button class="fs-filter-sidebar__close" onclick="closeFilterSidebar()" aria-label="Close filters">
+        <button class="fs-filter-sidebar__close" id="filter-close-btn" aria-label="Close filters">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -169,8 +170,7 @@
             </form>
         </div>
         
-        <button class="fs-filter-toggle" id="filter-toggle-btn" onclick="openFilterSidebar()" aria-controls="filter-sidebar" aria-expanded="false">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button class="fs-filter-toggle" id="filter-toggle-btn" aria-controls="filter-sidebar" aria-expanded="false">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 6a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm3 6a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z"/>
             </svg>
@@ -187,7 +187,7 @@
                             </a>
                             
                             <div class="product-card__badges">
-                                <c:if test="${product.new}">
+                                <c:if test="${product.isNew}">
                                     <span class="product-card__badge product-card__badge--new">New</span>
                                 </c:if>
                                 <c:if test="${product.sale}">
@@ -198,7 +198,7 @@
                                 </c:if>
                             </div>
                             
-                            <button class="product-card__wishlist" data-product-id="${product.productId}" onclick="FashionStore.productInteractions.toggleWishlist('${product.productId}', this)" aria-label="Add ${product.productName} to wishlist">
+                            <button class="product-card__wishlist" data-product-id="${product.productId}" aria-label="Add ${product.productName} to wishlist">
                                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                                 </svg>
@@ -216,7 +216,7 @@
                             </div>
                             <div class="product-card__actions">
                                 <a href="${pageContext.request.contextPath}/product?id=${product.productId}" class="product-card__btn product-card__btn--primary">View Details</a>
-                                <button class="product-card__btn product-card__btn--outline" onclick="CartManager.addToCart('${product.productId}')" aria-label="Add ${product.productName} to cart">
+                                <button class="product-card__btn product-card__btn--outline" data-product-id="${product.productId}" aria-label="Add ${product.productName} to cart">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
@@ -304,7 +304,7 @@
 
 <div class="modal-overlay" id="quickViewModal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal-content">
-        <button class="modal-close modal-close--positioned" onclick="FashionStore.closeQuickView()" aria-label="Close modal">
+        <button class="modal-close modal-close--positioned" id="quickview-close-btn" aria-label="Close modal">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>

@@ -6,7 +6,9 @@ import com.fashionstore.model.*;
 import com.fashionstore.service.CartService;
 import com.fashionstore.service.CheckoutService;
 import com.fashionstore.service.OrderService;
+import com.fashionstore.service.PaymentService;
 import com.fashionstore.registry.ServiceRegistry;
+import com.fashionstore.util.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final ProductDAO productDAO;
     private com.fashionstore.service.AddressService addressService;
     private com.fashionstore.service.CouponService couponService;
+    private com.fashionstore.service.InventoryService inventoryService;
 
     public CheckoutServiceImpl() {
         // Default constructor - dependencies will be set via setter injection
@@ -117,6 +120,18 @@ public class CheckoutServiceImpl implements CheckoutService {
                 field.set(this, productDAO);
             } catch (Exception e) {
                 logger.error("Failed to set productDAO", e);
+            }
+        }
+    }
+
+    public void setInventoryService(com.fashionstore.service.InventoryService inventoryService) {
+        if (this.inventoryService == null) {
+            try {
+                java.lang.reflect.Field field = CheckoutServiceImpl.class.getDeclaredField("inventoryService");
+                field.setAccessible(true);
+                field.set(this, inventoryService);
+            } catch (Exception e) {
+                logger.error("Failed to set inventoryService", e);
             }
         }
     }
@@ -219,8 +234,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public List<Address> getUserCheckoutAddresses(int userId) {
         if (addressService == null) {
-            logger.warn("AddressService not initialized");
-            return new ArrayList<>();
+            throw new IllegalStateException("AddressService not initialized - cannot get user checkout addresses");
         }
         return addressService.getAddressesByUserId(userId);
     }
@@ -228,8 +242,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public Address getDefaultShippingAddress(int userId) {
         if (addressService == null) {
-            logger.warn("AddressService not initialized");
-            return null;
+            throw new IllegalStateException("AddressService not initialized - cannot get default shipping address");
         }
         return addressService.getDefaultAddress(userId, "shipping");
     }
@@ -237,8 +250,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public Address getDefaultBillingAddress(int userId) {
         if (addressService == null) {
-            logger.warn("AddressService not initialized");
-            return null;
+            throw new IllegalStateException("AddressService not initialized - cannot get default billing address");
         }
         return addressService.getDefaultAddress(userId, "billing");
     }
@@ -334,8 +346,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public boolean applyCouponToCheckout(int userId, String couponCode) {
         if (couponService == null) {
-            logger.warn("CouponService not initialized");
-            return false;
+            throw new IllegalStateException("CouponService not initialized - cannot apply coupon to checkout");
         }
         return couponService.applyCoupon(userId, couponCode);
     }
@@ -343,96 +354,179 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public boolean removeCouponFromCheckout(int userId) {
         if (couponService == null) {
-            logger.warn("CouponService not initialized");
-            return false;
+            throw new IllegalStateException("CouponService not initialized - cannot remove coupon from checkout");
         }
         return couponService.removeCoupon(userId);
     }
 
     @Override
     public Order processCheckoutOrder(int userId, Map<String, Object> checkoutData) throws Exception {
-        String paymentMethod = (String) checkoutData.get("paymentMethod");
-        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
-            throw new IllegalArgumentException("Payment method is required");
-        }
-
-        Map<String, Object> shippingAddressData = (Map<String, Object>) checkoutData.get("shippingAddress");
-        if (shippingAddressData == null) {
-            throw new IllegalArgumentException("Shipping address is required");
-        }
-
-        String[] requiredFields = {"fullName", "addressLine1", "city", "state", "postalCode", "phone"};
-        for (String field : requiredFields) {
-            if (shippingAddressData.get(field) == null || ((String) shippingAddressData.get(field)).trim().isEmpty()) {
-                throw new IllegalArgumentException(field + " is required");
+        // CRITICAL FIX: Wrap entire checkout flow in transaction for atomicity
+        // This ensures order creation, inventory deduction, and payment happen together or not at all
+        // If any step fails, the entire transaction rolls back
+        return TransactionManager.executeInTransaction(conn -> {
+            String paymentMethod = (String) checkoutData.get("paymentMethod");
+            if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+                throw new IllegalArgumentException("Payment method is required");
             }
-        }
 
-        List<CartItem> cartItems = cartService.getCartItems(userId);
-        if (cartItems == null || cartItems.isEmpty()) {
-            throw new IllegalArgumentException("Your cart is empty");
-        }
+            Map<String, Object> shippingAddressData = (Map<String, Object>) checkoutData.get("shippingAddress");
+            if (shippingAddressData == null) {
+                throw new IllegalArgumentException("Shipping address is required");
+            }
 
-        if (!cartService.validateCartForCheckout(userId)) {
-            throw new IllegalArgumentException("Some items in your cart are not available");
-        }
+            String[] requiredFields = {"fullName", "addressLine1", "city", "state", "postalCode", "phone"};
+            for (String field : requiredFields) {
+                if (shippingAddressData.get(field) == null || ((String) shippingAddressData.get(field)).trim().isEmpty()) {
+                    throw new IllegalArgumentException(field + " is required");
+                }
+            }
 
-        // Inventory validation not available - InventoryService doesn't exist
+            List<CartItem> cartItems = cartService.getCartItems(userId);
+            if (cartItems == null || cartItems.isEmpty()) {
+                throw new IllegalArgumentException("Your cart is empty");
+            }
 
-        String couponCode = (String) checkoutData.get("couponCode");
-        Map<String, Double> totals = calculateCheckoutTotals(userId, couponCode);
-        if (totals == null || totals.isEmpty()) {
-            throw new IllegalStateException("Failed to calculate order totals");
-        }
+            if (!cartService.validateCartForCheckout(userId)) {
+                throw new IllegalArgumentException("Some items in your cart are not available");
+            }
 
-        Double totalAmount = totals.get("total");
-        if (totalAmount == null || totalAmount <= 0) {
-            throw new IllegalArgumentException("Invalid order total");
-        }
+            // Validate stock using InventoryService BEFORE order creation
+            if (inventoryService == null) {
+                throw new IllegalStateException("InventoryService not initialized - cannot validate stock for order");
+            }
+            for (CartItem item : cartItems) {
+                boolean isAvailable = inventoryService.isProductAvailable(item.getProductId(), item.getSizeLabel(), item.getQuantity());
+                if (!isAvailable) {
+                    throw new IllegalArgumentException("Product " + item.getProductId() + " (size: " + item.getSizeLabel() + ") is not available in the requested quantity");
+                }
+            }
 
-        // ProductSize validation not available - InventoryService doesn't exist
+            String couponCode = (String) checkoutData.get("couponCode");
+            Map<String, Double> totals = calculateCheckoutTotals(userId, couponCode);
+            if (totals == null || totals.isEmpty()) {
+                throw new IllegalStateException("Failed to calculate order totals");
+            }
 
-        Map<String, Object> orderData = new HashMap<>();
-        orderData.put("userId", userId);
-        orderData.put("fullName", shippingAddressData.get("fullName"));
-        
-        String addressLine1 = (String) shippingAddressData.get("addressLine1");
-        String addressLine2 = (String) shippingAddressData.get("addressLine2");
-        String fullAddress = addressLine1 + (addressLine2 != null && !addressLine2.isEmpty() ? " " + addressLine2 : "");
-        orderData.put("address", fullAddress);
-        
-        orderData.put("city", shippingAddressData.get("city"));
-        orderData.put("state", shippingAddressData.get("state"));
-        orderData.put("zip", shippingAddressData.get("postalCode"));
-        orderData.put("phone", shippingAddressData.get("phone"));
-        orderData.put("paymentMethod", paymentMethod);
-        orderData.put("totalAmount", totalAmount);
+            Double totalAmount = totals.get("total");
+            if (totalAmount == null || totalAmount <= 0) {
+                throw new IllegalArgumentException("Invalid order total");
+            }
 
-        List<Map<String, Object>> itemsData = new ArrayList<>();
-        for (CartItem item : cartItems) {
-            Map<String, Object> itemData = new HashMap<>();
-            itemData.put("productId", item.getProductId());
-            itemData.put("quantity", item.getQuantity());
-            itemData.put("price", item.getPrice());
-            itemData.put("sizeLabel", item.getSizeLabel());
-            itemsData.add(itemData);
-        }
-        orderData.put("items", itemsData);
+            Map<String, Object> orderData = new HashMap<>();
+            orderData.put("userId", userId);
+            orderData.put("fullName", shippingAddressData.get("fullName"));
+            
+            String addressLine1 = (String) shippingAddressData.get("addressLine1");
+            String addressLine2 = (String) shippingAddressData.get("addressLine2");
+            String fullAddress = addressLine1 + (addressLine2 != null && !addressLine2.isEmpty() ? " " + addressLine2 : "");
+            orderData.put("address", fullAddress);
+            
+            orderData.put("city", shippingAddressData.get("city"));
+            orderData.put("state", shippingAddressData.get("state"));
+            orderData.put("zip", shippingAddressData.get("postalCode"));
+            orderData.put("phone", shippingAddressData.get("phone"));
+            orderData.put("paymentMethod", paymentMethod);
+            orderData.put("totalAmount", totalAmount);
 
-        OrderService orderService = ServiceRegistry.getInstance().getOrderService();
-        Order order = null;
-        try {
-            order = orderService.createOrder(userId, orderData);
-        } catch (Exception e) {
-            // Inventory rollback not available - InventoryService doesn't exist
-            throw new IllegalStateException("Failed to create order. Please try again.", e);
-        }
+            List<Map<String, Object>> itemsData = new ArrayList<>();
+            for (CartItem item : cartItems) {
+                Map<String, Object> itemData = new HashMap<>();
+                itemData.put("productId", item.getProductId());
+                itemData.put("quantity", item.getQuantity());
+                itemData.put("price", item.getPrice());
+                itemData.put("sizeLabel", item.getSizeLabel());
+                itemsData.add(itemData);
+            }
+            orderData.put("items", itemsData);
 
-        if (order == null) {
-            // Inventory rollback not available - InventoryService doesn't exist
-            throw new IllegalStateException("Failed to create order. Please try again.");
-        }
+            OrderService orderService = ServiceRegistry.getInstance().getOrderService();
+            // CRITICAL FIX: Pass connection to ensure order creation uses same transaction
+            Order order;
+            if (orderService instanceof OrderServiceImpl) {
+                order = ((OrderServiceImpl) orderService).createOrder(userId, orderData, conn);
+            } else {
+                order = orderService.createOrder(userId, orderData);
+            }
+            
+            if (order == null) {
+                throw new IllegalStateException("Failed to create order. Please try again.");
+            }
 
-        return order;
+            // Process inventory after successful order creation - within same transaction
+            // If this fails, the entire transaction (including order creation) will roll back
+            if (inventoryService != null) {
+                List<com.fashionstore.model.ProductSize> productSizes = new ArrayList<>();
+                for (CartItem item : cartItems) {
+                    com.fashionstore.model.ProductSize ps = new com.fashionstore.model.ProductSize();
+                    ps.setProductId(item.getProductId());
+                    ps.setSizeLabel(item.getSizeLabel());
+                    ps.setStockQuantity(item.getQuantity());
+                    productSizes.add(ps);
+                }
+                // CRITICAL FIX: Pass connection to ensure inventory update uses same transaction
+                boolean inventoryProcessed = inventoryService.processInventoryAfterOrder(productSizes, conn);
+                if (!inventoryProcessed) {
+                    throw new IllegalStateException("Failed to process inventory after order creation. Order rolled back.");
+                }
+            }
+
+            // CRITICAL FIX: Create payment record within the same transaction
+            // This ensures payment is atomic with order creation and inventory update
+            PaymentService paymentService = ServiceRegistry.getInstance().getPaymentService();
+            if (paymentService != null) {
+                Payment payment = new Payment();
+                payment.setOrderId(order.getOrderId());
+                payment.setPaymentMethod(paymentMethod);
+                payment.setAmount(java.math.BigDecimal.valueOf(totalAmount));
+                payment.setCurrency("INR");
+                
+                // COD is confirmed immediately - no external gateway needed
+                boolean isCOD = "COD".equalsIgnoreCase(paymentMethod) || "cod".equalsIgnoreCase(paymentMethod);
+                if (isCOD) {
+                    payment.setTransactionId("COD_" + System.currentTimeMillis() + "_" + order.getOrderId());
+                    payment.setStatus("succeeded");
+                    payment.setGatewayResponse("COD payment - collected on delivery");
+                    payment.setVerified(true);
+                    
+                    // Update orders table with completed status for COD
+                    com.fashionstore.dao.PaymentDAO paymentDAO = ServiceRegistry.getInstance().getPaymentDAO();
+                    if (paymentDAO != null) {
+                        paymentDAO.updateOrderPaymentStatus(order.getOrderId(), "completed", payment.getTransactionId());
+                    }
+                } else {
+                    // Online payments start as pending until gateway confirmation
+                    payment.setTransactionId("PENDING_" + order.getOrderId());
+                    payment.setStatus("pending");
+                    payment.setGatewayResponse("Payment pending - awaiting gateway confirmation");
+                    payment.setVerified(false);
+                    
+                    // Update orders table with pending status for online payments
+                    com.fashionstore.dao.PaymentDAO paymentDAO = ServiceRegistry.getInstance().getPaymentDAO();
+                    if (paymentDAO != null) {
+                        paymentDAO.updateOrderPaymentStatus(order.getOrderId(), "pending", payment.getTransactionId());
+                    }
+                }
+                
+                int paymentId = paymentService.createPaymentInTransaction(conn, payment);
+                if (paymentId <= 0) {
+                    throw new IllegalStateException("Failed to create payment record. Order rolled back.");
+                }
+                payment.setPaymentId(paymentId);
+            }
+
+            // CRITICAL FIX: Clear cart within the same transaction
+            // This ensures cart clearing is atomic with order creation, inventory update, and payment
+            // If cart clearing fails, the entire transaction (including order) rolls back
+            CartDAO cartDAO = ServiceRegistry.getInstance().getCartDAO();
+            if (cartDAO != null) {
+                boolean cartCleared = cartDAO.clearCartByUserIdInTransaction(conn, userId);
+                if (!cartCleared) {
+                    throw new IllegalStateException("Failed to clear cart. Order rolled back.");
+                }
+            }
+
+            return order;
+        });
     }
 }
